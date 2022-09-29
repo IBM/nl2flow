@@ -11,7 +11,7 @@ class MappingItem(BaseModel):
 
 class MemoryItem(BaseModel):
     item_id: str
-    item_type: str
+    item_type: Optional[str]
     item_state: MemoryState
 
 
@@ -27,7 +27,7 @@ class Constraint(BaseModel):
 
 
 class GoalItems(BaseModel):
-    goals: List[Union[GoalItem, Constraint]]
+    goals: Union[GoalItem, Constraint, List[Union[GoalItem, Constraint]]]
 
 
 class SignatureItem(BaseModel):
@@ -48,7 +48,7 @@ class PartialOrder(BaseModel):
 
 class TypeItem(BaseModel):
     name: str
-    parent: str = TypeOptions.ROOT
+    parent: str = TypeOptions.ROOT.value
     children: Union[str, Set[str]] = set()
 
 
@@ -75,3 +75,8 @@ class FlowDefinition(BaseModel):
 class PDDL(BaseModel):
     domain: str
     problem: str
+
+
+class Transform(BaseModel):
+    source: str
+    target: str

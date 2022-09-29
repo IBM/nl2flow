@@ -1,3 +1,6 @@
+import collections
+
+from typing import List
 from nl2flow.compile.validators.validator import Validator, ValidationMessage
 from nl2flow.compile.schemas import (
     FlowDefinition,
@@ -7,9 +10,6 @@ from nl2flow.compile.schemas import (
     MemoryState,
     Constraint,
 )
-from typing import List
-
-import collections
 
 
 def __get_duplicates__(list_item: List[str]) -> List[str]:
@@ -90,8 +90,11 @@ class FlowValidator(Validator):
     @staticmethod
     def goals_are_of_proper_types(flow: FlowDefinition) -> ValidationMessage:
         for goal_item_list in flow.goal_items:
-            for goal_item in goal_item_list:
 
+            if not isinstance(goal_item_list, List):
+                goal_item_list = [goal_item_list]
+
+            for goal_item in goal_item_list:
                 if isinstance(goal_item, GoalItem):
 
                     goal_type_check = isinstance(goal_item.goal_type, GoalType)

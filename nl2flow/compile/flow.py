@@ -1,5 +1,6 @@
 from typing import Set, List, Union, Any
 from nl2flow.compile.compilations import ClassicPDDL
+from nl2flow.compile.operators import Operator
 from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL
 from nl2flow.compile.validators.flow_validator import FlowValidator
 from nl2flow.compile.options import (
@@ -77,6 +78,9 @@ class Flow:
             new_item = [new_item]
 
         for item in new_item:
+            if issubclass(type(item), Operator):
+                item = item.definition
+
             type_of_item = type(item).__name__
             key_name = next(
                 (
@@ -118,7 +122,7 @@ class Flow:
 
     def compile_to_pddl(
         self,
-        goal_type: GoalOptions,
+        goal_type: GoalOptions = GoalOptions.AND,
         lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PDDL:
@@ -133,10 +137,10 @@ class Flow:
 
         assert type(lookahead) == int, "Length of lookahead must be an integer."
 
-        if compilation_type.value != CompileOptions.CLASSICAL:
+        if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
 
-        assert self.validate(), "Invalid Flow definition!"
+        # assert self.validate(), "Invalid Flow definition!"
 
         compilation = ClassicPDDL(self.flow_definition)
         return compilation.compile(

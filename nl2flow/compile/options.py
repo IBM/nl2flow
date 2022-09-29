@@ -11,6 +11,7 @@ class CompileOptions(enum.Enum):
 
 
 class TypeOptions(enum.Enum):
+    AGENT = "agent"
     ROOT = "generic"
     LEAF = "end"
 

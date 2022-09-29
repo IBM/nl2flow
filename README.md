@@ -29,7 +29,7 @@ from nl2flow.compile.flow import Flow
 my_new_flow = Flow("My New Flow")
 ```
 
-The resultant flow looks like this. Note that this package only produces the compiled PDDL; you still need to call a planner after.
+The resultant flow looks like this. Note that this package only produces the compiled PDDL; you still need to call a [planner](https://hub.docker.com/r/ctpelok77/ibmresearchaiplanningsolver) after.
 
 ```json
 [

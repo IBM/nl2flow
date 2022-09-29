@@ -41,7 +41,7 @@ class Operator(ABC):
 
         for item in new_input:
             assert isinstance(
-                new_input, SignatureItem
+                item, SignatureItem
             ), "Tried to add a non-signature item to an operator."
             self.operator_definition.inputs.append(item)
 
@@ -60,6 +60,9 @@ class ClassicalOperator(Operator):
     true for the operator to execute and a list of outputs that become true
     after the operator executes. The list of inputs and outputs are independent.
     """
+
+    def __init__(self, name: str):
+        Operator.__init__(self, name)
 
     def add_outcome(self, outcome: Outcome) -> None:
         assert isinstance(
@@ -85,7 +88,7 @@ class ClassicalOperator(Operator):
             ), "Tried to add a non-signature item to an operator."
 
             if not self.operator_definition.outputs:
-                self.operator_definition.outputs = Outcome
+                self.operator_definition.outputs = Outcome()
 
             self.operator_definition.outputs.outcomes.append(item)
 
@@ -97,6 +100,9 @@ class ContingentOperator(Operator):
     multiple input conditions hold, then multiple output conditions are enforced. It can
     also admit global conditions that must hold true for all output conditions.
     """
+
+    def __init__(self, name: str):
+        Operator.__init__(self, name)
 
     def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
 
@@ -129,6 +135,9 @@ class NonDeterministicOperator(Operator):
     has been executed. Like a classical operator though, the list of input conditions must
     be true globally for any of them to occur. You can assign a probability to an outcome.
     """
+
+    def __init__(self, name: str):
+        Operator.__init__(self, name)
 
     def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
 
