@@ -1,4 +1,11 @@
-from nl2flow.compile.schemas import FlowDefinition, PDDL, Transform, GoalItem, Constraint
+from nl2flow.compile.schemas import (
+    FlowDefinition,
+    PDDL,
+    Transform,
+    GoalItem,
+    GoalItems,
+    Constraint,
+)
 from nl2flow.compile.options import TypeOptions, GoalType
 from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Any
@@ -10,23 +17,27 @@ import tarski.fstrips as fs
 from tarski.theories import Theory
 from tarski.io import fstrips as iofs
 from tarski.io import FstripsWriter
-from tarski.syntax import land, neg
+from tarski.syntax import land
 
 
 class Compilation(ABC):
     def __init__(self, flow_definition: FlowDefinition):
         self.flow_definition = flow_definition
-        self.cached_transforms = list()
+        self.cached_transforms: List[Transform] = list()
 
     def transform(self, item: str) -> str:
-        transformed_item = re.sub(r"\s+", '_', item.lower())
+        transformed_item = re.sub(r"\s+", "_", item.lower())
         self.cached_transforms.append(Transform(source=item, target=transformed_item))
         return transformed_item
 
     def revert_transform(self, item: str) -> str:
         og_items = list(filter(lambda x: item == x.target, self.cached_transforms))
-        assert len(og_items) == 1, "There cannot be more than one mapping, something terrible has happened."
-        return og_items[0].source
+        assert (
+            len(og_items) == 1
+        ), "There cannot be more than one mapping, something terrible has happened."
+
+        source: str = og_items[0].source
+        return source
 
     @abstractmethod
     def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
@@ -34,14 +45,12 @@ class Compilation(ABC):
 
 
 class ClassicPDDL(Compilation):
-
     def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
-
-        def __compile_goals(goal_items) -> Set:
+        def __compile_goals(list_of_goal_items: List[GoalItems]) -> Set[Any]:
             goal_predicates = set()
 
-            for goal_item in goal_items:
-                goals = goal_item.goals
+            for goal_items in list_of_goal_items:
+                goals = goal_items.goals
 
                 if not isinstance(goals, List):
                     goals = [goals]
@@ -51,7 +60,11 @@ class ClassicPDDL(Compilation):
                         if isinstance(goal, GoalItem):
 
                             if goal.goal_type == GoalType.OPERATOR.value:
-                                goal_predicates.add(has_done(constant_map[self.transform(goal.goal_name)]))
+                                goal_predicates.add(
+                                    has_done(
+                                        constant_map[self.transform(goal.goal_name)]
+                                    )
+                                )
 
                         elif isinstance(goal, Constraint):
                             pass
@@ -65,7 +78,9 @@ class ClassicPDDL(Compilation):
         lang = fs.language(name, theories=[Theory.ARITHMETIC])
         cost = lang.function("total-cost", lang.Real)
 
-        problem = fs.create_fstrips_problem(domain_name=f"{name}-domain", problem_name=f"{name}-problem", language=lang)
+        problem = fs.create_fstrips_problem(
+            domain_name=f"{name}-domain", problem_name=f"{name}-problem", language=lang
+        )
         problem.metric(cost(), fs.OptimizationType.MINIMIZE)
 
         # noinspection PyUnresolvedReferences
@@ -80,13 +95,22 @@ class ClassicPDDL(Compilation):
         has_done = lang.predicate("has_done", type_map[TypeOptions.AGENT.value])
 
         for type_item in self.flow_definition.type_hierarchy:
-            type_map[self.transform(type_item.name)] = lang.sort(self.transform(type_item.name), self.transform(type_item.parent))
+            type_map[self.transform(type_item.name)] = lang.sort(
+                self.transform(type_item.name), self.transform(type_item.parent)
+            )
 
         for memory_item in self.flow_definition.memory_items:
-            constant_map[self.transform(memory_item.item_id)] = lang.constant(self.transform(memory_item.item_id), self.transform(memory_item.item_type) if memory_item.item_type else TypeOptions.ROOT.value)
+            constant_map[self.transform(memory_item.item_id)] = lang.constant(
+                self.transform(memory_item.item_id),
+                self.transform(memory_item.item_type)
+                if memory_item.item_type
+                else TypeOptions.ROOT.value,
+            )
 
         for operator in self.flow_definition.operators:
-            constant_map[self.transform(operator.name)] = lang.constant(self.transform(operator.name), TypeOptions.AGENT.value)
+            constant_map[self.transform(operator.name)] = lang.constant(
+                self.transform(operator.name), TypeOptions.AGENT.value
+            )
 
             problem.action(
                 operator.name,
@@ -94,7 +118,10 @@ class ClassicPDDL(Compilation):
                 precondition=land(*[]),
                 effects=[],
                 cost=iofs.AdditiveActionCost(
-                    problem.language.constant(operator.cost, problem.language.get_sort("Integer"))),
+                    problem.language.constant(
+                        operator.cost, problem.language.get_sort("Integer")
+                    )
+                ),
             )
 
         init.set(cost(), 0)

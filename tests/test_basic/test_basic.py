@@ -1,5 +1,12 @@
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.schemas import PDDL, MemoryItem, SignatureItem, GoalItem, GoalItems, TypeItem
+from nl2flow.compile.schemas import (
+    PDDL,
+    MemoryItem,
+    SignatureItem,
+    GoalItem,
+    GoalItems,
+    TypeItem,
+)
 from nl2flow.compile.options import GoalType, TypeOptions, MemoryState
 from nl2flow.compile.operators import ClassicalOperator
 from nl2flow.plan.planners import Michael
@@ -18,7 +25,9 @@ def test_basic() -> None:
     fix_errors_api = ClassicalOperator("fix errors")
     fix_errors_api.add_input(SignatureItem(parameters=["list of errors"]))
 
-    goal = GoalItems(goals=GoalItem(goal_name="fix errors", goal_type=GoalType.OPERATOR))
+    goal = GoalItems(
+        goals=GoalItem(goal_name="fix errors", goal_type=GoalType.OPERATOR)
+    )
 
     new_flow.add([find_errors_api, fix_errors_api, goal])
 
