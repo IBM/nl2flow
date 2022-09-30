@@ -47,7 +47,7 @@ pddl, transforms = new_flow.compile_to_pddl()
 
 planner = Michael(url="PLANNER_URL")
 raw_plans = planner.plan(pddl=pddl)
-parsed_plans = planner.parse(response=raw_plans, transforms=transforms)
+parsed_plans = planner.parse(response=raw_plans, flow=new_flow, transforms=transforms)
 
 print(planner.pretty_print(parsed_plans))
 ```
@@ -58,16 +58,16 @@ The resultant flow looks like this. Note that this package only produces the com
 ---- Plan #0 ----
 Cost: 501.0, Length: 2.0
 
-Step 0: ask, Inputs: None, Outputs: None
-Step 1: Fix Errors, Inputs: None, Outputs: None
+Step 0: ask, Inputs: list of errors (generic), Outputs: None
+Step 1: Fix Errors, Inputs: list of errors (generic), Outputs: None
 
 
 ---- Plan #1 ----
 Cost: 502.0, Length: 3.0
 
-Step 0: ask, Inputs: None, Outputs: None
-Step 1: Find Errors, Inputs: None, Outputs: None
-Step 2: Fix Errors, Inputs: None, Outputs: None
+Step 0: ask, Inputs: database link (generic), Outputs: None
+Step 1: Find Errors, Inputs: database link (generic), Outputs: list of errors (generic)
+Step 2: Fix Errors, Inputs: list of errors (generic), Outputs: None
 ```
 
 Learn more about the NL2Flow API and use cases by clicking on the links below. 

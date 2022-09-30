@@ -95,7 +95,7 @@ class ClassicPDDL(Compilation):
 
         for operator in list_of_actions:
             self.constant_map[operator.name] = self.lang.constant(
-                operator.name, TypeOptions.AGENT.value
+                operator.name, TypeOptions.OPERATOR.value
             )
 
             precondition_list = list()
@@ -141,10 +141,12 @@ class ClassicPDDL(Compilation):
     def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
 
         self.type_map[TypeOptions.ROOT.value] = self.lang.sort(TypeOptions.ROOT.value)
-        self.type_map[TypeOptions.AGENT.value] = self.lang.sort(TypeOptions.AGENT.value)
+        self.type_map[TypeOptions.OPERATOR.value] = self.lang.sort(
+            TypeOptions.OPERATOR.value
+        )
 
         self.has_done = self.lang.predicate(
-            "has_done", self.type_map[TypeOptions.AGENT.value]
+            "has_done", self.type_map[TypeOptions.OPERATOR.value]
         )
         self.known = self.lang.predicate("known", self.type_map[TypeOptions.ROOT.value])
 

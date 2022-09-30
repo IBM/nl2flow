@@ -32,6 +32,8 @@ def test_basic() -> None:
     pddl, transforms = new_flow.compile_to_pddl()
 
     raw_plans = PLANNER.plan(pddl=pddl)
-    parsed_plans = PLANNER.parse(response=raw_plans, transforms=transforms)
+    parsed_plans = PLANNER.parse(
+        response=raw_plans, flow=new_flow, transforms=transforms
+    )
 
     print(PLANNER.pretty_print(parsed_plans))

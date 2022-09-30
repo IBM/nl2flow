@@ -1,12 +1,82 @@
-from nl2flow.compile.schemas import PDDL
+from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
-from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action
+from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action, Parameter
+from nl2flow.compile.options import BasicOperations, TypeOptions
+from nl2flow.compile.schemas import (
+    PDDL,
+    OperatorDefinition,
+    MemoryItem,
+    SignatureItem,
+)
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, List, Dict
 
 import requests
 import re
+
+
+def parse_action(
+    action_name: str,
+    parameters: List[str],
+    **kwargs: Dict[str, Any],
+) -> Action:
+    def __add_parameters(signatures: List[SignatureItem]) -> List[SignatureItem]:
+        list_of_parameters: List[SignatureItem] = list()
+
+        for signature_item in signatures:
+            for parameter in signature_item.parameters:
+
+                if isinstance(parameter, MemoryItem):
+                    list_of_parameters.append(
+                        Parameter(name=parameter.item_id, type=parameter.item_type)
+                    )
+
+                elif isinstance(parameter, str):
+
+                    find_in_memory = list(
+                        filter(
+                            lambda x: x.item_id == parameter,
+                            flow.flow_definition.memory_items,
+                        )
+                    )
+
+                    if find_in_memory:
+                        memory_item: MemoryItem = find_in_memory[0]
+                        list_of_parameters.append(
+                            Parameter(
+                                name=memory_item.item_id, type=memory_item.item_type
+                            )
+                        )
+
+                    else:
+                        list_of_parameters.append(
+                            Parameter(name=parameter, type=TypeOptions.ROOT.value)
+                        )
+
+        return list_of_parameters
+
+    new_action = Action(name=action_name)
+    flow: Flow = kwargs["flow"]
+
+    if action_name not in [item.value for item in BasicOperations]:
+        operator: OperatorDefinition = list(
+            filter(lambda x: x.name == action_name, flow.flow_definition.operators)
+        )[0]
+
+        new_action.inputs = __add_parameters(operator.inputs)
+        new_action.outputs = __add_parameters(operator.outputs.outcomes)
+
+    else:
+        new_action.inputs = [
+            Parameter(
+                name=revert_string_transform(param, kwargs["transforms"]),
+                type=TypeOptions.ROOT.value,
+            )
+            for param in parameters
+        ]
+
+    return new_action
 
 
 class Planner(ABC):
@@ -34,7 +104,11 @@ class Planner(ABC):
                     [f"{item.name} ({item.type})" for item in action.outputs]
                 )
 
-                pretty += f"Step {step}: {action.name}, Inputs: {inputs if action.inputs else None}, Outputs: {outputs if action.outputs else None}\n"
+                pretty += (
+                    f"Step {step}: {action.name}, "
+                    f"Inputs: {inputs if action.inputs else None}, "
+                    f"Outputs: {outputs if action.outputs else None}\n"
+                )
 
         return pretty
 
@@ -75,17 +149,14 @@ class Michael(Planner, RemotePlanner):
 
                 for action in actions:
                     action = action.split()
-
-                    operator_name = revert_string_transform(
+                    action_name = revert_string_transform(
                         action[0], kwargs["transforms"]
                     )
-                    new_plan.plan.append(
-                        Action(
-                            name=operator_name,
-                            inputs=[],
-                            outputs=[],
-                        )
+
+                    new_action: Action = parse_action(
+                        action_name=action_name, parameters=action[1:], **kwargs
                     )
+                    new_plan.plan.append(new_action)
 
                 planner_response.list_of_plans.append(new_plan)
 
@@ -121,13 +192,12 @@ class Christian(Planner, RemotePlanner):
                 action = action.group(1)
 
                 action = action.split()
-                new_plan.plan.append(
-                    Action(
-                        name=revert_string_transform(action[0], kwargs["transforms"]),
-                        inputs=[],
-                        outputs=[],
-                    )
+                action_name = revert_string_transform(action[0], kwargs["transforms"])
+
+                new_action: Action = parse_action(
+                    action_name=action_name, parameters=action[1:], **kwargs
                 )
+                new_plan.plan.append(new_action)
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response

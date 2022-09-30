@@ -9,8 +9,8 @@ class Parameter(BaseModel):
 
 class Action(BaseModel):
     name: str
-    inputs: List[Parameter]
-    outputs: List[Parameter]
+    inputs: List[Parameter] = []
+    outputs: List[Parameter] = []
 
 
 class ClassicalPlan(BaseModel):
