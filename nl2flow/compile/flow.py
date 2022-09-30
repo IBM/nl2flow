@@ -1,7 +1,7 @@
-from typing import Set, List, Union, Any
+from typing import Set, List, Union, Any, Tuple
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
-from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL
+from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, Transform
 from nl2flow.compile.validators.flow_validator import FlowValidator
 from nl2flow.compile.options import (
     CompileOptions,
@@ -129,7 +129,7 @@ class Flow:
         goal_type: GoalOptions = GoalOptions.AND,
         lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
-    ) -> PDDL:
+    ) -> Tuple[PDDL, List[Transform]]:
 
         assert isinstance(
             goal_type, GoalOptions
@@ -147,10 +147,12 @@ class Flow:
         assert self.validate(), "Invalid Flow definition!"
 
         compilation = ClassicPDDL(self.flow_definition)
-        return compilation.compile(
+        pddl, transforms = compilation.compile(
             slot_options=self.slot_options,
             mapping_option=self.mapping_option,
             variable_life_cycle=self.variable_life_cycle,
             goal_type=goal_type,
             lookahead=lookahead,
         )
+
+        return pddl, transforms

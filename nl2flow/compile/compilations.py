@@ -15,7 +15,7 @@ from nl2flow.compile.options import (
     CostOptions,
 )
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Any
+from typing import List, Set, Dict, Any, Tuple
 
 import tarski
 import tarski.fstrips as fs
@@ -138,7 +138,7 @@ class ClassicPDDL(Compilation):
                 ),
             )
 
-    def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
+    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
 
         self.type_map[TypeOptions.ROOT.value] = self.lang.sort(TypeOptions.ROOT.value)
         self.type_map[TypeOptions.AGENT.value] = self.lang.sort(TypeOptions.AGENT.value)
@@ -193,4 +193,4 @@ class ClassicPDDL(Compilation):
         domain = writer.print_domain().replace(" :numeric-fluents", "")
         problem = writer.print_instance()
 
-        return PDDL(domain=domain, problem=problem)
+        return PDDL(domain=domain, problem=problem), self.cached_transforms

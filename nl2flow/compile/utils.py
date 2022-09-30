@@ -12,16 +12,13 @@ class Transform(BaseModel):
 def string_transform(item: str, reference: List[Transform]) -> str:
     transform = re.sub(r"\s+", "_", item.lower()) if item is not None else item
 
-    if transform:
-        check_existing = revert_string_transform(transform, reference)
-
-        if not check_existing:
-            reference.append(
-                Transform(
-                    source=item,
-                    target=transform,
-                )
+    if transform and transform == revert_string_transform(transform, reference):
+        reference.append(
+            Transform(
+                source=item,
+                target=transform,
             )
+        )
 
     return transform
 
@@ -30,7 +27,7 @@ def revert_string_transform(item: str, reference: List[Transform]) -> Optional[s
     og_items = list(filter(lambda x: item == x.target, reference))
 
     if not og_items:
-        return None
+        return item
 
     else:
 

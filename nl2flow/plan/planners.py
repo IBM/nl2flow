@@ -1,4 +1,5 @@
 from nl2flow.compile.schemas import PDDL
+from nl2flow.compile.utils import revert_string_transform
 from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action
 
 from abc import ABC, abstractmethod
@@ -74,7 +75,17 @@ class Michael(Planner, RemotePlanner):
 
                 for action in actions:
                     action = action.split()
-                    new_plan.plan.append(Action(name=action[0], inputs=[], outputs=[]))
+
+                    operator_name = revert_string_transform(
+                        action[0], kwargs["transforms"]
+                    )
+                    new_plan.plan.append(
+                        Action(
+                            name=operator_name,
+                            inputs=[],
+                            outputs=[],
+                        )
+                    )
 
                 planner_response.list_of_plans.append(new_plan)
 
@@ -110,7 +121,13 @@ class Christian(Planner, RemotePlanner):
                 action = action.group(1)
 
                 action = action.split()
-                new_plan.plan.append(Action(name=action[0], inputs=[], outputs=[]))
+                new_plan.plan.append(
+                    Action(
+                        name=revert_string_transform(action[0], kwargs["transforms"]),
+                        inputs=[],
+                        outputs=[],
+                    )
+                )
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response

@@ -2,12 +2,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.plan.planners import Michael, Christian
 from nl2flow.plan.options import DEFAULT_PLANNER_URL
-from nl2flow.compile.schemas import (
-    PDDL,
-    SignatureItem,
-    GoalItem,
-    GoalItems,
-)
+from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 
 import os
 
@@ -34,8 +29,9 @@ def test_basic() -> None:
     goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
     new_flow.add(goal)
 
-    pddl: PDDL = new_flow.compile_to_pddl()
+    pddl, transforms = new_flow.compile_to_pddl()
 
     raw_plans = PLANNER.plan(pddl=pddl)
-    parsed_plans = PLANNER.parse(response=raw_plans)
+    parsed_plans = PLANNER.parse(response=raw_plans, transforms=transforms)
+
     print(PLANNER.pretty_print(parsed_plans))
