@@ -1,43 +1,32 @@
 from nl2flow.compile.schemas import (
     FlowDefinition,
     PDDL,
-    Transform,
     GoalItem,
     GoalItems,
     Constraint,
+    OperatorDefinition,
 )
-from nl2flow.compile.options import TypeOptions, GoalType
+from nl2flow.compile.options import (
+    TypeOptions,
+    GoalType,
+    SlotOptions,
+    BasicOperations,
+    CostOptions,
+)
 from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Any
-
-import re
 
 import tarski
 import tarski.fstrips as fs
 from tarski.theories import Theory
 from tarski.io import fstrips as iofs
 from tarski.io import FstripsWriter
-from tarski.syntax import land
+from tarski.syntax import land, neg
 
 
 class Compilation(ABC):
     def __init__(self, flow_definition: FlowDefinition):
         self.flow_definition = flow_definition
-        self.cached_transforms: List[Transform] = list()
-
-    def transform(self, item: str) -> str:
-        transformed_item = re.sub(r"\s+", "_", item.lower())
-        self.cached_transforms.append(Transform(source=item, target=transformed_item))
-        return transformed_item
-
-    def revert_transform(self, item: str) -> str:
-        og_items = list(filter(lambda x: item == x.target, self.cached_transforms))
-        assert (
-            len(og_items) == 1
-        ), "There cannot be more than one mapping, something terrible has happened."
-
-        source: str = og_items[0].source
-        return source
 
     @abstractmethod
     def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
@@ -45,92 +34,158 @@ class Compilation(ABC):
 
 
 class ClassicPDDL(Compilation):
-    def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
-        def __compile_goals(list_of_goal_items: List[GoalItems]) -> Set[Any]:
-            goal_predicates = set()
-
-            for goal_items in list_of_goal_items:
-                goals = goal_items.goals
-
-                if not isinstance(goals, List):
-                    goals = [goals]
-
-                    for goal in goals:
-
-                        if isinstance(goal, GoalItem):
-
-                            if goal.goal_type == GoalType.OPERATOR.value:
-                                goal_predicates.add(
-                                    has_done(
-                                        constant_map[self.transform(goal.goal_name)]
-                                    )
-                                )
-
-                        elif isinstance(goal, Constraint):
-                            pass
-
-                        else:
-                            raise TypeError("Unrecognized goal type.")
-
-            return goal_predicates
-
-        name = self.transform(self.flow_definition.name)
-        lang = fs.language(name, theories=[Theory.ARITHMETIC])
-        cost = lang.function("total-cost", lang.Real)
-
-        problem = fs.create_fstrips_problem(
-            domain_name=f"{name}-domain", problem_name=f"{name}-problem", language=lang
+    def __init__(self, flow_definition: FlowDefinition):
+        Compilation.__init__(self, flow_definition)
+        self.flow_definition, self.cached_transforms = FlowDefinition.transform(
+            self.flow_definition
         )
-        problem.metric(cost(), fs.OptimizationType.MINIMIZE)
+
+        name = self.flow_definition.name
+        lang = fs.language(name, theories=[Theory.EQUALITY, Theory.ARITHMETIC])
+
+        self.lang = lang
+        self.cost = self.lang.function("total-cost", self.lang.Real)
+
+        self.problem = fs.create_fstrips_problem(
+            domain_name=f"{name}-domain",
+            problem_name=f"{name}-problem",
+            language=self.lang,
+        )
+        self.problem.metric(self.cost(), fs.OptimizationType.MINIMIZE)
 
         # noinspection PyUnresolvedReferences
-        init = tarski.model.create(lang)
+        self.init = tarski.model.create(self.lang)
 
-        type_map = dict()
-        constant_map = dict()
+        self.has_done: Any = None
+        self.known: Any = None
 
-        type_map[TypeOptions.ROOT.value] = lang.sort(TypeOptions.ROOT.value)
-        type_map[TypeOptions.AGENT.value] = lang.sort(TypeOptions.AGENT.value)
+        self.type_map: Dict[str, Any] = dict()
+        self.constant_map: Dict[str, Any] = dict()
 
-        has_done = lang.predicate("has_done", type_map[TypeOptions.AGENT.value])
+    def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> Set[Any]:
+        goal_predicates = set()
 
-        for type_item in self.flow_definition.type_hierarchy:
-            type_map[self.transform(type_item.name)] = lang.sort(
-                self.transform(type_item.name), self.transform(type_item.parent)
+        for goal_items in list_of_goal_items:
+            goals = goal_items.goals
+
+            if not isinstance(goals, List):
+                goals = [goals]
+
+                for goal in goals:
+
+                    if isinstance(goal, GoalItem):
+
+                        if goal.goal_type == GoalType.OPERATOR:
+                            goal_predicates.add(
+                                self.has_done(self.constant_map[goal.goal_name])
+                            )
+
+                    elif isinstance(goal, Constraint):
+                        pass
+
+                    else:
+                        raise TypeError("Unrecognized goal type.")
+
+        return goal_predicates
+
+    def __compile_actions(self, list_of_actions: List[OperatorDefinition]) -> None:
+
+        for operator in list_of_actions:
+            self.constant_map[operator.name] = self.lang.constant(
+                operator.name, TypeOptions.AGENT.value
             )
 
-        for memory_item in self.flow_definition.memory_items:
-            constant_map[self.transform(memory_item.item_id)] = lang.constant(
-                self.transform(memory_item.item_id),
-                self.transform(memory_item.item_type)
-                if memory_item.item_type
-                else TypeOptions.ROOT.value,
-            )
+            precondition_list = list()
+            add_effect_list = [self.has_done(self.constant_map[operator.name])]
 
-        for operator in self.flow_definition.operators:
-            constant_map[self.transform(operator.name)] = lang.constant(
-                self.transform(operator.name), TypeOptions.AGENT.value
-            )
+            for o_input in operator.inputs:
+                for param in o_input.parameters:
 
-            problem.action(
+                    if isinstance(param, str):
+
+                        if param not in self.constant_map:
+                            self.constant_map[param] = self.lang.constant(
+                                param, TypeOptions.ROOT.value
+                            )
+
+                        precondition_list.append(self.known(self.constant_map[param]))
+
+            for o_output in operator.outputs.outcomes:
+                for param in o_output.parameters:
+
+                    if isinstance(param, str):
+
+                        if param not in self.constant_map:
+                            self.constant_map[param] = self.lang.constant(
+                                param, TypeOptions.ROOT.value
+                            )
+
+                        add_effect_list.append(self.known(self.constant_map[param]))
+
+            self.problem.action(
                 operator.name,
                 parameters=list(),
-                precondition=land(*[]),
-                effects=[],
+                precondition=land(*precondition_list),
+                effects=[fs.AddEffect(add) for add in add_effect_list],
                 cost=iofs.AdditiveActionCost(
-                    problem.language.constant(
-                        operator.cost, problem.language.get_sort("Integer")
+                    self.problem.language.constant(
+                        operator.cost, self.problem.language.get_sort("Integer")
                     )
                 ),
             )
 
-        init.set(cost(), 0)
-        problem.init = init
+    def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
 
-        goal_set = __compile_goals(self.flow_definition.goal_items)
-        problem.goal = land(*goal_set, flat=True)
+        self.type_map[TypeOptions.ROOT.value] = self.lang.sort(TypeOptions.ROOT.value)
+        self.type_map[TypeOptions.AGENT.value] = self.lang.sort(TypeOptions.AGENT.value)
 
-        writer = FstripsWriter(problem)
+        self.has_done = self.lang.predicate(
+            "has_done", self.type_map[TypeOptions.AGENT.value]
+        )
+        self.known = self.lang.predicate("known", self.type_map[TypeOptions.ROOT.value])
+
+        for type_item in self.flow_definition.type_hierarchy:
+            self.type_map[type_item.name] = self.lang.sort(
+                type_item.name, type_item.parent
+            )
+
+        for memory_item in self.flow_definition.memory_items:
+            self.constant_map[memory_item.item_id] = self.lang.constant(
+                memory_item.item_id,
+                memory_item.item_type
+                if memory_item.item_type
+                else TypeOptions.ROOT.value,
+            )
+
+        self.__compile_actions(self.flow_definition.operators)
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+        if SlotOptions.higher_cost in slot_options:
+
+            x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
+
+            precondition_list = [neg(self.known(x))]
+            add_effect_list = [self.known(x)]
+
+            self.problem.action(
+                BasicOperations.SLOT_FILLER.value,
+                parameters=[x],
+                precondition=land(*precondition_list),
+                effects=[fs.AddEffect(add) for add in add_effect_list],
+                cost=iofs.AdditiveActionCost(
+                    self.problem.language.constant(
+                        CostOptions.VERY_HIGH.value,
+                        self.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
+
+        self.init.set(self.cost(), 0)
+        self.problem.init = self.init
+
+        goal_set = self.__compile_goals(self.flow_definition.goal_items)
+        self.problem.goal = land(*goal_set, flat=True)
+
+        writer = FstripsWriter(self.problem)
         domain = writer.print_domain().replace(" :numeric-fluents", "")
         problem = writer.print_instance()
 

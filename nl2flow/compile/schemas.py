@@ -1,5 +1,7 @@
+from __future__ import annotations
+from nl2flow.compile.utils import string_transform, Transform
 from nl2flow.compile.options import TypeOptions, CostOptions, GoalType, MemoryState
-from typing import Set, List, Optional, Union
+from typing import Set, List, Optional, Union, Tuple
 from pydantic import BaseModel
 
 
@@ -12,12 +14,7 @@ class MappingItem(BaseModel):
 class MemoryItem(BaseModel):
     item_id: str
     item_type: Optional[str]
-    item_state: MemoryState
-
-
-class GoalItem(BaseModel):
-    goal_name: str
-    goal_type: GoalType
+    item_state: MemoryState = MemoryState.UNKNOWN
 
 
 class Constraint(BaseModel):
@@ -26,13 +23,18 @@ class Constraint(BaseModel):
     truth_value: Optional[bool]
 
 
+class GoalItem(BaseModel):
+    goal_name: str
+    goal_type: GoalType = GoalType.OPERATOR
+
+
 class GoalItems(BaseModel):
     goals: Union[GoalItem, Constraint, List[Union[GoalItem, Constraint]]]
 
 
 class SignatureItem(BaseModel):
-    parameters: Set[str]
-    constraints: Optional[List[Constraint]]
+    parameters: Set[Union[str, MemoryItem]]
+    constraints: List[Constraint] = []
 
 
 class Outcome(BaseModel):
@@ -59,6 +61,11 @@ class OperatorDefinition(BaseModel):
     outputs: Union[Outcome, List[Outcome]] = []
 
 
+class PDDL(BaseModel):
+    domain: str
+    problem: str
+
+
 class FlowDefinition(BaseModel):
     name: str
     operators: List[OperatorDefinition] = []
@@ -71,12 +78,15 @@ class FlowDefinition(BaseModel):
     starts_with: Optional[str]
     ends_with: Optional[str]
 
+    @classmethod
+    def transform(cls, flow: FlowDefinition) -> Tuple[FlowDefinition, Transform]:
+        new_flow = FlowDefinition(name=flow.name)
+        transforms: List[Transform] = list()
 
-class PDDL(BaseModel):
-    domain: str
-    problem: str
+        if flow.starts_with:
+            new_flow.starts_with = string_transform(flow.starts_with)
 
+        if flow.ends_with:
+            new_flow.ends_with = string_transform(flow.ends_with)
 
-class Transform(BaseModel):
-    source: str
-    target: str
+        return flow, transforms

@@ -63,6 +63,7 @@ class ClassicalOperator(Operator):
 
     def __init__(self, name: str):
         Operator.__init__(self, name)
+        self.operator_definition.outputs = Outcome()
 
     def add_outcome(self, outcome: Outcome) -> None:
         assert isinstance(
@@ -86,9 +87,6 @@ class ClassicalOperator(Operator):
             assert isinstance(
                 item, SignatureItem
             ), "Tried to add a non-signature item to an operator."
-
-            if not self.operator_definition.outputs:
-                self.operator_definition.outputs = Outcome()
 
             self.operator_definition.outputs.outcomes.append(item)
 

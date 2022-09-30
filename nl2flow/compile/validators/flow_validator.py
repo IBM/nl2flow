@@ -1,7 +1,9 @@
 import collections
 
 from typing import List
+from nl2flow.compile.utils import string_transform
 from nl2flow.compile.validators.validator import Validator, ValidationMessage
+from nl2flow.compile.options import TypeOptions
 from nl2flow.compile.schemas import (
     FlowDefinition,
     SignatureItem,
@@ -21,6 +23,9 @@ def __is_name_an_operator_name__(name: str, flow: FlowDefinition) -> bool:
 
 
 def __is_name_a_type_name__(name: str, flow: FlowDefinition) -> bool:
+    assert not any(
+        t for t in TypeOptions if t.value == name
+    ), "Cannot use reserved name {name} for type."
     return name in map(lambda x: str(x.name), flow.type_hierarchy)
 
 
@@ -31,15 +36,17 @@ def __is_name_an_object_name__(name: str, flow: FlowDefinition) -> bool:
 def __check_constraint__(
     constraint: Constraint, flow: FlowDefinition
 ) -> ValidationMessage:
-    for param in constraint.parameters:
-        check_known_item = __is_name_a_type_name__(
-            param, flow
-        ) or __is_name_an_object_name__(param, flow)
-        if not check_known_item:
-            return ValidationMessage(
-                truth_value=check_known_item,
-                error_message=f"Unknown parameter for constraint: {constraint.constraint_id}.",
-            )
+    _ = flow
+    # for param in constraint.parameters:
+    #     if isinstance(param, str):
+    #         check_known_item = __is_name_a_type_name__(
+    #             param, flow
+    #         ) or __is_name_an_object_name__(param, flow)
+    #         if not check_known_item:
+    #             return ValidationMessage(
+    #                 truth_value=check_known_item,
+    #                 error_message=f"Unknown parameter for constraint: {constraint.constraint_id}.",
+    #             )
 
     constraint_must_have_value = constraint.truth_value is not None
     if not constraint_must_have_value:
@@ -54,13 +61,13 @@ def __check_constraint__(
 def __check_signature_item__(
     signature_item: SignatureItem, flow: FlowDefinition
 ) -> ValidationMessage:
-    for param in signature_item.parameters:
-        check_known_item = __is_name_an_object_name__(param, flow)
-        if not check_known_item:
-            return ValidationMessage(
-                truth_value=check_known_item,
-                error_message=f"Unknown parameter {param} for signature.",
-            )
+    # for param in signature_item.parameters:
+    #     check_known_item = __is_name_an_object_name__(param, flow)
+    #     if not check_known_item:
+    #         return ValidationMessage(
+    #             truth_value=check_known_item,
+    #             error_message=f"Unknown parameter {param} for signature.",
+    #         )
 
     for constraint in signature_item.constraints:
         __check_constraint__(constraint, flow)
@@ -89,12 +96,14 @@ class FlowValidator(Validator):
 
     @staticmethod
     def goals_are_of_proper_types(flow: FlowDefinition) -> ValidationMessage:
-        for goal_item_list in flow.goal_items:
+        for list_of_goal_items in flow.goal_items:
+            goal_items = list_of_goal_items.goals
 
-            if not isinstance(goal_item_list, List):
-                goal_item_list = [goal_item_list]
+            if not isinstance(goal_items, List):
+                goal_items = [goal_items]
 
-            for goal_item in goal_item_list:
+            for goal_item in goal_items:
+
                 if isinstance(goal_item, GoalItem):
 
                     goal_type_check = isinstance(goal_item.goal_type, GoalType)
@@ -179,7 +188,7 @@ class FlowValidator(Validator):
                 )
 
             check_for_known_types = __is_name_a_type_name__(item.item_type, flow)
-            if not check_for_known_types:
+            if not check_for_known_types and item.item_type is not None:
                 return ValidationMessage(
                     truth_value=check_for_known_types,
                     error_message=f"Memory item {item.item_id} has unknown type.",
@@ -189,21 +198,14 @@ class FlowValidator(Validator):
 
     @staticmethod
     def partial_orders_are_operator_names(flow: FlowDefinition) -> ValidationMessage:
-        for item in flow.memory_items:
-
-            state_type_check = isinstance(item.item_state, MemoryState)
-            if not state_type_check:
-                return ValidationMessage(
-                    truth_value=state_type_check,
-                    error_message=f"Memory item {item.item_id} has unknown state.",
-                )
-
-            check_for_known_types = __is_name_a_type_name__(item.item_type, flow)
-            if not check_for_known_types:
-                return ValidationMessage(
-                    truth_value=check_for_known_types,
-                    error_message=f"Memory item {item.item_id} has unknown type.",
-                )
+        for partial_order in flow.partial_orders:
+            for name in [partial_order.precedent, partial_order.antecedent]:
+                check_name = __is_name_an_operator_name__(name, flow) or name == "*"
+                if not check_name:
+                    return ValidationMessage(
+                        truth_value=check_name,
+                        error_message=f"Partial orders must be an operator name or total order *, found {name}.",
+                    )
 
         return ValidationMessage(truth_value=True)
 
@@ -211,16 +213,16 @@ class FlowValidator(Validator):
     def check_operator_definition(flow: FlowDefinition) -> ValidationMessage:
 
         for operator in flow.operators:
-
             for o_input in operator.inputs:
 
-                for param in o_input.parameters:
-                    is_param_known_object = __is_name_an_object_name__(param, flow)
-                    if not is_param_known_object:
-                        return ValidationMessage(
-                            truth_value=is_param_known_object,
-                            error_message=f"Unknown parameter for action: {operator.name}.",
-                        )
+                # for param in o_input.parameters:
+                #     if isinstance(param, str):
+                #         is_param_known_object = __is_name_an_object_name__(param, flow)
+                #         if not is_param_known_object:
+                #             return ValidationMessage(
+                #                 truth_value=is_param_known_object,
+                #                 error_message=f"Unknown parameter for action: {operator.name}.",
+                #             )
 
                 for constraint in o_input.constraints:
                     __check_constraint__(constraint, flow)
@@ -239,9 +241,11 @@ class FlowValidator(Validator):
     @staticmethod
     def no_duplicate_items(flow: FlowDefinition) -> ValidationMessage:
 
-        operators = map(lambda x: str(x.name.lower()), flow.operators)
-        memory_items = map(lambda x: str(x.item_id.lower()), flow.memory_items)
-        types = map(lambda x: str(x.name.lower()), flow.type_hierarchy)
+        operators = map(lambda x: str(string_transform(x.name)), flow.operators)
+        memory_items = map(
+            lambda x: str(string_transform(x.item_id)), flow.memory_items
+        )
+        types = map(lambda x: str(string_transform(x.name)), flow.type_hierarchy)
 
         # TODO: Not sure what to do with constraint names spread across the definition. Is this allowed?
         constraints = map(lambda x: str(x.name.lower()), flow.constraints)

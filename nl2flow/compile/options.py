@@ -4,6 +4,13 @@ LOOKAHEAD: int = 2
 RETRY: int = 3
 
 
+class BasicOperations(enum.Enum):
+    SLOT_FILLER = "ask"
+    MAPPER = "map"
+    TRANSFORM = "transform"
+    CONFIRM = "confirm"
+
+
 class CompileOptions(enum.Enum):
     CLASSICAL = "CLASSICAL"
     ALLOUTCOMES = "ALL_OUTCOMES"
