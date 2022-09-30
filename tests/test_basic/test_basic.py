@@ -20,18 +20,18 @@ PLANNER = (
 
 
 def test_basic() -> None:
-    new_flow = Flow("Basic")
+    new_flow = Flow("Basic Test")
 
-    find_errors_api = Operator("find_errors")
-    find_errors_api.add_input(SignatureItem(parameters=["database_link"]))
-    find_errors_api.add_output(SignatureItem(parameters=["list_of_errors"]))
+    find_errors_api = Operator("Find Errors")
+    find_errors_api.add_input(SignatureItem(parameters=["database link"]))
+    find_errors_api.add_output(SignatureItem(parameters=["list of errors"]))
 
-    fix_errors_api = Operator("fix_errors")
-    fix_errors_api.add_input(SignatureItem(parameters=["list_of_errors"]))
+    fix_errors_api = Operator("Fix Errors")
+    fix_errors_api.add_input(SignatureItem(parameters=["list of errors"]))
 
     new_flow.add([find_errors_api, fix_errors_api])
 
-    goal = GoalItems(goals=GoalItem(goal_name="fix_errors"))
+    goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
     new_flow.add(goal)
 
     pddl: PDDL = new_flow.compile_to_pddl()

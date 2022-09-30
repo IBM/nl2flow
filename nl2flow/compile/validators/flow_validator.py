@@ -11,6 +11,7 @@ from nl2flow.compile.schemas import (
     GoalItem,
     MemoryState,
     Constraint,
+    Transform,
 )
 
 
@@ -241,11 +242,16 @@ class FlowValidator(Validator):
     @staticmethod
     def no_duplicate_items(flow: FlowDefinition) -> ValidationMessage:
 
-        operators = map(lambda x: str(string_transform(x.name)), flow.operators)
-        memory_items = map(
-            lambda x: str(string_transform(x.item_id)), flow.memory_items
+        transforms: List[Transform] = list()
+        operators = map(
+            lambda x: str(string_transform(x.name, transforms)), flow.operators
         )
-        types = map(lambda x: str(string_transform(x.name)), flow.type_hierarchy)
+        memory_items = map(
+            lambda x: str(string_transform(x.item_id, transforms)), flow.memory_items
+        )
+        types = map(
+            lambda x: str(string_transform(x.name, transforms)), flow.type_hierarchy
+        )
 
         # TODO: Not sure what to do with constraint names spread across the definition. Is this allowed?
         constraints = map(lambda x: str(x.name.lower()), flow.constraints)

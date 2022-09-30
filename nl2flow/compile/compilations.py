@@ -5,6 +5,7 @@ from nl2flow.compile.schemas import (
     GoalItems,
     Constraint,
     OperatorDefinition,
+    Transform,
 )
 from nl2flow.compile.options import (
     TypeOptions,
@@ -36,8 +37,10 @@ class Compilation(ABC):
 class ClassicPDDL(Compilation):
     def __init__(self, flow_definition: FlowDefinition):
         Compilation.__init__(self, flow_definition)
-        self.flow_definition, self.cached_transforms = FlowDefinition.transform(
-            self.flow_definition
+
+        self.cached_transforms: List[Transform] = list()
+        self.flow_definition = FlowDefinition.transform(
+            self.flow_definition, self.cached_transforms
         )
 
         name = self.flow_definition.name
@@ -71,20 +74,20 @@ class ClassicPDDL(Compilation):
             if not isinstance(goals, List):
                 goals = [goals]
 
-                for goal in goals:
+            for goal in goals:
 
-                    if isinstance(goal, GoalItem):
+                if isinstance(goal, GoalItem):
 
-                        if goal.goal_type == GoalType.OPERATOR:
-                            goal_predicates.add(
-                                self.has_done(self.constant_map[goal.goal_name])
-                            )
+                    if goal.goal_type == GoalType.OPERATOR:
+                        goal_predicates.add(
+                            self.has_done(self.constant_map[goal.goal_name])
+                        )
 
-                    elif isinstance(goal, Constraint):
-                        pass
+                elif isinstance(goal, Constraint):
+                    pass
 
-                    else:
-                        raise TypeError("Unrecognized goal type.")
+                else:
+                    raise TypeError("Unrecognized goal type.")
 
         return goal_predicates
 
@@ -110,7 +113,8 @@ class ClassicPDDL(Compilation):
 
                         precondition_list.append(self.known(self.constant_map[param]))
 
-            for o_output in operator.outputs.outcomes:
+            outputs = operator.outputs[0]
+            for o_output in outputs.outcomes:
                 for param in o_output.parameters:
 
                     if isinstance(param, str):

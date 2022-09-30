@@ -101,7 +101,11 @@ class Flow:
                     self.add(TypeItem(name=child, parent=item.name, children=[]))
 
             if key_name:
-                eval(f"self.flow_definition.{key_name}.append(item)")
+
+                temp = getattr(self.flow_definition, key_name)
+                temp.append(item)
+                setattr(self.flow_definition, key_name, temp)
+
             else:
                 raise TypeError("Attempted to add unknown type of object to flow.")
 
