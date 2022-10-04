@@ -14,7 +14,7 @@ PLANNER = (
 )
 
 
-def stest_basic() -> None:
+def test_basic() -> None:
     new_flow = Flow("Basic Test")
 
     find_errors_api = Operator("Find Errors")
@@ -29,11 +29,7 @@ def stest_basic() -> None:
     goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
     new_flow.add(goal)
 
-    pddl, transforms = new_flow.compile_to_pddl()
+    plans = new_flow.plan_it(PLANNER)
+    print(PLANNER.pretty_print(plans))
 
-    raw_plans = PLANNER.plan(pddl=pddl)
-    parsed_plans = PLANNER.parse(
-        response=raw_plans, flow=new_flow, transforms=transforms
-    )
-
-    print(PLANNER.pretty_print(parsed_plans))
+    assert plans.list_of_plans, "There should be plans."
