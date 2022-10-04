@@ -1,3 +1,13 @@
+import tarski
+import tarski.fstrips as fs
+from tarski.theories import Theory
+from tarski.io import fstrips as iofs
+from tarski.io import FstripsWriter
+from tarski.syntax import land, neg
+
+from abc import ABC, abstractmethod
+from typing import List, Set, Dict, Any, Tuple
+
 from nl2flow.compile.schemas import (
     FlowDefinition,
     PDDL,
@@ -7,6 +17,7 @@ from nl2flow.compile.schemas import (
     OperatorDefinition,
     Transform,
 )
+
 from nl2flow.compile.options import (
     TypeOptions,
     GoalType,
@@ -14,15 +25,6 @@ from nl2flow.compile.options import (
     BasicOperations,
     CostOptions,
 )
-from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Any, Tuple
-
-import tarski
-import tarski.fstrips as fs
-from tarski.theories import Theory
-from tarski.io import fstrips as iofs
-from tarski.io import FstripsWriter
-from tarski.syntax import land, neg
 
 
 class Compilation(ABC):
@@ -99,6 +101,59 @@ class ClassicPDDL(Compilation):
                     )
                 ),
             )
+
+        if SlotOptions.last_resort in slot_options:
+            source_map: Dict[str, List[str]] = dict()
+
+            for constant in self.constant_map:
+                source_map[constant] = list()
+
+                for operator in self.flow_definition.operators:
+                    outputs = operator.outputs[0]
+                    for o_output in outputs.outcomes:
+                        params = [
+                            p if isinstance(p, str) else p.item_id
+                            for p in o_output.parameters
+                        ]
+
+                        if constant in params:
+                            source_map[constant].append(operator.name)
+
+            not_slots = list(
+                map(
+                    lambda ns: str(ns.slot_name),
+                    filter(
+                        lambda sp: not sp.slot_desirability,
+                        flow_definition.slot_properties,
+                    ),
+                )
+            )
+
+            for constant in self.constant_map:
+                if constant not in not_slots and constant not in [
+                    o.name for o in self.flow_definition.operators
+                ]:
+
+                    precondition_list = [neg(self.known(self.constant_map[constant]))]
+                    add_effect_list = [self.known(self.constant_map[constant])]
+
+                    for operator in source_map[constant]:
+                        precondition_list.append(
+                            self.has_done(self.constant_map[operator])
+                        )
+
+                    self.problem.action(
+                        f"{BasicOperations.SLOT_FILLER.value}--slot--{constant}",
+                        parameters=[],
+                        precondition=land(*precondition_list),
+                        effects=[fs.AddEffect(add) for add in add_effect_list],
+                        cost=iofs.AdditiveActionCost(
+                            self.problem.language.constant(
+                                CostOptions.INTERMEDIATE.value,
+                                self.problem.language.get_sort("Integer"),
+                            )
+                        ),
+                    )
 
     def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
         goal_predicates = set()

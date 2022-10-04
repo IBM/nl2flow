@@ -17,7 +17,7 @@ from nl2flow.compile.options import (
 class Flow:
     def __init__(self, name: str):
         self.flow_definition = FlowDefinition(name=name)
-        self._slot_options = {SlotOptions.higher_cost}
+        self._slot_options = {SlotOptions.higher_cost, SlotOptions.last_resort}
         self._mapping_option = MappingOptions.relaxed
         self._variable_life_cycle = LifeCycleOptions.bistate
 

@@ -1,9 +1,13 @@
 from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty
 from nl2flow.compile.options import BasicOperations
-from nl2flow.plan.schemas import Action
+from nl2flow.plan.schemas import Action, PlannerResponse
 from tests.testing import BaseTestAgents
 
 from collections import Counter
+
+# NOTE: This is part of dev dependencies
+# noinspection PyPackageRequirements
+import pytest
 
 
 class TestSlotFillerBasic(BaseTestAgents):
@@ -35,13 +39,10 @@ class TestSlotFillerBasic(BaseTestAgents):
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no empty plans."
 
-    def test_not_slot_fillable_fallback(self) -> None:
-        goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
-        self.flow.add(goal)
-
-        self.flow.add(SlotProperty(slot_name="list_of_errors", slot_desirability=0))
-
-        plans = self.get_plan()
+    @staticmethod
+    def __fallback_and_last_resort_tests_should_look_the_same(
+        plans: PlannerResponse,
+    ) -> None:
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
@@ -63,5 +64,21 @@ class TestSlotFillerBasic(BaseTestAgents):
             step_3.name == "Fix Errors"
         ), "Fix Errors without slot filling list of errors."
 
-    # def test_slot_fillable_as_last_resort(self) -> None:
-    # def test_slot_preference(self) -> None:
+    def test_not_slot_fillable_fallback(self) -> None:
+        goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
+        self.flow.add(goal)
+        self.flow.add(SlotProperty(slot_name="list_of_errors", slot_desirability=0))
+
+        plans = self.get_plan()
+        self.__fallback_and_last_resort_tests_should_look_the_same(plans)
+
+    def test_slot_fillable_as_last_resort(self) -> None:
+        goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        self.__fallback_and_last_resort_tests_should_look_the_same(plans)
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_slot_preference(self) -> None:
+        raise NotImplementedError

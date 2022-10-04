@@ -59,15 +59,17 @@ def parse_action(
     new_action = Action(name=action_name)
     flow: Flow = kwargs["flow"]
 
-    if action_name not in [item.value for item in BasicOperations]:
-        operator: OperatorDefinition = list(
-            filter(lambda x: x.name == action_name, flow.flow_definition.operators)
-        )[0]
+    if any([action_name.startswith(item.value) for item in BasicOperations]):
 
-        new_action.inputs = __add_parameters(operator.inputs)
-        new_action.outputs = __add_parameters(operator.outputs.outcomes)
+        if (
+            action_name.startswith(BasicOperations.SLOT_FILLER.value)
+            and "--slot--" in action_name
+        ):
+            temp = action_name.split("--slot--")
 
-    else:
+            new_action.name = temp[0]
+            parameters = temp[1:]
+
         new_action.inputs = [
             Parameter(
                 name=revert_string_transform(param, kwargs["transforms"]),
@@ -75,6 +77,14 @@ def parse_action(
             )
             for param in parameters
         ]
+
+    else:
+        operator: OperatorDefinition = list(
+            filter(lambda x: x.name == action_name, flow.flow_definition.operators)
+        )[0]
+
+        new_action.inputs = __add_parameters(operator.inputs)
+        new_action.outputs = __add_parameters(operator.outputs.outcomes)
 
     return new_action
 
