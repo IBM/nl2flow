@@ -1,4 +1,5 @@
 from typing import Set, List, Union, Any, Tuple
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
 from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, Transform
@@ -123,6 +124,23 @@ class Flow:
 
     def get_flow_definition(self) -> FlowDefinition:
         return self.flow_definition
+
+    def plan_it(
+        self,
+        planner: Any,
+        goal_type: GoalOptions = GoalOptions.AND,
+        lookahead: int = LOOKAHEAD,
+        compilation_type: CompileOptions = CompileOptions.CLASSICAL,
+    ) -> PlannerResponse:
+
+        pddl, transforms = self.compile_to_pddl(goal_type, lookahead, compilation_type)
+
+        raw_plans = planner.plan(pddl=pddl)
+        parsed_plans: PlannerResponse = planner.parse(
+            response=raw_plans, flow=self, transforms=transforms
+        )
+
+        return parsed_plans
 
     def compile_to_pddl(
         self,

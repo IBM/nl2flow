@@ -186,6 +186,21 @@ class OperatorDefinition(BaseModel):
         return new_item
 
 
+class SlotProperty(BaseModel):
+    slot_name: str
+    slot_desirability: float
+
+    @classmethod
+    def transform(
+        cls, slot_property: SlotProperty, transforms: List[Transform]
+    ) -> SlotProperty:
+        new_item = SlotProperty(
+            slot_name=string_transform(slot_property.slot_name, transforms),
+            slot_desirability=slot_property.slot_desirability,
+        )
+        return new_item
+
+
 class PDDL(BaseModel):
     domain: str
     problem: str
@@ -199,6 +214,7 @@ class FlowDefinition(BaseModel):
     constraints: List[Constraint] = []
     partial_orders: List[PartialOrder] = []
     list_of_mappings: List[MappingItem] = []
+    slot_properties: List[SlotProperty] = []
     goal_items: List[GoalItems] = []
     starts_with: Optional[str]
     ends_with: Optional[str]

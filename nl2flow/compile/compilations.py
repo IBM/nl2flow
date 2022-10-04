@@ -61,11 +61,46 @@ class ClassicPDDL(Compilation):
 
         self.has_done: Any = None
         self.known: Any = None
+        self.not_slotfillable: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
-    def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> Set[Any]:
+    def __compile_slots(
+        self, flow_definition: FlowDefinition, slot_options: Set[SlotOptions]
+    ) -> None:
+
+        self.not_slotfillable = self.lang.predicate(
+            "not_slotfillable", self.type_map[TypeOptions.ROOT.value]
+        )
+
+        for slot_item in flow_definition.slot_properties:
+            if not slot_item.slot_desirability:
+                self.init.add(
+                    self.not_slotfillable(self.constant_map[slot_item.slot_name])
+                )
+
+        if SlotOptions.higher_cost in slot_options:
+
+            x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
+
+            precondition_list = [neg(self.known(x)), neg(self.not_slotfillable(x))]
+            add_effect_list = [self.known(x)]
+
+            self.problem.action(
+                BasicOperations.SLOT_FILLER.value,
+                parameters=[x],
+                precondition=land(*precondition_list),
+                effects=[fs.AddEffect(add) for add in add_effect_list],
+                cost=iofs.AdditiveActionCost(
+                    self.problem.language.constant(
+                        CostOptions.VERY_HIGH.value,
+                        self.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
+
+    def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
         goal_predicates = set()
 
         for goal_items in list_of_goal_items:
@@ -89,7 +124,7 @@ class ClassicPDDL(Compilation):
                 else:
                     raise TypeError("Unrecognized goal type.")
 
-        return goal_predicates
+        self.problem.goal = land(*goal_predicates, flat=True)
 
     def __compile_actions(self, list_of_actions: List[OperatorDefinition]) -> None:
 
@@ -164,32 +199,13 @@ class ClassicPDDL(Compilation):
             )
 
         self.__compile_actions(self.flow_definition.operators)
+
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
-        if SlotOptions.higher_cost in slot_options:
-
-            x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
-
-            precondition_list = [neg(self.known(x))]
-            add_effect_list = [self.known(x)]
-
-            self.problem.action(
-                BasicOperations.SLOT_FILLER.value,
-                parameters=[x],
-                precondition=land(*precondition_list),
-                effects=[fs.AddEffect(add) for add in add_effect_list],
-                cost=iofs.AdditiveActionCost(
-                    self.problem.language.constant(
-                        CostOptions.VERY_HIGH.value,
-                        self.problem.language.get_sort("Integer"),
-                    )
-                ),
-            )
+        self.__compile_slots(self.flow_definition, slot_options)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
-
-        goal_set = self.__compile_goals(self.flow_definition.goal_items)
-        self.problem.goal = land(*goal_set, flat=True)
+        self.__compile_goals(self.flow_definition.goal_items)
 
         writer = FstripsWriter(self.problem)
         domain = writer.print_domain().replace(" :numeric-fluents", "")

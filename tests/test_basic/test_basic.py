@@ -14,7 +14,7 @@ PLANNER = (
 )
 
 
-def test_basic() -> None:
+def stest_basic() -> None:
     new_flow = Flow("Basic Test")
 
     find_errors_api = Operator("Find Errors")

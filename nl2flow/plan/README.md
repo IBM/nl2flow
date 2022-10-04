@@ -7,3 +7,5 @@ calls to two popular classical planning engines to help you get started quickly.
 |:----------|:-----------------------------|:-----------|
 | Michael   | Optimal, Top-K/Quality, Cost | [[link](https://hub.docker.com/r/ctpelok77/ibmresearchaiplanningsolver)] |
 | Christian | Agile, 10 second timeout     | [[link](https://solver.planning.domains/)] |
+
+Note that the integration tests are written for an optimal planner, and so Christian may not pass all tests. 

@@ -43,12 +43,10 @@ new_flow.add([find_errors_api, fix_errors_api])
 goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
 new_flow.add(goal)
 
-pddl, transforms = new_flow.compile_to_pddl()
+pddl, _ = new_flow.compile_to_pddl()
 
 planner = Michael(url="PLANNER_URL")
-raw_plans = planner.plan(pddl=pddl)
-parsed_plans = planner.parse(response=raw_plans, flow=new_flow, transforms=transforms)
-
+parsed_plans = new_flow.plan_it(planner)
 print(planner.pretty_print(parsed_plans))
 ```
 
