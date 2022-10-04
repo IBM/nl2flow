@@ -40,6 +40,7 @@ class MappingOptions(enum.Enum):
 
 
 class SlotOptions(enum.Enum):
+    group_slots = "GROUP"
     higher_cost = "COST"
     last_resort = "FALLBACK"
     ordered = "ORDERED"

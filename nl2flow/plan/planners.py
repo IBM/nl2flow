@@ -1,7 +1,7 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
 from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action, Parameter
-from nl2flow.compile.options import BasicOperations, TypeOptions
+from nl2flow.compile.options import BasicOperations, TypeOptions, SlotOptions
 from nl2flow.compile.schemas import (
     PDDL,
     OperatorDefinition,
@@ -10,7 +10,7 @@ from nl2flow.compile.schemas import (
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Dict
+from typing import Any, List, Set, Dict
 
 import requests
 import re
@@ -89,6 +89,28 @@ class Planner(ABC):
         pass
 
     @staticmethod
+    def group_slots(plan: ClassicalPlan) -> ClassicalPlan:
+
+        new_slot_fill_action = Action(name=BasicOperations.SLOT_FILLER.value)
+        new_plan = ClassicalPlan(
+            cost=plan.cost,
+            length=plan.length,
+            metadata=plan.metadata,
+        )
+
+        new_start_of_plan = 0
+        for index, action in enumerate(plan.plan):
+
+            if action.name == BasicOperations.SLOT_FILLER.value:
+                new_slot_fill_action.inputs += action.inputs
+            else:
+                new_start_of_plan = index
+                break
+
+        new_plan.plan = [new_slot_fill_action] + plan.plan[new_start_of_plan:]
+        return new_plan
+
+    @staticmethod
     def pretty_print(planner_response: PlannerResponse) -> str:
         pretty = ""
 
@@ -140,6 +162,9 @@ class Michael(Planner, RemotePlanner):
             response = response.json()
             planner_response = PlannerResponse(metadata=response["raw_output"])
 
+            flow: Flow = kwargs["flow"]
+            slot_options: Set[SlotOptions] = flow.slot_options
+
             for plan in response.get("plans", []):
 
                 actions = plan.get("actions", [])
@@ -157,6 +182,9 @@ class Michael(Planner, RemotePlanner):
                         action_name=action_name, parameters=action[1:], **kwargs
                     )
                     new_plan.plan.append(new_action)
+
+                if SlotOptions.group_slots in slot_options:
+                    new_plan = self.group_slots(new_plan)
 
                 planner_response.list_of_plans.append(new_plan)
 
@@ -185,6 +213,9 @@ class Christian(Planner, RemotePlanner):
 
             new_plan = ClassicalPlan(cost=response.get("cost", length), length=length)
 
+            flow: Flow = kwargs["flow"]
+            slot_options: Set[SlotOptions] = flow.slot_options
+
             for action in actions:
                 action = re.search(r"\((.*?)\)", action["name"])
 
@@ -198,6 +229,9 @@ class Christian(Planner, RemotePlanner):
                     action_name=action_name, parameters=action[1:], **kwargs
                 )
                 new_plan.plan.append(new_action)
+
+            if SlotOptions.group_slots in slot_options:
+                new_plan = self.group_slots(new_plan)
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response
