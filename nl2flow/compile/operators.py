@@ -80,7 +80,7 @@ class ClassicalOperator(Operator):
 
     def add_output(self, new_output: Union[SignatureItem, List[SignatureItem]]) -> None:
 
-        if type(new_output) != List:
+        if not isinstance(new_output, List):
             new_output = [new_output]
 
         for item in new_output:

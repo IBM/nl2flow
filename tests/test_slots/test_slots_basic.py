@@ -1,5 +1,5 @@
 from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty
-from nl2flow.compile.options import BasicOperations
+from nl2flow.compile.options import BasicOperations, SlotOptions
 from nl2flow.plan.schemas import Action, PlannerResponse
 from tests.testing import BaseTestAgents
 
@@ -67,7 +67,7 @@ class TestSlotFillerBasic(BaseTestAgents):
     def test_not_slot_fillable_fallback(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
         self.flow.add(goal)
-        self.flow.add(SlotProperty(slot_name="list_of_errors", slot_desirability=0))
+        self.flow.add(SlotProperty(slot_name="list of errors", slot_desirability=0))
 
         plans = self.get_plan()
         self.__fallback_and_last_resort_tests_should_look_the_same(plans)
@@ -75,6 +75,7 @@ class TestSlotFillerBasic(BaseTestAgents):
     def test_slot_fillable_as_last_resort(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
         self.flow.add(goal)
+        self.flow.slot_options.add(SlotOptions.last_resort)
 
         plans = self.get_plan()
         self.__fallback_and_last_resort_tests_should_look_the_same(plans)

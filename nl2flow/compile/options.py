@@ -26,8 +26,8 @@ class TypeOptions(enum.Enum):
 class CostOptions(enum.Enum):
     ZERO = 0
     UNIT = 1
-    LOW = 5
-    MEDIUM = 20
+    LOW = 10
+    MEDIUM = 25
     INTERMEDIATE = 50
     HIGH = 100
     VERY_HIGH = 500
@@ -37,6 +37,7 @@ class MappingOptions(enum.Enum):
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
+    transitive = "TRANSITIVE"
 
 
 class SlotOptions(enum.Enum):

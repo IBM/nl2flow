@@ -9,7 +9,7 @@ from nl2flow.compile.options import TypeOptions, CostOptions, GoalType, MemorySt
 class MappingItem(BaseModel):
     source_name: str
     target_name: str
-    probability: int
+    probability: float = 1.0
 
     @classmethod
     def transform(

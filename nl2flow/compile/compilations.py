@@ -22,6 +22,7 @@ from nl2flow.compile.options import (
     TypeOptions,
     GoalType,
     SlotOptions,
+    MappingOptions,
     BasicOperations,
     CostOptions,
 )
@@ -64,6 +65,8 @@ class ClassicPDDL(Compilation):
         self.has_done: Any = None
         self.known: Any = None
         self.not_slotfillable: Any = None
+        self.is_mappable: Any = None
+        self.affinity: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
@@ -154,6 +157,55 @@ class ClassicPDDL(Compilation):
                             )
                         ),
                     )
+
+    def __compile_mappings(
+        self, flow_definition: FlowDefinition, mapping_options: Set[MappingOptions]
+    ) -> None:
+
+        self.is_mappable = self.lang.predicate(
+            "is_mappable",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+        self.affinity = self.lang.function(
+            "affinity",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
+
+        for mappable_item in flow_definition.list_of_mappings:
+            source = self.constant_map[mappable_item.source_name]
+            target = self.constant_map[mappable_item.target_name]
+
+            self.init.add(self.is_mappable(source, target))
+            self.init.set(
+                self.affinity(source, target),
+                int((2 - mappable_item.probability) * CostOptions.LOW.value),
+            )
+
+            if MappingOptions.transitive in mapping_options:
+                self.init.add(self.is_mappable(target, source))
+                self.init.set(
+                    self.affinity(target, source),
+                    int((2 - mappable_item.probability) * CostOptions.LOW.value),
+                )
+
+        x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
+        y = self.lang.variable("y", self.type_map[TypeOptions.ROOT.value])
+
+        precondition_list = [
+            self.known(x),
+            neg(self.known(y)),
+            self.is_mappable(x, y),
+        ]
+        self.problem.action(
+            BasicOperations.MAPPER.value,
+            parameters=[x, y],
+            precondition=land(*precondition_list),
+            effects=[fs.AddEffect(self.known(y))],
+            cost=iofs.AdditiveActionCost(self.affinity(x, y)),
+        )
 
     def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
         goal_predicates = set()
@@ -257,6 +309,9 @@ class ClassicPDDL(Compilation):
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         self.__compile_slots(self.flow_definition, slot_options)
+
+        mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
+        self.__compile_mappings(self.flow_definition, mapping_options)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

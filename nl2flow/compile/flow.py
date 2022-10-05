@@ -17,8 +17,8 @@ from nl2flow.compile.options import (
 class Flow:
     def __init__(self, name: str):
         self.flow_definition = FlowDefinition(name=name)
-        self._slot_options = {SlotOptions.higher_cost, SlotOptions.last_resort}
-        self._mapping_option = MappingOptions.relaxed
+        self._slot_options = {SlotOptions.higher_cost, SlotOptions.relaxed}
+        self._mapping_option = {MappingOptions.relaxed}
         self._variable_life_cycle = LifeCycleOptions.bistate
 
     @property
@@ -33,15 +33,25 @@ class Flow:
         self._variable_life_cycle = option
 
     @property
-    def mapping_option(self) -> MappingOptions:
+    def mapping_options(self) -> Set[MappingOptions]:
         return self._mapping_option
 
-    @mapping_option.setter
-    def mapping_option(self, option: MappingOptions) -> None:
-        assert isinstance(
-            option, MappingOptions
+    @mapping_options.setter
+    def mapping_options(self, options: Set[MappingOptions]) -> None:
+        assert all(
+            [isinstance(option, SlotOptions) for option in options]
         ), "Tried to set unknown mapping option."
-        self._mapping_option = option
+
+        exclusive_set = {
+            MappingOptions.relaxed,
+            MappingOptions.immediate,
+            MappingOptions.eventual,
+        }
+        assert (
+            len(exclusive_set & options) == 1
+        ), f"Cannot have more than one of {', '.join([e.value for e in exclusive_set])} among mapping options."
+
+        self._mapping_option = options
 
     @property
     def slot_options(self) -> Set[SlotOptions]:
@@ -162,12 +172,11 @@ class Flow:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
 
-        assert self.validate(), "Invalid Flow definition!"
-
+        # assert self.validate(), "Invalid Flow definition!"
         compilation = ClassicPDDL(self.flow_definition)
         pddl, transforms = compilation.compile(
             slot_options=self.slot_options,
-            mapping_option=self.mapping_option,
+            mapping_options=self.mapping_options,
             variable_life_cycle=self.variable_life_cycle,
             goal_type=goal_type,
             lookahead=lookahead,

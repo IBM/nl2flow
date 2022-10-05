@@ -12,7 +12,11 @@ class Transform(BaseModel):
 def string_transform(item: str, reference: List[Transform]) -> str:
     transform = re.sub(r"\s+", "_", item.lower()) if item is not None else item
 
-    if transform and transform == revert_string_transform(transform, reference):
+    if (
+        transform
+        and transform == revert_string_transform(transform, reference)
+        and transform != item
+    ):
         reference.append(
             Transform(
                 source=item,
