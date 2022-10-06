@@ -2,6 +2,7 @@ import enum
 
 LOOKAHEAD: int = 2
 RETRY: int = 3
+SLOT_GOODNESS: float = 0.5
 
 
 class BasicOperations(enum.Enum):

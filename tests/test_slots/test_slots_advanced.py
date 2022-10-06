@@ -10,7 +10,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 
-    def test_slot_filler_basic(self) -> None:
+    def test_slot_filler_grouping(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
         self.flow.add(goal)
         self.flow.slot_options.add(SlotOptions.group_slots)

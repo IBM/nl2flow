@@ -1,8 +1,15 @@
-from nl2flow.compile.schemas import GoalItem, GoalItems, MappingItem, SignatureItem
+from tests.testing import BaseTestAgents
+from nl2flow.plan.schemas import Action, PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations, MappingOptions
-from nl2flow.plan.schemas import Action, PlannerResponse
-from tests.testing import BaseTestAgents
+from nl2flow.compile.schemas import (
+    SlotProperty,
+    GoalItem,
+    GoalItems,
+    MappingItem,
+    SignatureItem,
+    MemoryItem,
+)
 
 
 class TestMappingsBasic(BaseTestAgents):
@@ -82,7 +89,7 @@ class TestMappingsBasic(BaseTestAgents):
         plans = self.get_plan()
         self.__test_basic_mapping_plan(plans)
 
-    def test_mapper_with_slot_preference(self) -> None:
+    def test_mapper_with_slot_last_resort(self) -> None:
         self.flow.add(MappingItem(source_name="errors", target_name="list of errors"))
 
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
@@ -134,3 +141,45 @@ class TestMappingsBasic(BaseTestAgents):
             and step_2.inputs[0].name == "preferred errors"
             and step_2.inputs[1].name == "list of errors"
         ), "The high probability mapping is preferred."
+
+    def test_mapper_with_slot_preference(self) -> None:
+        self.flow.add(
+            [
+                MemoryItem(item_id="Name"),
+                SlotProperty(slot_name="Name", slot_desirability=1.0),
+                MappingItem(source_name="Name", target_name="AccountID"),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 4, "There should be 4 steps in the plan."
+
+        slot_fill_actions = list(
+            filter(
+                lambda action: action.name == BasicOperations.SLOT_FILLER.value,
+                poi.plan[:2],
+            )
+        )
+
+        assert len(slot_fill_actions) == 2, "Two slot fill actions."
+        assert "Name" in [
+            action.inputs[0].name for action in slot_fill_actions
+        ], "One slot fill for Name."
+        assert "Email" in [
+            action.inputs[0].name for action in slot_fill_actions
+        ], "One slot fill for Email."
+
+        assert BasicOperations.MAPPER.value in [
+            action.name for action in poi.plan[1:3]
+        ], "One mapping among 2nd and 3rd step."
+
+        step_4: Action = poi.plan[-1]
+        assert (
+            step_4.name == "Credit Score API"
+        ), "Fix Errors using the mapping and alternative slot."

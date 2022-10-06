@@ -1,13 +1,10 @@
-from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty
+from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty, SignatureItem
+from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations, SlotOptions
 from nl2flow.plan.schemas import Action, PlannerResponse
 from tests.testing import BaseTestAgents
 
 from collections import Counter
-
-# NOTE: This is part of dev dependencies
-# noinspection PyPackageRequirements
-import pytest
 
 
 class TestSlotFillerBasic(BaseTestAgents):
@@ -80,6 +77,42 @@ class TestSlotFillerBasic(BaseTestAgents):
         plans = self.get_plan()
         self.__fallback_and_last_resort_tests_should_look_the_same(plans)
 
-    @pytest.mark.skip(reason="Coming soon.")
     def test_slot_preference(self) -> None:
-        raise NotImplementedError
+        find_errors_api_alternative = Operator("Find Errors Alternative")
+        find_errors_api_alternative.add_input(
+            SignatureItem(parameters=["name of database"])
+        )
+        find_errors_api_alternative.add_output(
+            SignatureItem(parameters=["list of errors"])
+        )
+
+        self.flow.add(find_errors_api_alternative)
+        self.flow.add(
+            [
+                SlotProperty(slot_name="list of errors", slot_desirability=0.0),
+                SlotProperty(slot_name="name of database", slot_desirability=1.0),
+                SlotProperty(slot_name="database link", slot_desirability=0.3),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
+        self.flow.add(goal)
+        self.flow.slot_options.add(SlotOptions.last_resort)
+
+        plans = self.get_plan()
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 3, "There should be 3 steps in the plan."
+
+        step_1: Action = poi.plan[0]
+        assert (
+            step_1.name == BasicOperations.SLOT_FILLER.value
+            and step_1.inputs[0].name == "name of database"
+        ), "The first step should be looking to slot fill name of database instead of database link."
+
+        step_2: Action = poi.plan[1]
+        assert (
+            step_2.name == "Find Errors Alternative"
+        ), "Step 2 acquires list of errors using alternative Find Errors operation."
+
+        step_3: Action = poi.plan[2]
+        assert step_3.name == "Fix Errors", "Fix Errors using the alternative path."

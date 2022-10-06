@@ -10,14 +10,18 @@ from tests.testing import BaseTestAgents
 import pytest
 
 
-class TestMappingsAdvanced(BaseTestAgents):
+class TestTypingBasic(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_mapper_with_multi_instance_without_typing(self) -> None:
+    def test_typing_with_concept_tags(self) -> None:
         raise NotImplementedError
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_mapper_with_multi_instance_and_typing(self) -> None:
+    def test_typing_with_hierarchy(self) -> None:
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_typing_with_costly_hierarchy(self) -> None:
         raise NotImplementedError

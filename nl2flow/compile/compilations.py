@@ -19,6 +19,7 @@ from nl2flow.compile.schemas import (
 )
 
 from nl2flow.compile.options import (
+    SLOT_GOODNESS,
     TypeOptions,
     GoalType,
     SlotOptions,
@@ -66,7 +67,8 @@ class ClassicPDDL(Compilation):
         self.known: Any = None
         self.not_slotfillable: Any = None
         self.is_mappable: Any = None
-        self.affinity: Any = None
+        self.map_affinity: Any = None
+        self.slot_goodness: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
@@ -78,6 +80,11 @@ class ClassicPDDL(Compilation):
         self.not_slotfillable = self.lang.predicate(
             "not_slotfillable", self.type_map[TypeOptions.ROOT.value]
         )
+        self.slot_goodness = self.lang.function(
+            "slot_goodness",
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
 
         for slot_item in flow_definition.slot_properties:
             if not slot_item.slot_desirability:
@@ -85,8 +92,23 @@ class ClassicPDDL(Compilation):
                     self.not_slotfillable(self.constant_map[slot_item.slot_name])
                 )
 
-        if SlotOptions.higher_cost in slot_options:
+        goodness_map: Dict[str, float] = dict()
+        for constant in self.constant_map:
+            if constant not in [o.name for o in self.flow_definition.operators]:
+                slot_goodness = SLOT_GOODNESS
 
+                for slot in self.flow_definition.slot_properties:
+                    if slot.slot_name == constant:
+                        slot_goodness = slot.slot_desirability
+                        break
+
+                goodness_map[constant] = slot_goodness
+                self.init.set(
+                    self.slot_goodness(self.constant_map[constant]),
+                    int((2 - slot_goodness) * CostOptions.VERY_HIGH.value),
+                )
+
+        if SlotOptions.higher_cost in slot_options:
             x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
 
             precondition_list = [neg(self.known(x)), neg(self.not_slotfillable(x))]
@@ -97,12 +119,7 @@ class ClassicPDDL(Compilation):
                 parameters=[x],
                 precondition=land(*precondition_list),
                 effects=[fs.AddEffect(add) for add in add_effect_list],
-                cost=iofs.AdditiveActionCost(
-                    self.problem.language.constant(
-                        CostOptions.VERY_HIGH.value,
-                        self.problem.language.get_sort("Integer"),
-                    )
-                ),
+                cost=iofs.AdditiveActionCost(self.slot_goodness(x)),
             )
 
         if SlotOptions.last_resort in slot_options:
@@ -145,6 +162,10 @@ class ClassicPDDL(Compilation):
                             self.has_done(self.constant_map[operator])
                         )
 
+                    slot_cost = int(
+                        (2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value
+                    )
+
                     self.problem.action(
                         f"{BasicOperations.SLOT_FILLER.value}--slot--{constant}",
                         parameters=[],
@@ -152,7 +173,7 @@ class ClassicPDDL(Compilation):
                         effects=[fs.AddEffect(add) for add in add_effect_list],
                         cost=iofs.AdditiveActionCost(
                             self.problem.language.constant(
-                                CostOptions.INTERMEDIATE.value,
+                                slot_cost,
                                 self.problem.language.get_sort("Integer"),
                             )
                         ),
@@ -167,7 +188,7 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.ROOT.value],
             self.type_map[TypeOptions.ROOT.value],
         )
-        self.affinity = self.lang.function(
+        self.map_affinity = self.lang.function(
             "affinity",
             self.type_map[TypeOptions.ROOT.value],
             self.type_map[TypeOptions.ROOT.value],
@@ -180,14 +201,14 @@ class ClassicPDDL(Compilation):
 
             self.init.add(self.is_mappable(source, target))
             self.init.set(
-                self.affinity(source, target),
+                self.map_affinity(source, target),
                 int((2 - mappable_item.probability) * CostOptions.LOW.value),
             )
 
             if MappingOptions.transitive in mapping_options:
                 self.init.add(self.is_mappable(target, source))
                 self.init.set(
-                    self.affinity(target, source),
+                    self.map_affinity(target, source),
                     int((2 - mappable_item.probability) * CostOptions.LOW.value),
                 )
 
@@ -204,7 +225,7 @@ class ClassicPDDL(Compilation):
             parameters=[x, y],
             precondition=land(*precondition_list),
             effects=[fs.AddEffect(self.known(y))],
-            cost=iofs.AdditiveActionCost(self.affinity(x, y)),
+            cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
 
     def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
