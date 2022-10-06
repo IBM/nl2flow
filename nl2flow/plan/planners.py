@@ -61,14 +61,15 @@ def parse_action(
 
     if any([action_name.startswith(item.value) for item in BasicOperations]):
 
-        if (
-            action_name.startswith(BasicOperations.SLOT_FILLER.value)
-            and "--slot--" in action_name
-        ):
-            temp = action_name.split("--slot--")
+        if action_name.startswith(
+            BasicOperations.SLOT_FILLER.value
+        ) or action_name.startswith(BasicOperations.MAPPER.value):
 
+            temp = action_name.split("----")
             new_action.name = temp[0]
-            parameters = temp[1:]
+
+            if temp[1:] and not parameters:
+                parameters = temp[1:]
 
         new_action.inputs = [
             Parameter(

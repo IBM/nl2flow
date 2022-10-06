@@ -26,12 +26,12 @@ class TypeOptions(enum.Enum):
 
 class CostOptions(enum.Enum):
     ZERO = 0
-    UNIT = 1
-    LOW = 10
-    MEDIUM = 25
-    INTERMEDIATE = 50
-    HIGH = 100
-    VERY_HIGH = 500
+    UNIT = 10
+    LOW = 50
+    MEDIUM = 250
+    INTERMEDIATE = 1000
+    HIGH = 5000
+    VERY_HIGH = 100000
 
 
 class MappingOptions(enum.Enum):

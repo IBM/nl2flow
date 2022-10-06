@@ -6,7 +6,7 @@ from tarski.io import FstripsWriter
 from tarski.syntax import land, neg
 
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Any, Tuple
+from typing import List, Set, Dict, Any, Tuple, Union
 
 from nl2flow.compile.schemas import (
     FlowDefinition,
@@ -16,6 +16,8 @@ from nl2flow.compile.schemas import (
     Constraint,
     OperatorDefinition,
     Transform,
+    MemoryItem,
+    TypeItem,
 )
 
 from nl2flow.compile.options import (
@@ -167,7 +169,7 @@ class ClassicPDDL(Compilation):
                     )
 
                     self.problem.action(
-                        f"{BasicOperations.SLOT_FILLER.value}--slot--{constant}",
+                        f"{BasicOperations.SLOT_FILLER.value}----{constant}",
                         parameters=[],
                         precondition=land(*precondition_list),
                         effects=[fs.AddEffect(add) for add in add_effect_list],
@@ -228,6 +230,24 @@ class ClassicPDDL(Compilation):
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
 
+        for typing in self.type_map:
+            if typing not in [t.value for t in TypeOptions]:
+                x = self.lang.variable("x", self.type_map[typing])
+                y = self.lang.variable("y", self.type_map[typing])
+
+                self.problem.action(
+                    f"{BasicOperations.value}----{typing}",
+                    parameters=[x, y],
+                    precondition=land(*[self.known(x), neg(self.known(y))]),
+                    effects=[fs.AddEffect(self.known(y))],
+                    cost=iofs.AdditiveActionCost(
+                        self.problem.language.constant(
+                            CostOptions.UNIT.value,
+                            self.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
+
     def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
         goal_predicates = set()
 
@@ -255,39 +275,43 @@ class ClassicPDDL(Compilation):
         self.problem.goal = land(*goal_predicates, flat=True)
 
     def __compile_actions(self, list_of_actions: List[OperatorDefinition]) -> None:
+        def __add_param_to_condition_list(
+            parameter: Union[str, MemoryItem], list_of_items: List[Any]
+        ) -> List[Any]:
+            if isinstance(parameter, str):
+                self.__add_memory_item_to_constant_map(
+                    MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value)
+                )
+
+            elif isinstance(parameter, MemoryItem):
+                self.__add_memory_item_to_constant_map(parameter)
+
+            else:
+                raise TypeError
+
+            list_of_items.append(self.known(self.constant_map[parameter]))
+            return list_of_items
 
         for operator in list_of_actions:
             self.constant_map[operator.name] = self.lang.constant(
                 operator.name, TypeOptions.OPERATOR.value
             )
 
-            precondition_list = list()
+            precondition_list: List[Any] = list()
             add_effect_list = [self.has_done(self.constant_map[operator.name])]
 
             for o_input in operator.inputs:
                 for param in o_input.parameters:
-
-                    if isinstance(param, str):
-
-                        if param not in self.constant_map:
-                            self.constant_map[param] = self.lang.constant(
-                                param, TypeOptions.ROOT.value
-                            )
-
-                        precondition_list.append(self.known(self.constant_map[param]))
+                    precondition_list = __add_param_to_condition_list(
+                        param, precondition_list
+                    )
 
             outputs = operator.outputs[0]
             for o_output in outputs.outcomes:
                 for param in o_output.parameters:
-
-                    if isinstance(param, str):
-
-                        if param not in self.constant_map:
-                            self.constant_map[param] = self.lang.constant(
-                                param, TypeOptions.ROOT.value
-                            )
-
-                        add_effect_list.append(self.known(self.constant_map[param]))
+                    add_effect_list = __add_param_to_condition_list(
+                        param, add_effect_list
+                    )
 
             self.problem.action(
                 operator.name,
@@ -299,6 +323,25 @@ class ClassicPDDL(Compilation):
                         operator.cost, self.problem.language.get_sort("Integer")
                     )
                 ),
+            )
+
+    def __add_type_item_to_type_map(self, type_item: TypeItem) -> None:
+        if type_item.name not in self.type_map:
+            self.type_map[type_item.name] = self.lang.sort(
+                type_item.name, type_item.parent
+            )
+
+    def __add_memory_item_to_constant_map(self, memory_item: MemoryItem) -> None:
+        type_name: str = (
+            memory_item.item_type if memory_item.item_type else TypeOptions.ROOT.value
+        )
+        self.__add_type_item_to_type_map(
+            TypeItem(name=type_name, parent=TypeOptions.ROOT.value)
+        )
+
+        if memory_item.item_id not in self.constant_map:
+            self.constant_map[memory_item.item_id] = self.lang.constant(
+                memory_item.item_id, type_name
             )
 
     def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
@@ -314,17 +357,10 @@ class ClassicPDDL(Compilation):
         self.known = self.lang.predicate("known", self.type_map[TypeOptions.ROOT.value])
 
         for type_item in self.flow_definition.type_hierarchy:
-            self.type_map[type_item.name] = self.lang.sort(
-                type_item.name, type_item.parent
-            )
+            self.__add_type_item_to_type_map(type_item)
 
         for memory_item in self.flow_definition.memory_items:
-            self.constant_map[memory_item.item_id] = self.lang.constant(
-                memory_item.item_id,
-                memory_item.item_type
-                if memory_item.item_type
-                else TypeOptions.ROOT.value,
-            )
+            self.__add_memory_item_to_constant_map(memory_item)
 
         self.__compile_actions(self.flow_definition.operators)
 
