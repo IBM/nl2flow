@@ -17,12 +17,12 @@ from nl2flow.compile.options import (
 class Flow:
     def __init__(self, name: str):
         self.flow_definition = FlowDefinition(name=name)
+        self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
+        self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
         }
-        self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
-        self._variable_life_cycle: Set[LifeCycleOptions] = set()
 
     @property
     def variable_life_cycle(self) -> Set[LifeCycleOptions]:
