@@ -265,7 +265,7 @@ class ClassicPDDL(Compilation):
                 self.init.add(self.is_mappable(target, source))
                 self.init.set(
                     self.map_affinity(target, source),
-                    int((2 - mappable_item.probability) * CostOptions.LOW.value),
+                    int((2 - mappable_item.probability) * CostOptions.UNIT.value),
                 )
 
         x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
@@ -433,6 +433,11 @@ class ClassicPDDL(Compilation):
         ] and constant not in [m.value for m in MemoryState]
 
     def __add_type_item_to_type_map(self, type_item: TypeItem) -> None:
+        if type_item.parent not in self.type_map:
+            self.type_map[type_item.parent] = self.lang.sort(
+                type_item.parent, TypeOptions.ROOT.value
+            )
+
         if type_item.name not in self.type_map:
             self.type_map[type_item.name] = self.lang.sort(
                 type_item.name, type_item.parent

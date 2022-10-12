@@ -1,6 +1,7 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
 from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action, Parameter
+from nl2flow.plan.options import TIMEOUT
 from nl2flow.compile.options import BasicOperations, TypeOptions, SlotOptions
 from nl2flow.compile.schemas import (
     PDDL,
@@ -133,10 +134,10 @@ class Planner(ABC):
             pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
 
             for step, action in enumerate(plan.plan):
-                inputs = ",".join(
+                inputs = ", ".join(
                     [f"{item.name} ({item.type})" for item in action.inputs]
                 )
-                outputs = ",".join(
+                outputs = ", ".join(
                     [f"{item.name} ({item.type})" for item in action.outputs]
                 )
 
@@ -150,7 +151,7 @@ class Planner(ABC):
 
 
 class RemotePlanner(ABC):
-    def __init__(self, url: str, timeout: int = 5):
+    def __init__(self, url: str, timeout: int = TIMEOUT):
         self.url = url
         self.timeout = timeout
 

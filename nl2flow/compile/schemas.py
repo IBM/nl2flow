@@ -150,16 +150,11 @@ class TypeItem(BaseModel):
 
     @classmethod
     def transform(cls, type_item: TypeItem, transforms: List[Transform]) -> TypeItem:
-        def __type_transform(typing: str) -> str:
-            return f"type-of-{typing}"
-
-        new_item = type_item
-        TypeItem(
-            name=__type_transform(string_transform(type_item.name, transforms)),
-            parent=__type_transform(string_transform(type_item.parent, transforms)),
+        new_item = TypeItem(
+            name=string_transform(type_item.name, transforms),
+            parent=string_transform(type_item.parent, transforms),
             children=[
-                __type_transform(string_transform(child, transforms))
-                for child in type_item.children
+                string_transform(child, transforms) for child in type_item.children
             ],
         )
         return new_item

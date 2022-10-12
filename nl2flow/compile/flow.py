@@ -106,7 +106,7 @@ class Flow:
                 None,
             )
 
-            if type_of_item == TypeItem and item.children:
+            if type_of_item == TypeItem.__name__ and item.children:
                 children = item.children
 
                 if not isinstance(children, Set):

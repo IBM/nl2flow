@@ -1,9 +1,14 @@
-# from nl2flow.compile.schemas import GoalItem, GoalItems
-# from nl2flow.compile.options import BasicOperations, SlotOptions
-# from nl2flow.plan.schemas import Action
 from tests.testing import BaseTestAgents
+from tests.test_mappings.test_mappings_basic import TestMappingsBasic
 
-# from collections import Counter
+from nl2flow.compile.operators import ClassicalOperator as Operator
+from nl2flow.compile.schemas import (
+    GoalItem,
+    GoalItems,
+    MemoryItem,
+    TypeItem,
+    SignatureItem,
+)
 
 # NOTE: This is part of dev dependencies
 # noinspection PyPackageRequirements
@@ -14,14 +19,77 @@ class TestTypingBasic(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 
-    @pytest.mark.skip(reason="Coming soon.")
     def test_typing_with_concept_tags(self) -> None:
-        raise NotImplementedError
 
-    @pytest.mark.skip(reason="Coming soon.")
+        self.flow.add(
+            [
+                MemoryItem(item_id="Username", item_type="contact-info"),
+                MemoryItem(item_id="Account Info", item_type="id"),
+                MemoryItem(item_id="Email", item_type="contact-info"),
+                MemoryItem(item_id="AccountID", item_type="id"),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        TestMappingsBasic.check_basic_mapping_plan(plans)
+
     def test_typing_with_hierarchy(self) -> None:
-        raise NotImplementedError
 
-    @pytest.mark.skip(reason="Coming soon.")
+        self.flow.add(TypeItem(name="Contact", parent="Person"))
+        self.flow.add(
+            [
+                MemoryItem(item_id="Username", item_type="Person"),
+                MemoryItem(item_id="Account Info", item_type="id"),
+                MemoryItem(item_id="Email", item_type="Contact"),
+                MemoryItem(item_id="AccountID", item_type="id"),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        TestMappingsBasic.check_basic_mapping_plan(plans)
+
+    @pytest.mark.skip(reason="This is not supposed to pass. Illustration.")
     def test_typing_with_costly_hierarchy(self) -> None:
-        raise NotImplementedError
+        self.flow.add(
+            [
+                TypeItem(name="HigherPerson", children=["Person"]),
+                TypeItem(name="Contact", parent="Person"),
+            ]
+        )
+        self.flow.add(
+            [
+                MemoryItem(item_id="Username", item_type="Person"),
+                MemoryItem(item_id="HigherUsername", item_type="HigherPerson"),
+                MemoryItem(item_id="Account Info", item_type="id"),
+                MemoryItem(item_id="Email", item_type="Contact"),
+                MemoryItem(item_id="AccountID", item_type="id"),
+            ]
+        )
+
+        imposter_user_info_agent = Operator("Imposter User Info")
+        imposter_user_info_agent.add_output(
+            [
+                SignatureItem(parameters=["HigherUsername"]),
+                SignatureItem(parameters=["Account Info"]),
+            ]
+        )
+        self.flow.add(imposter_user_info_agent)
+
+        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
+        self.flow.add(goal)
+
+        pddl, _ = self.flow.compile_to_pddl()
+
+        plans = self.get_plan()
+        TestMappingsBasic.check_basic_mapping_plan(plans)
+
+        poi = plans.list_of_plans[0]
+        assert "Username" in [
+            step.inputs[0].name for step in poi.plan[1:3]
+        ], "Make sure Username is used."

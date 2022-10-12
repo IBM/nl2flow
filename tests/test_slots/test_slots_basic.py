@@ -38,7 +38,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         assert not plans.list_of_plans, "There should be no empty plans."
 
     @staticmethod
-    def __fallback_and_last_resort_tests_should_look_the_same(
+    def fallback_and_last_resort_tests_should_look_the_same(
         plans: PlannerResponse,
     ) -> None:
         assert plans.list_of_plans, "There should be plans."
@@ -68,7 +68,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.add(SlotProperty(slot_name="list of errors", slot_desirability=0))
 
         plans = self.get_plan()
-        self.__fallback_and_last_resort_tests_should_look_the_same(plans)
+        self.fallback_and_last_resort_tests_should_look_the_same(plans)
 
     def test_slot_fillable_as_last_resort(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
@@ -76,7 +76,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.slot_options.add(SlotOptions.last_resort)
 
         plans = self.get_plan()
-        self.__fallback_and_last_resort_tests_should_look_the_same(plans)
+        self.fallback_and_last_resort_tests_should_look_the_same(plans)
 
     def test_slot_preference(self) -> None:
         find_errors_api_alternative = Operator("Find Errors Alternative")

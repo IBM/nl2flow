@@ -26,22 +26,8 @@ class TestMappingsBasic(BaseTestAgents):
         )
         self.flow.add(imposter_agent_preferred)
 
-    def test_mapper_basic(self) -> None:
-        self.flow.add(
-            [
-                MappingItem(source_name="Username", target_name="Email"),
-                MappingItem(source_name="Account Info", target_name="AccountID"),
-            ]
-        )
-
-        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
-        self.flow.add(goal)
-
-        plans = self.get_plan()
-        self.__test_basic_mapping_plan(plans)
-
     @staticmethod
-    def __test_basic_mapping_plan(plans: PlannerResponse) -> None:
+    def check_basic_mapping_plan(plans: PlannerResponse) -> None:
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
@@ -60,6 +46,20 @@ class TestMappingsBasic(BaseTestAgents):
         assert (
             step_4.name == "Credit Score API"
         ), "Final action should be the goal action."
+
+    def test_mapper_basic(self) -> None:
+        self.flow.add(
+            [
+                MappingItem(source_name="Username", target_name="Email"),
+                MappingItem(source_name="Account Info", target_name="AccountID"),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        self.check_basic_mapping_plan(plans)
 
     def test_mapper_is_transitive(self) -> None:
         self.flow.add(
@@ -87,7 +87,7 @@ class TestMappingsBasic(BaseTestAgents):
         self.flow.mapping_options.add(MappingOptions.transitive)
 
         plans = self.get_plan()
-        self.__test_basic_mapping_plan(plans)
+        self.check_basic_mapping_plan(plans)
 
     def test_mapper_with_slot_last_resort(self) -> None:
         self.flow.add(MappingItem(source_name="errors", target_name="list of errors"))
