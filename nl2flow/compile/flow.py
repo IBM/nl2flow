@@ -17,20 +17,24 @@ from nl2flow.compile.options import (
 class Flow:
     def __init__(self, name: str):
         self.flow_definition = FlowDefinition(name=name)
-        self._slot_options = {SlotOptions.higher_cost, SlotOptions.relaxed}
-        self._mapping_option = {MappingOptions.relaxed}
-        self._variable_life_cycle = LifeCycleOptions.bistate
+        self._slot_options: Set[SlotOptions] = {
+            SlotOptions.higher_cost,
+            SlotOptions.relaxed,
+        }
+        self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
+        self._variable_life_cycle: Set[LifeCycleOptions] = set()
 
     @property
-    def variable_life_cycle(self) -> LifeCycleOptions:
+    def variable_life_cycle(self) -> Set[LifeCycleOptions]:
         return self._variable_life_cycle
 
     @variable_life_cycle.setter
-    def variable_life_cycle(self, option: LifeCycleOptions) -> None:
-        assert isinstance(
-            option, LifeCycleOptions
-        ), "Tried to set unknown variable lifecycle type."
-        self._variable_life_cycle = option
+    def variable_life_cycle(self, options: Set[LifeCycleOptions]) -> None:
+        assert all(
+            [isinstance(option, LifeCycleOptions) for option in options]
+        ), "Tried to set unknown lifecycle option."
+
+        self._variable_life_cycle = options
 
     @property
     def mapping_options(self) -> Set[MappingOptions]:

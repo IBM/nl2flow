@@ -100,7 +100,7 @@ class Planner(ABC):
         pass
 
     @staticmethod
-    def group_slots(plan: ClassicalPlan) -> ClassicalPlan:
+    def group_slots(plan: ClassicalPlan, flow: Flow) -> ClassicalPlan:
 
         new_slot_fill_action = Action(name=BasicOperations.SLOT_FILLER.value)
         new_plan = ClassicalPlan(
@@ -112,11 +112,14 @@ class Planner(ABC):
         new_start_of_plan = 0
         for index, action in enumerate(plan.plan):
 
-            if action.name == BasicOperations.SLOT_FILLER.value:
-                new_slot_fill_action.inputs += action.inputs
-            else:
+            if action.name in [o.name for o in flow.flow_definition.operators]:
                 new_start_of_plan = index
                 break
+            elif action.name == BasicOperations.SLOT_FILLER.value:
+                new_slot_fill_action.inputs += action.inputs
+
+            else:
+                pass
 
         new_plan.plan = [new_slot_fill_action] + plan.plan[new_start_of_plan:]
         return new_plan
@@ -195,7 +198,7 @@ class Michael(Planner, RemotePlanner):
                     new_plan.plan.append(new_action)
 
                 if SlotOptions.group_slots in slot_options:
-                    new_plan = self.group_slots(new_plan)
+                    new_plan = self.group_slots(new_plan, flow)
 
                 planner_response.list_of_plans.append(new_plan)
 
@@ -242,7 +245,7 @@ class Christian(Planner, RemotePlanner):
                 new_plan.plan.append(new_action)
 
             if SlotOptions.group_slots in slot_options:
-                new_plan = self.group_slots(new_plan)
+                new_plan = self.group_slots(new_plan, flow)
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response

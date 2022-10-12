@@ -25,9 +25,11 @@ from nl2flow.compile.options import (
     TypeOptions,
     GoalType,
     SlotOptions,
+    LifeCycleOptions,
     MappingOptions,
     BasicOperations,
     CostOptions,
+    MemoryState,
 )
 
 
@@ -76,7 +78,10 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def __compile_slots(
-        self, flow_definition: FlowDefinition, slot_options: Set[SlotOptions]
+        self,
+        flow_definition: FlowDefinition,
+        slot_options: Set[SlotOptions],
+        variable_life_cycle: Set[LifeCycleOptions],
     ) -> None:
 
         self.not_slotfillable = self.lang.predicate(
@@ -96,7 +101,7 @@ class ClassicPDDL(Compilation):
 
         goodness_map: Dict[str, float] = dict()
         for constant in self.constant_map:
-            if constant not in [o.name for o in self.flow_definition.operators]:
+            if self.__is_this_a_datum(constant):
                 slot_goodness = SLOT_GOODNESS
 
                 for slot in self.flow_definition.slot_properties:
@@ -110,11 +115,44 @@ class ClassicPDDL(Compilation):
                     int((2 - slot_goodness) * CostOptions.VERY_HIGH.value),
                 )
 
+        if variable_life_cycle:
+            x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
+
+            self.problem.action(
+                BasicOperations.CONFIRM.value,
+                parameters=[x],
+                precondition=self.known(
+                    x, self.constant_map[MemoryState.UNCERTAIN.value]
+                ),
+                effects=[
+                    fs.AddEffect(
+                        self.known(x, self.constant_map[MemoryState.KNOWN.value])
+                    )
+                ],
+                cost=iofs.AdditiveActionCost(
+                    self.problem.language.constant(
+                        CostOptions.UNIT.value,
+                        self.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
+
         if SlotOptions.higher_cost in slot_options:
             x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
 
-            precondition_list = [neg(self.known(x)), neg(self.not_slotfillable(x))]
-            add_effect_list = [self.known(x)]
+            precondition_list = [
+                neg(self.known(x, self.constant_map[MemoryState.KNOWN.value])),
+                neg(self.not_slotfillable(x)),
+            ]
+
+            add_effect_list = [
+                self.known(
+                    x,
+                    self.constant_map[MemoryState.UNCERTAIN.value]
+                    if LifeCycleOptions.confirm_on_slot in variable_life_cycle
+                    else self.constant_map[MemoryState.KNOWN.value],
+                )
+            ]
 
             self.problem.action(
                 BasicOperations.SLOT_FILLER.value,
@@ -152,12 +190,25 @@ class ClassicPDDL(Compilation):
             )
 
             for constant in self.constant_map:
-                if constant not in not_slots and constant not in [
-                    o.name for o in self.flow_definition.operators
-                ]:
+                if constant not in not_slots and self.__is_this_a_datum(constant):
 
-                    precondition_list = [neg(self.known(self.constant_map[constant]))]
-                    add_effect_list = [self.known(self.constant_map[constant])]
+                    precondition_list = [
+                        neg(
+                            self.known(
+                                self.constant_map[constant],
+                                self.constant_map[MemoryState.KNOWN.value],
+                            )
+                        )
+                    ]
+
+                    add_effect_list = [
+                        self.known(
+                            self.constant_map[constant],
+                            self.constant_map[MemoryState.UNCERTAIN.value]
+                            if LifeCycleOptions.confirm_on_slot in variable_life_cycle
+                            else self.constant_map[MemoryState.KNOWN.value],
+                        )
+                    ]
 
                     for operator in source_map[constant]:
                         precondition_list.append(
@@ -182,7 +233,10 @@ class ClassicPDDL(Compilation):
                     )
 
     def __compile_mappings(
-        self, flow_definition: FlowDefinition, mapping_options: Set[MappingOptions]
+        self,
+        flow_definition: FlowDefinition,
+        mapping_options: Set[MappingOptions],
+        variable_life_cycle: Set[LifeCycleOptions],
     ) -> None:
 
         self.is_mappable = self.lang.predicate(
@@ -218,15 +272,24 @@ class ClassicPDDL(Compilation):
         y = self.lang.variable("y", self.type_map[TypeOptions.ROOT.value])
 
         precondition_list = [
-            self.known(x),
-            neg(self.known(y)),
+            self.known(x, self.constant_map[MemoryState.KNOWN.value]),
+            neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
             self.is_mappable(x, y),
         ]
         self.problem.action(
             BasicOperations.MAPPER.value,
             parameters=[x, y],
             precondition=land(*precondition_list),
-            effects=[fs.AddEffect(self.known(y))],
+            effects=[
+                fs.AddEffect(
+                    self.known(
+                        y,
+                        self.constant_map[MemoryState.UNCERTAIN.value]
+                        if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
+                        else self.constant_map[MemoryState.KNOWN.value],
+                    )
+                )
+            ],
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
 
@@ -236,10 +299,29 @@ class ClassicPDDL(Compilation):
                 y = self.lang.variable("y", self.type_map[typing])
 
                 self.problem.action(
-                    f"{BasicOperations.value}----{typing}",
+                    f"{BasicOperations.MAPPER.value}----{typing}",
                     parameters=[x, y],
-                    precondition=land(*[self.known(x), neg(self.known(y))]),
-                    effects=[fs.AddEffect(self.known(y))],
+                    precondition=land(
+                        *[
+                            self.known(x, self.constant_map[MemoryState.KNOWN.value]),
+                            neg(
+                                self.known(
+                                    y, self.constant_map[MemoryState.KNOWN.value]
+                                )
+                            ),
+                        ]
+                    ),
+                    effects=[
+                        fs.AddEffect(
+                            self.known(
+                                y,
+                                self.constant_map[MemoryState.UNCERTAIN.value]
+                                if LifeCycleOptions.confirm_on_mapping
+                                in variable_life_cycle
+                                else self.constant_map[MemoryState.KNOWN.value],
+                            )
+                        )
+                    ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
                             CostOptions.UNIT.value,
@@ -274,10 +356,14 @@ class ClassicPDDL(Compilation):
 
         self.problem.goal = land(*goal_predicates, flat=True)
 
-    def __compile_actions(self, list_of_actions: List[OperatorDefinition]) -> None:
-        def __add_param_to_condition_list(
-            parameter: Union[str, MemoryItem], list_of_items: List[Any]
-        ) -> List[Any]:
+    def __compile_actions(
+        self,
+        list_of_actions: List[OperatorDefinition],
+        variable_life_cycle: Set[LifeCycleOptions],
+    ) -> None:
+        def __add_to_condition_list_pre_check(
+            parameter: Union[str, MemoryItem]
+        ) -> None:
             if isinstance(parameter, str):
                 self.__add_memory_item_to_constant_map(
                     MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value)
@@ -289,9 +375,6 @@ class ClassicPDDL(Compilation):
             else:
                 raise TypeError
 
-            list_of_items.append(self.known(self.constant_map[parameter]))
-            return list_of_items
-
         for operator in list_of_actions:
             self.constant_map[operator.name] = self.lang.constant(
                 operator.name, TypeOptions.OPERATOR.value
@@ -302,15 +385,34 @@ class ClassicPDDL(Compilation):
 
             for o_input in operator.inputs:
                 for param in o_input.parameters:
-                    precondition_list = __add_param_to_condition_list(
-                        param, precondition_list
+                    __add_to_condition_list_pre_check(param)
+                    precondition_list.append(
+                        self.known(
+                            self.constant_map[param],
+                            self.constant_map[MemoryState.KNOWN.value],
+                        )
                     )
+
+                    if LifeCycleOptions.uncertain_on_use in variable_life_cycle:
+                        add_effect_list.append(
+                            self.known(
+                                self.constant_map[param],
+                                self.constant_map[MemoryState.UNCERTAIN.value],
+                            )
+                        )
 
             outputs = operator.outputs[0]
             for o_output in outputs.outcomes:
                 for param in o_output.parameters:
-                    add_effect_list = __add_param_to_condition_list(
-                        param, add_effect_list
+                    __add_to_condition_list_pre_check(param)
+                    add_effect_list.append(
+                        self.known(
+                            self.constant_map[param],
+                            self.constant_map[MemoryState.UNCERTAIN.value]
+                            if LifeCycleOptions.confirm_on_determination
+                            in variable_life_cycle
+                            else self.constant_map[MemoryState.KNOWN.value],
+                        )
                     )
 
             self.problem.action(
@@ -324,6 +426,11 @@ class ClassicPDDL(Compilation):
                     )
                 ),
             )
+
+    def __is_this_a_datum(self, constant: str) -> bool:
+        return constant not in [
+            o.name for o in self.flow_definition.operators
+        ] and constant not in [m.value for m in MemoryState]
 
     def __add_type_item_to_type_map(self, type_item: TypeItem) -> None:
         if type_item.name not in self.type_map:
@@ -351,10 +458,23 @@ class ClassicPDDL(Compilation):
             TypeOptions.OPERATOR.value
         )
 
+        self.type_map[TypeOptions.MEMORY.value] = self.lang.sort(
+            TypeOptions.MEMORY.value
+        )
+        for memory_state in MemoryState:
+            self.constant_map[memory_state.value] = self.lang.constant(
+                memory_state.value, TypeOptions.MEMORY.value
+            )
+
         self.has_done = self.lang.predicate(
             "has_done", self.type_map[TypeOptions.OPERATOR.value]
         )
-        self.known = self.lang.predicate("known", self.type_map[TypeOptions.ROOT.value])
+
+        self.known = self.lang.predicate(
+            "known",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.MEMORY.value],
+        )
 
         for type_item in self.flow_definition.type_hierarchy:
             self.__add_type_item_to_type_map(type_item)
@@ -362,13 +482,16 @@ class ClassicPDDL(Compilation):
         for memory_item in self.flow_definition.memory_items:
             self.__add_memory_item_to_constant_map(memory_item)
 
-        self.__compile_actions(self.flow_definition.operators)
+        variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
+        self.__compile_actions(self.flow_definition.operators, variable_life_cycle)
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
-        self.__compile_slots(self.flow_definition, slot_options)
+        self.__compile_slots(self.flow_definition, slot_options, variable_life_cycle)
 
         mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
-        self.__compile_mappings(self.flow_definition, mapping_options)
+        self.__compile_mappings(
+            self.flow_definition, mapping_options, variable_life_cycle
+        )
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

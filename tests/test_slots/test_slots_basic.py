@@ -23,7 +23,8 @@ class TestSlotFillerBasic(BaseTestAgents):
 
         assert Counter(["AccountID", "Email"]) == Counter(
             [step.inputs[0].name for step in poi.plan[:2]]
-        )
+        ), "Two slot fills for account ID and email."
+
         assert (
             poi.plan[2].name == "Credit Score API"
         ), "Third action should be the goal action."

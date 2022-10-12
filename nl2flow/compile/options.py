@@ -19,6 +19,7 @@ class CompileOptions(enum.Enum):
 
 
 class TypeOptions(enum.Enum):
+    MEMORY = "datum-state"
     OPERATOR = "operator"
     ROOT = "generic"
     LEAF = "end"
@@ -52,15 +53,17 @@ class SlotOptions(enum.Enum):
 
 
 class MemoryState(enum.Enum):
-    KNOWN = "KNOWN"
-    UNKNOWN = "UNKNOWN"
-    UNCERTAIN = "UNCERTAIN"
+    KNOWN = "certain"
+    UNKNOWN = "unknown"
+    UNCERTAIN = "uncertain"
 
 
 class LifeCycleOptions(enum.Enum):
-    bistate = "BISTATE"
-    bi_tristate = "BI_TRISTATE"
-    tristate = "TRISTATE"
+    uncertain_on_use = "UNCERTAIN-USE"
+    confirm_on_mapping = "CONFIRM-MAP"
+    confirm_on_determination = "CONFIRM-DET"
+    confirm_on_transform = "CONFIRM-TRANS"
+    confirm_on_slot = "CONFIRM-SLOT"
 
 
 class GoalOptions(enum.Enum):

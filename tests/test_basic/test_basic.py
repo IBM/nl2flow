@@ -29,6 +29,9 @@ def test_basic() -> None:
     goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
     new_flow.add(goal)
 
+    pddl, _ = new_flow.compile_to_pddl()
+    _ = pddl
+
     plans = new_flow.plan_it(PLANNER)
     print(PLANNER.pretty_print(plans))
 
