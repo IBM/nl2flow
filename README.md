@@ -1,11 +1,12 @@
 # NL2Flow: A PDDL Interface to Flow Construction
 
-![image](https://img.shields.io/badge/python-3.7-brightgreen)
+![image](https://img.shields.io/badge/python-3.8-darkblue)
 ![image](https://img.shields.io/badge/tarski-0.8.2-blue)
 ![image](https://img.shields.io/badge/code%20style-black-black)
 ![image](https://img.shields.io/badge/linting-pylint-yellow)
 ![image](https://img.shields.io/badge/linting-flake8-yellow)
 ![image](https://img.shields.io/badge/typing-mypy-orange)
+![image](https://img.shields.io/badge/tests-passing-brightgreen)
 
 This package allows developers to easily integrate automated planning applications into their systems. Migrating research efforts to product creates knowledge gaps and blindspots, along with requirements for long term support which often cannot be followed through. Particularly, the adoption of automated planners into products requires developers to get familiar with declarative modeling and understand requirements of the [PDDL](https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language) syntax. 
 

@@ -69,6 +69,7 @@ class ClassicPDDL(Compilation):
 
         self.has_done: Any = None
         self.known: Any = None
+        self.mapped: Any = None
         self.not_slotfillable: Any = None
         self.is_mappable: Any = None
         self.map_affinity: Any = None
@@ -83,15 +84,6 @@ class ClassicPDDL(Compilation):
         slot_options: Set[SlotOptions],
         variable_life_cycle: Set[LifeCycleOptions],
     ) -> None:
-
-        self.not_slotfillable = self.lang.predicate(
-            "not_slotfillable", self.type_map[TypeOptions.ROOT.value]
-        )
-        self.slot_goodness = self.lang.function(
-            "slot_goodness",
-            self.type_map[TypeOptions.ROOT.value],
-            self.lang.Real,
-        )
 
         for slot_item in flow_definition.slot_properties:
             if not slot_item.slot_desirability:
@@ -239,17 +231,13 @@ class ClassicPDDL(Compilation):
         variable_life_cycle: Set[LifeCycleOptions],
     ) -> None:
 
-        self.is_mappable = self.lang.predicate(
-            "is_mappable",
-            self.type_map[TypeOptions.ROOT.value],
-            self.type_map[TypeOptions.ROOT.value],
-        )
-        self.map_affinity = self.lang.function(
-            "affinity",
-            self.type_map[TypeOptions.ROOT.value],
-            self.type_map[TypeOptions.ROOT.value],
-            self.lang.Real,
-        )
+        for constant in self.constant_map:
+            if self.__is_this_a_datum(constant):
+                self.init.add(
+                    self.mapped(
+                        self.constant_map[constant], self.constant_map[constant]
+                    )
+                )
 
         for mappable_item in flow_definition.list_of_mappings:
             source = self.constant_map[mappable_item.source_name]
@@ -288,7 +276,8 @@ class ClassicPDDL(Compilation):
                         if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
                         else self.constant_map[MemoryState.KNOWN.value],
                     )
-                )
+                ),
+                fs.AddEffect(self.mapped(x, y)),
             ],
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
@@ -320,7 +309,8 @@ class ClassicPDDL(Compilation):
                                 in variable_life_cycle
                                 else self.constant_map[MemoryState.KNOWN.value],
                             )
-                        )
+                        ),
+                        fs.AddEffect(self.mapped(x, y)),
                     ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
@@ -380,12 +370,24 @@ class ClassicPDDL(Compilation):
                 operator.name, TypeOptions.OPERATOR.value
             )
 
+            parameter_list: List[Any] = list()
             precondition_list: List[Any] = list()
             add_effect_list = [self.has_done(self.constant_map[operator.name])]
 
             for o_input in operator.inputs:
                 for param in o_input.parameters:
                     __add_to_condition_list_pre_check(param)
+
+                    # type_of_param = __get_type_of_constant(param)
+                    type_of_param = TypeOptions.ROOT.value
+                    index_of_param = list(o_input.parameters).index(param)
+
+                    x = self.lang.variable(
+                        f"x{index_of_param}", self.type_map[type_of_param]
+                    )
+                    parameter_list.append(x)
+                    precondition_list.append(self.mapped(x, self.constant_map[param]))
+
                     precondition_list.append(
                         self.known(
                             self.constant_map[param],
@@ -417,7 +419,7 @@ class ClassicPDDL(Compilation):
 
             self.problem.action(
                 operator.name,
-                parameters=list(),
+                parameters=parameter_list,
                 precondition=land(*precondition_list),
                 effects=[fs.AddEffect(add) for add in add_effect_list],
                 cost=iofs.AdditiveActionCost(
@@ -447,6 +449,7 @@ class ClassicPDDL(Compilation):
         type_name: str = (
             memory_item.item_type if memory_item.item_type else TypeOptions.ROOT.value
         )
+
         self.__add_type_item_to_type_map(
             TypeItem(name=type_name, parent=TypeOptions.ROOT.value)
         )
@@ -466,6 +469,7 @@ class ClassicPDDL(Compilation):
         self.type_map[TypeOptions.MEMORY.value] = self.lang.sort(
             TypeOptions.MEMORY.value
         )
+
         for memory_state in MemoryState:
             self.constant_map[memory_state.value] = self.lang.constant(
                 memory_state.value, TypeOptions.MEMORY.value
@@ -481,6 +485,35 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.MEMORY.value],
         )
 
+        self.not_slotfillable = self.lang.predicate(
+            "not_slotfillable", self.type_map[TypeOptions.ROOT.value]
+        )
+
+        self.slot_goodness = self.lang.function(
+            "slot_goodness",
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
+
+        self.is_mappable = self.lang.predicate(
+            "is_mappable",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.mapped = self.lang.predicate(
+            "mapped",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.map_affinity = self.lang.function(
+            "affinity",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
+
         for type_item in self.flow_definition.type_hierarchy:
             self.__add_type_item_to_type_map(type_item)
 
@@ -489,6 +522,7 @@ class ClassicPDDL(Compilation):
 
         variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
         self.__compile_actions(self.flow_definition.operators, variable_life_cycle)
+        self.__compile_goals(self.flow_definition.goal_items)
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         self.__compile_slots(self.flow_definition, slot_options, variable_life_cycle)
@@ -500,7 +534,6 @@ class ClassicPDDL(Compilation):
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
-        self.__compile_goals(self.flow_definition.goal_items)
 
         writer = FstripsWriter(self.problem)
         domain = writer.print_domain().replace(" :numeric-fluents", "")
