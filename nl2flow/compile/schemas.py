@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from nl2flow.compile.utils import string_transform, Transform
 from nl2flow.compile.options import TypeOptions, CostOptions, GoalType, MemoryState
+from nl2flow.plan.schemas import Step
 
 
 class MappingItem(BaseModel):
@@ -15,12 +16,11 @@ class MappingItem(BaseModel):
     def transform(
         cls, mapping_item: MappingItem, transforms: List[Transform]
     ) -> MappingItem:
-        new_item = MappingItem(
+        return MappingItem(
             source_name=string_transform(mapping_item.source_name, transforms),
             target_name=string_transform(mapping_item.target_name, transforms),
             probability=mapping_item.probability,
         )
-        return new_item
 
 
 class MemoryItem(BaseModel):
@@ -32,12 +32,11 @@ class MemoryItem(BaseModel):
     def transform(
         cls, memory_item: MemoryItem, transforms: List[Transform]
     ) -> MemoryItem:
-        new_item = MemoryItem(
+        return MemoryItem(
             item_id=string_transform(memory_item.item_id, transforms),
             item_type=string_transform(memory_item.item_type, transforms),
             item_state=memory_item.item_state,
         )
-        return new_item
 
 
 class Constraint(BaseModel):
@@ -49,14 +48,13 @@ class Constraint(BaseModel):
     def transform(
         cls, constraint: Constraint, transforms: List[Transform]
     ) -> Constraint:
-        new_item = Constraint(
+        return Constraint(
             constraint_id=string_transform(constraint.constraint_id, transforms),
             parameters=[
                 string_transform(param, transforms) for param in constraint.parameters
             ],
             truth_value=constraint.truth_value,
         )
-        return new_item
 
 
 class GoalItem(BaseModel):
@@ -65,11 +63,10 @@ class GoalItem(BaseModel):
 
     @classmethod
     def transform(cls, goal_item: GoalItem, transforms: List[Transform]) -> GoalItem:
-        new_item = GoalItem(
+        return GoalItem(
             goal_name=string_transform(goal_item.goal_name, transforms),
             goal_type=goal_item.goal_type,
         )
-        return new_item
 
 
 class GoalItems(BaseModel):
@@ -81,8 +78,7 @@ class GoalItems(BaseModel):
         if not isinstance(temp, List):
             temp = [temp]
 
-        new_item = GoalItems(goals=[goal.transform(goal, transforms) for goal in temp])
-        return new_item
+        return GoalItems(goals=[goal.transform(goal, transforms) for goal in temp])
 
 
 class SignatureItem(BaseModel):
@@ -93,7 +89,7 @@ class SignatureItem(BaseModel):
     def transform(
         cls, signature: SignatureItem, transforms: List[Transform]
     ) -> SignatureItem:
-        new_item = SignatureItem(
+        return SignatureItem(
             parameters=[
                 string_transform(param, transforms)
                 if isinstance(param, str)
@@ -105,7 +101,6 @@ class SignatureItem(BaseModel):
                 for constraint in signature.constraints
             ],
         )
-        return new_item
 
 
 class Outcome(BaseModel):
@@ -115,7 +110,7 @@ class Outcome(BaseModel):
 
     @classmethod
     def transform(cls, outcome: Outcome, transforms: List[Transform]) -> Outcome:
-        new_item = Outcome(
+        return Outcome(
             conditions=[
                 condition.transform(condition, transforms)
                 for condition in outcome.conditions
@@ -125,7 +120,6 @@ class Outcome(BaseModel):
             ],
             probability=outcome.probability,
         )
-        return new_item
 
 
 class PartialOrder(BaseModel):
@@ -136,11 +130,10 @@ class PartialOrder(BaseModel):
     def transform(
         cls, partial_order: PartialOrder, transforms: List[Transform]
     ) -> PartialOrder:
-        new_item = PartialOrder(
+        return PartialOrder(
             antecedent=string_transform(partial_order.antecedent, transforms),
             precedent=string_transform(partial_order.precedent, transforms),
         )
-        return new_item
 
 
 class TypeItem(BaseModel):
@@ -150,14 +143,13 @@ class TypeItem(BaseModel):
 
     @classmethod
     def transform(cls, type_item: TypeItem, transforms: List[Transform]) -> TypeItem:
-        new_item = TypeItem(
+        return TypeItem(
             name=string_transform(type_item.name, transforms),
             parent=string_transform(type_item.parent, transforms),
             children=[
                 string_transform(child, transforms) for child in type_item.children
             ],
         )
-        return new_item
 
 
 class OperatorDefinition(BaseModel):
@@ -174,7 +166,7 @@ class OperatorDefinition(BaseModel):
         if not isinstance(temp, List):
             temp = [temp]
 
-        new_item = OperatorDefinition(
+        return OperatorDefinition(
             name=string_transform(operator.name, transforms),
             cost=operator.cost,
             inputs=[
@@ -183,7 +175,6 @@ class OperatorDefinition(BaseModel):
             ],
             outputs=[output.transform(output, transforms) for output in temp],
         )
-        return new_item
 
 
 class SlotProperty(BaseModel):
@@ -194,11 +185,10 @@ class SlotProperty(BaseModel):
     def transform(
         cls, slot_property: SlotProperty, transforms: List[Transform]
     ) -> SlotProperty:
-        new_item = SlotProperty(
+        return SlotProperty(
             slot_name=string_transform(slot_property.slot_name, transforms),
             slot_desirability=slot_property.slot_desirability,
         )
-        return new_item
 
 
 class PDDL(BaseModel):
@@ -214,6 +204,7 @@ class FlowDefinition(BaseModel):
     constraints: List[Constraint] = []
     partial_orders: List[PartialOrder] = []
     list_of_mappings: List[MappingItem] = []
+    history: List[Step] = []
     slot_properties: List[SlotProperty] = []
     goal_items: List[GoalItems] = []
     starts_with: Optional[str]
