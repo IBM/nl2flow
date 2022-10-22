@@ -1,6 +1,6 @@
 import enum
 
-LOOKAHEAD: int = 2
+LOOKAHEAD: int = 1
 RETRY: int = 3
 SLOT_GOODNESS: float = 0.5
 

@@ -79,7 +79,6 @@ def parse_action(
             )
             for param in parameters
         ]
-        new_action.parameters = new_action.inputs
 
     else:
         operator: OperatorDefinition = list(
@@ -88,9 +87,6 @@ def parse_action(
 
         new_action.inputs = __add_parameters(operator.inputs)
         new_action.outputs = __add_parameters(operator.outputs.outcomes)
-        new_action.parameters = __add_parameters(
-            [SignatureItem(parameters={p}) for p in parameters]
-        )
 
     return new_action
 
@@ -138,9 +134,6 @@ class Planner(ABC):
             pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
 
             for step, action in enumerate(plan.plan):
-                parameters = ", ".join(
-                    [f"{item.name} ({item.type})" for item in action.parameters]
-                )
                 inputs = ", ".join(
                     [f"{item.name} ({item.type})" for item in action.inputs]
                 )
@@ -150,7 +143,6 @@ class Planner(ABC):
 
                 pretty += (
                     f"Step {step}: {action.name}, "
-                    f"Parameters: {parameters if action.parameters else None}, "
                     f"Inputs: {inputs if action.inputs else None}, "
                     f"Outputs: {outputs if action.outputs else None}\n"
                 )
