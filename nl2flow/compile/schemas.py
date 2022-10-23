@@ -82,7 +82,7 @@ class GoalItems(BaseModel):
 
 
 class SignatureItem(BaseModel):
-    parameters: Set[Union[str, MemoryItem]]
+    parameters: List[Union[str, MemoryItem]]
     constraints: List[Constraint] = []
 
     @classmethod
@@ -180,6 +180,7 @@ class OperatorDefinition(BaseModel):
 class SlotProperty(BaseModel):
     slot_name: str
     slot_desirability: float
+    propagate_desirability: bool = False
 
     @classmethod
     def transform(
@@ -188,6 +189,7 @@ class SlotProperty(BaseModel):
         return SlotProperty(
             slot_name=string_transform(slot_property.slot_name, transforms),
             slot_desirability=slot_property.slot_desirability,
+            propagate_desirability=slot_property.propagate_desirability,
         )
 
 

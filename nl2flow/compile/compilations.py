@@ -18,6 +18,7 @@ from nl2flow.compile.schemas import (
     Transform,
     MemoryItem,
     TypeItem,
+    SlotProperty,
 )
 
 from nl2flow.compile.options import (
@@ -363,7 +364,6 @@ class ClassicPDDL(Compilation):
 
             elif isinstance(parameter, MemoryItem):
                 self.__add_memory_item_to_constant_map(parameter)
-
             else:
                 raise TypeError
 
@@ -381,9 +381,13 @@ class ClassicPDDL(Compilation):
             for o_input in operator.inputs:
                 for param in o_input.parameters:
                     __add_to_condition_list_pre_check(param)
-
-                    type_of_param = self.__get_type_of_constant(param)
                     index_of_param = list(o_input.parameters).index(param)
+
+                    if isinstance(param, MemoryItem):
+                        type_of_param = param.item_type or TypeOptions.ROOT.value
+                        param = param.item_id
+                    else:
+                        type_of_param = self.__get_type_of_constant(param)
 
                     x = self.lang.variable(
                         f"x{index_of_param}", self.type_map[type_of_param]
@@ -412,6 +416,10 @@ class ClassicPDDL(Compilation):
             for o_output in outputs.outcomes:
                 for param in o_output.parameters:
                     __add_to_condition_list_pre_check(param)
+
+                    if isinstance(param, MemoryItem):
+                        param = param.item_id
+
                     add_effect_list.append(
                         self.known(
                             self.constant_map[param],
@@ -469,16 +477,7 @@ class ClassicPDDL(Compilation):
             o.name for o in self.flow_definition.operators
         ] and constant not in [m.value for m in MemoryState]
 
-    def __add_extra_objects(
-        self, flow_definition: FlowDefinition, num_lookahead: int
-    ) -> None:
-        cache_unslottable_types = set()
-        for slot_item in flow_definition.slot_properties:
-            if not slot_item.slot_desirability:
-                type_of_slot_item = self.__get_type_of_constant(slot_item)
-                if type_of_slot_item != TypeOptions.ROOT.value:
-                    cache_unslottable_types.add(type_of_slot_item)
-
+    def __add_extra_objects(self, num_lookahead: int) -> None:
         for type_name in self.type_map:
             if type_name not in [TypeOptions.MEMORY.value, TypeOptions.OPERATOR.value]:
                 new_objects = [
@@ -490,10 +489,21 @@ class ClassicPDDL(Compilation):
                         MemoryItem(item_id=new_object, item_type=type_name)
                     )
 
-                    if type_name in cache_unslottable_types:
-                        self.init.add(
-                            self.not_slotfillable(self.constant_map[new_object])
-                        )
+                    if type_name != TypeOptions.ROOT.value:
+                        temp_slot_properties = self.flow_definition.slot_properties
+
+                        for slot in temp_slot_properties:
+                            if (
+                                slot.propagate_desirability
+                                and self.__get_type_of_constant(slot.slot_name)
+                                == type_name
+                            ):
+                                self.flow_definition.slot_properties.append(
+                                    SlotProperty(
+                                        slot_name=new_object,
+                                        slot_desirability=slot.slot_desirability,
+                                    )
+                                )
 
     def __add_type_item_to_type_map(self, type_item: TypeItem) -> None:
         if type_item.parent not in self.type_map:
@@ -592,9 +602,7 @@ class ClassicPDDL(Compilation):
         self.__compile_goals(self.flow_definition.goal_items)
 
         lookahead_option: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
-        self.__add_extra_objects(
-            flow_definition=self.flow_definition, num_lookahead=lookahead_option
-        )
+        self.__add_extra_objects(num_lookahead=lookahead_option)
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         self.__compile_slots(self.flow_definition, slot_options, variable_life_cycle)

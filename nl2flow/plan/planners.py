@@ -30,7 +30,10 @@ def parse_action(
 
                 if isinstance(parameter, MemoryItem):
                     list_of_parameters.append(
-                        Parameter(name=parameter.item_id, type=parameter.item_type)
+                        Parameter(
+                            name=parameter.item_id,
+                            type=parameter.item_type or TypeOptions.ROOT.value,
+                        )
                     )
 
                 elif isinstance(parameter, str):

@@ -84,8 +84,6 @@ class TestTypingBasic(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
         self.flow.add(goal)
 
-        pddl, _ = self.flow.compile_to_pddl()
-
         plans = self.get_plan()
         TestMappingsBasic.check_basic_mapping_plan(plans)
 
