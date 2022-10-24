@@ -265,6 +265,7 @@ class ClassicPDDL(Compilation):
             self.known(x, self.constant_map[MemoryState.KNOWN.value]),
             neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
             self.is_mappable(x, y),
+            neg(self.mapped(x, y)),
         ]
         self.problem.action(
             BasicOperations.MAPPER.value,
@@ -300,6 +301,7 @@ class ClassicPDDL(Compilation):
                                     y, self.constant_map[MemoryState.KNOWN.value]
                                 )
                             ),
+                            neg(self.mapped(x, y)),
                         ]
                     ),
                     effects=[

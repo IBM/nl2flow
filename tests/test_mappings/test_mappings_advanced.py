@@ -48,9 +48,21 @@ class TestMappingsAdvanced(BaseTestAgents):
         ), "Final action should be the goal action."
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_mapper_with_multi_instance_without_typing(self) -> None:
+    def test_multi_instance_from_memory_with_same_skill(self) -> None:
+        """(x,y); x,y->A"""
         raise NotImplementedError
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_mapper_with_multi_instance_and_typing(self) -> None:
+    def test_multi_instance_from_memory_with_multi_skill(self) -> None:
+        """(x,y); x->A, y->A"""
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_multi_instance_to_produce_with_multi_skill(self) -> None:
+        """A->x, B->y, (x,y)-> C"""
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_multi_instance_with_iteration(self) -> None:
+        """A->x, B->y, (x,y)-> C"""
         raise NotImplementedError
