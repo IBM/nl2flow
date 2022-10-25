@@ -34,6 +34,25 @@ class TestMappingsMultiInstance(BaseTestAgents):
             )
         )
 
+        # Some emails to play around with
+        self.emails_in_memory = [
+            MemoryItem(
+                item_id="item12321",
+                item_type="Email ID",
+                item_state=MemoryState.KNOWN,
+            ),
+            MemoryItem(
+                item_id="item14311",
+                item_type="Email ID",
+                item_state=MemoryState.KNOWN,
+            ),
+            MemoryItem(
+                item_id="item55132",
+                item_type="Email ID",
+                item_state=MemoryState.KNOWN,
+            ),
+        ]
+
         # Copy agent copies a file from
         copy_agent = Operator("Copy Agent")
         copy_agent.add_input(
@@ -52,10 +71,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
                 copy_agent,
             ]
         )
-
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_multi_instance_same_item(self) -> None:
-        raise NotImplementedError
 
     def test_multi_instance_pitfall(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
@@ -79,8 +94,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
         )
         self.flow.mapping_options.add(MappingOptions.transitive)
 
-        pddl, _ = self.flow.compile_to_pddl()
-
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
@@ -96,26 +109,33 @@ class TestMappingsMultiInstance(BaseTestAgents):
             [o == BasicOperations.SLOT_FILLER.value for o in first_four_action_names]
         ), "A plan of length 5 full of slot fills and no mapping."
 
-    def test_multi_instance_from_memory_with_same_skill_no_preference(self) -> None:
+    def test_multi_instance_same_item(self) -> None:
+        self.flow.add(self.emails_in_memory)
         self.flow.add(
             [
-                MemoryItem(
-                    item_id="item12321",
-                    item_type="Email ID",
-                    item_state=MemoryState.KNOWN,
-                ),
-                MemoryItem(
-                    item_id="item14311",
-                    item_type="Email ID",
-                    item_state=MemoryState.KNOWN,
-                ),
-                MemoryItem(
-                    item_id="item55132",
-                    item_type="Email ID",
-                    item_state=MemoryState.KNOWN,
+                MappingItem(source_name="from", target_name="to", probability=0.0),
+                MappingItem(source_name="item12321", target_name="to", probability=1.0),
+                MappingItem(
+                    source_name="item12321", target_name="from", probability=1.0
                 ),
             ]
         )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        for action in poi.plan:
+            if action.name == BasicOperations.MAPPER.value:
+                assert (
+                    action.inputs[0].name == "item12321"
+                ), "Item item12321 mapped twice"
+
+    def test_multi_instance_from_memory_with_same_skill_no_preference(self) -> None:
+        self.flow.add(self.emails_in_memory)
 
         goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
         self.flow.add(goal)
@@ -134,10 +154,43 @@ class TestMappingsMultiInstance(BaseTestAgents):
             and first_four_action_names.count(BasicOperations.MAPPER.value) == 2
         ), "A plan of length 5 with 2 slot fills and 2 maps."
 
-    @pytest.mark.skip(reason="Coming soon.")
     def test_multi_instance_from_memory_with_same_skill_with_preference(self) -> None:
-        """(x,y); x,y->A"""
-        raise NotImplementedError
+        self.flow.add(self.emails_in_memory)
+        self.flow.add(
+            [
+                MappingItem(source_name="item55132", target_name="to", probability=1.0),
+                MappingItem(
+                    source_name="item12321", target_name="from", probability=1.0
+                ),
+            ]
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 5, "A plan of length 5."
+
+        first_four_action_names = [action.name for action in poi.plan]
+        assert (
+            first_four_action_names.count(BasicOperations.SLOT_FILLER.value) == 2
+            and first_four_action_names.count(BasicOperations.MAPPER.value) == 2
+        ), "A plan of length 5 with 2 slot fills and 2 maps."
+
+        for action in poi.plan[: len(poi.plan) - 1]:
+            assert action.name in [
+                BasicOperations.MAPPER.value,
+                BasicOperations.SLOT_FILLER.value,
+            ], "Either mapping or slot fill."
+
+            if action.name == BasicOperations.MAPPER.value:
+                assert [i.name for i in action.inputs] in [
+                    ["item55132", "to"],
+                    ["item12321", "from"],
+                ], "Preferred mappings only."
 
     @pytest.mark.skip(reason="Coming soon.")
     def test_multi_instance_from_memory_with_multi_skill(self) -> None:

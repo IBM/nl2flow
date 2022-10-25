@@ -254,7 +254,7 @@ class ClassicPDDL(Compilation):
                 self.init.add(self.is_mappable(source, target))
                 self.init.set(
                     self.map_affinity(source, target),
-                    int((2 - mappable_item.probability) * CostOptions.LOW.value),
+                    int((2 - mappable_item.probability) * CostOptions.UNIT.value),
                 )
 
             if MappingOptions.transitive in mapping_options:
@@ -277,7 +277,6 @@ class ClassicPDDL(Compilation):
             self.is_mappable(x, y),
             neg(self.not_mappable(x, y)),
             neg(self.mapped_to(x, y)),
-            neg(self.mapped(x)),
             neg(self.new_item(y)),
         ]
         self.problem.action(
@@ -337,7 +336,7 @@ class ClassicPDDL(Compilation):
                     ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
-                            CostOptions.UNIT.value,
+                            CostOptions.LOW.value,
                             self.problem.language.get_sort("Integer"),
                         )
                     ),
