@@ -70,10 +70,13 @@ class ClassicPDDL(Compilation):
         self.init = tarski.model.create(self.lang)
 
         self.has_done: Any = None
+        self.new_item: Any = None
         self.known: Any = None
         self.mapped: Any = None
+        self.mapped_to: Any = None
         self.not_slotfillable: Any = None
         self.is_mappable: Any = None
+        self.not_mappable: Any = None
         self.map_affinity: Any = None
         self.slot_goodness: Any = None
 
@@ -151,7 +154,7 @@ class ClassicPDDL(Compilation):
             self.problem.action(
                 BasicOperations.SLOT_FILLER.value,
                 parameters=[x],
-                precondition=land(*precondition_list),
+                precondition=land(*precondition_list, flat=True),
                 effects=[fs.AddEffect(add) for add in add_effect_list],
                 cost=iofs.AdditiveActionCost(self.slot_goodness(x)),
             )
@@ -216,7 +219,7 @@ class ClassicPDDL(Compilation):
                     self.problem.action(
                         f"{BasicOperations.SLOT_FILLER.value}----{constant}",
                         parameters=[],
-                        precondition=land(*precondition_list),
+                        precondition=land(*precondition_list, flat=True),
                         effects=[fs.AddEffect(add) for add in add_effect_list],
                         cost=iofs.AdditiveActionCost(
                             self.problem.language.constant(
@@ -236,7 +239,7 @@ class ClassicPDDL(Compilation):
         for constant in self.constant_map:
             if self.__is_this_a_datum(constant):
                 self.init.add(
-                    self.mapped(
+                    self.mapped_to(
                         self.constant_map[constant], self.constant_map[constant]
                     )
                 )
@@ -245,18 +248,25 @@ class ClassicPDDL(Compilation):
             source = self.constant_map[mappable_item.source_name]
             target = self.constant_map[mappable_item.target_name]
 
-            self.init.add(self.is_mappable(source, target))
-            self.init.set(
-                self.map_affinity(source, target),
-                int((2 - mappable_item.probability) * CostOptions.LOW.value),
-            )
+            if not mappable_item.probability:
+                self.init.add(self.not_mappable(source, target))
+            else:
+                self.init.add(self.is_mappable(source, target))
+                self.init.set(
+                    self.map_affinity(source, target),
+                    int((2 - mappable_item.probability) * CostOptions.LOW.value),
+                )
 
             if MappingOptions.transitive in mapping_options:
-                self.init.add(self.is_mappable(target, source))
-                self.init.set(
-                    self.map_affinity(target, source),
-                    int((2 - mappable_item.probability) * CostOptions.UNIT.value),
-                )
+                if not mappable_item.probability:
+                    self.init.add(self.not_mappable(target, source))
+
+                else:
+                    self.init.add(self.is_mappable(target, source))
+                    self.init.set(
+                        self.map_affinity(target, source),
+                        int((2 - mappable_item.probability) * CostOptions.UNIT.value),
+                    )
 
         x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
         y = self.lang.variable("y", self.type_map[TypeOptions.ROOT.value])
@@ -265,12 +275,15 @@ class ClassicPDDL(Compilation):
             self.known(x, self.constant_map[MemoryState.KNOWN.value]),
             neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
             self.is_mappable(x, y),
-            neg(self.mapped(x, y)),
+            neg(self.not_mappable(x, y)),
+            neg(self.mapped_to(x, y)),
+            neg(self.mapped(x)),
+            neg(self.new_item(y)),
         ]
         self.problem.action(
             BasicOperations.MAPPER.value,
             parameters=[x, y],
-            precondition=land(*precondition_list),
+            precondition=land(*precondition_list, flat=True),
             effects=[
                 fs.AddEffect(
                     self.known(
@@ -280,7 +293,8 @@ class ClassicPDDL(Compilation):
                         else self.constant_map[MemoryState.KNOWN.value],
                     )
                 ),
-                fs.AddEffect(self.mapped(x, y)),
+                fs.AddEffect(self.mapped_to(x, y)),
+                fs.AddEffect(self.mapped(x)),
             ],
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
@@ -296,13 +310,17 @@ class ClassicPDDL(Compilation):
                     precondition=land(
                         *[
                             self.known(x, self.constant_map[MemoryState.KNOWN.value]),
+                            neg(self.mapped_to(x, y)),
+                            neg(self.mapped(x)),
+                            neg(self.not_mappable(x, y)),
+                            neg(self.new_item(y)),
                             neg(
                                 self.known(
                                     y, self.constant_map[MemoryState.KNOWN.value]
                                 )
                             ),
-                            neg(self.mapped(x, y)),
-                        ]
+                        ],
+                        flat=True,
                     ),
                     effects=[
                         fs.AddEffect(
@@ -314,7 +332,8 @@ class ClassicPDDL(Compilation):
                                 else self.constant_map[MemoryState.KNOWN.value],
                             )
                         ),
-                        fs.AddEffect(self.mapped(x, y)),
+                        fs.AddEffect(self.mapped_to(x, y)),
+                        fs.AddEffect(self.mapped(x)),
                     ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
@@ -398,7 +417,9 @@ class ClassicPDDL(Compilation):
                     parameter_list.append(x)
                     type_list.append(type_of_param)
 
-                    precondition_list.append(self.mapped(x, self.constant_map[param]))
+                    precondition_list.append(
+                        self.mapped_to(x, self.constant_map[param])
+                    )
                     precondition_list.append(
                         self.known(
                             self.constant_map[param],
@@ -413,24 +434,6 @@ class ClassicPDDL(Compilation):
                                 self.constant_map[MemoryState.UNCERTAIN.value],
                             )
                         )
-
-            outputs = operator.outputs[0]
-            for o_output in outputs.outcomes:
-                for param in o_output.parameters:
-                    __add_to_condition_list_pre_check(param)
-
-                    if isinstance(param, MemoryItem):
-                        param = param.item_id
-
-                    add_effect_list.append(
-                        self.known(
-                            self.constant_map[param],
-                            self.constant_map[MemoryState.UNCERTAIN.value]
-                            if LifeCycleOptions.confirm_on_determination
-                            in variable_life_cycle
-                            else self.constant_map[MemoryState.KNOWN.value],
-                        )
-                    )
 
             if multi_instance:
                 new_has_done_predicate_name = f"has_done_{operator.name}"
@@ -452,10 +455,28 @@ class ClassicPDDL(Compilation):
                     neg(self.has_done(self.constant_map[operator.name]))
                 )
 
+            outputs = operator.outputs[0]
+            for o_output in outputs.outcomes:
+                for param in o_output.parameters:
+                    __add_to_condition_list_pre_check(param)
+
+                    if isinstance(param, MemoryItem):
+                        param = param.item_id
+
+                    add_effect_list.append(
+                        self.known(
+                            self.constant_map[param],
+                            self.constant_map[MemoryState.UNCERTAIN.value]
+                            if LifeCycleOptions.confirm_on_determination
+                            in variable_life_cycle
+                            else self.constant_map[MemoryState.KNOWN.value],
+                        )
+                    )
+
             self.problem.action(
                 operator.name,
                 parameters=parameter_list,
-                precondition=land(*precondition_list),
+                precondition=land(*precondition_list, flat=True),
                 effects=[fs.AddEffect(add) for add in add_effect_list],
                 cost=iofs.AdditiveActionCost(
                     self.problem.language.constant(
@@ -490,6 +511,7 @@ class ClassicPDDL(Compilation):
                     self.__add_memory_item_to_constant_map(
                         MemoryItem(item_id=new_object, item_type=type_name)
                     )
+                    self.init.add(self.new_item(self.constant_map[new_object]))
 
                     if type_name != TypeOptions.ROOT.value:
                         temp_slot_properties = self.flow_definition.slot_properties
@@ -552,6 +574,10 @@ class ClassicPDDL(Compilation):
             "has_done", self.type_map[TypeOptions.OPERATOR.value]
         )
 
+        self.new_item = self.lang.predicate(
+            "new_item", self.type_map[TypeOptions.ROOT.value]
+        )
+
         self.known = self.lang.predicate(
             "known",
             self.type_map[TypeOptions.ROOT.value],
@@ -574,8 +600,19 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.ROOT.value],
         )
 
+        self.not_mappable = self.lang.predicate(
+            "not_mappable",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
         self.mapped = self.lang.predicate(
             "mapped",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.mapped_to = self.lang.predicate(
+            "mapped_to",
             self.type_map[TypeOptions.ROOT.value],
             self.type_map[TypeOptions.ROOT.value],
         )
@@ -592,6 +629,14 @@ class ClassicPDDL(Compilation):
 
         for memory_item in self.flow_definition.memory_items:
             self.__add_memory_item_to_constant_map(memory_item)
+
+            if memory_item.item_state != MemoryState.UNKNOWN:
+                self.init.add(
+                    self.known(
+                        self.constant_map[memory_item.item_id],
+                        self.constant_map[memory_item.item_state.value],
+                    )
+                )
 
         multi_instance_option: bool = kwargs.get("multi_instance", True)  # type: ignore
         variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])

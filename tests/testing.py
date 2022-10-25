@@ -44,12 +44,6 @@ class BaseTestAgents:
         credit_score_agent.add_input(SignatureItem(parameters=["AccountID", "Email"]))
         credit_score_agent.add_output(SignatureItem(parameters=["Credit Score"]))
 
-        # Email service require from, to, cc, bcc, body and attachments
-        email_agent = Operator("Email Agent")
-        email_agent.add_input(
-            SignatureItem(parameters=["from", "to", "cc", "bcc", "body", "attachments"])
-        )
-
         # An API that can find errors in a database given a database link
         find_errors_api = Operator("Find Errors")
         find_errors_api.add_input(SignatureItem(parameters=["database link"]))
@@ -62,7 +56,6 @@ class BaseTestAgents:
         self.flow.add(
             [
                 credit_score_agent,
-                email_agent,
                 find_errors_api,
                 fix_errors_api,
                 user_info_agent,
