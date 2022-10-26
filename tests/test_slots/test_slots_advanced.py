@@ -1,14 +1,39 @@
-from nl2flow.compile.schemas import GoalItem, GoalItems
+from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty
 from nl2flow.compile.options import BasicOperations, SlotOptions, LifeCycleOptions
 from nl2flow.plan.schemas import Action
+
 from tests.testing import BaseTestAgents
+from tests.test_slots.test_slots_basic import TestSlotFillerBasic
 
 from collections import Counter
+import pytest
 
 
 class TestSlotFillerAdvanced(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
+
+    def test_do_not_last_resort(self) -> None:
+        goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
+        self.flow.add(goal)
+
+        self.flow.slot_options.add(SlotOptions.last_resort)
+        self.flow.add(SlotProperty(slot_name="list of errors", do_not_last_resort=True))
+
+        plans = self.get_plan()
+
+        with pytest.raises(Exception):
+            TestSlotFillerBasic.fallback_and_last_resort_tests_should_look_the_same(
+                plans
+            )
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 2, "There should be 2 steps."
+
+        assert (
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value
+            and poi.plan[0].inputs[0].name == "list of errors"
+        ), "Directly fill slot instead of mapping as last resort."
 
     def test_slot_filler_grouping(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))

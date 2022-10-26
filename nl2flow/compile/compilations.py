@@ -176,6 +176,16 @@ class ClassicPDDL(Compilation):
                         if constant in params:
                             source_map[constant].append(operator.name)
 
+            not_slots_as_last_resort = list(
+                map(
+                    lambda ns: str(ns.slot_name),
+                    filter(
+                        lambda sp: sp.do_not_last_resort,
+                        flow_definition.slot_properties,
+                    ),
+                )
+            )
+
             not_slots = list(
                 map(
                     lambda ns: str(ns.slot_name),
@@ -207,10 +217,11 @@ class ClassicPDDL(Compilation):
                         )
                     ]
 
-                    for operator in source_map[constant]:
-                        precondition_list.append(
-                            self.has_done(self.constant_map[operator])
-                        )
+                    if constant not in not_slots_as_last_resort:
+                        for operator in source_map[constant]:
+                            precondition_list.append(
+                                self.has_done(self.constant_map[operator])
+                            )
 
                     slot_cost = int(
                         (2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value

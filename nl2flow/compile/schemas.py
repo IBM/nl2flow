@@ -3,7 +3,13 @@ from typing import Set, List, Optional, Union
 from pydantic import BaseModel
 
 from nl2flow.compile.utils import string_transform, Transform
-from nl2flow.compile.options import TypeOptions, CostOptions, GoalType, MemoryState
+from nl2flow.compile.options import (
+    TypeOptions,
+    CostOptions,
+    GoalType,
+    MemoryState,
+    SLOT_GOODNESS,
+)
 from nl2flow.plan.schemas import Step
 
 
@@ -179,8 +185,9 @@ class OperatorDefinition(BaseModel):
 
 class SlotProperty(BaseModel):
     slot_name: str
-    slot_desirability: float
+    slot_desirability: float = SLOT_GOODNESS
     propagate_desirability: bool = False
+    do_not_last_resort: bool = False
 
     @classmethod
     def transform(
@@ -190,6 +197,7 @@ class SlotProperty(BaseModel):
             slot_name=string_transform(slot_property.slot_name, transforms),
             slot_desirability=slot_property.slot_desirability,
             propagate_desirability=slot_property.propagate_desirability,
+            do_not_last_resort=slot_property.do_not_last_resort,
         )
 
 
