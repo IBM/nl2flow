@@ -27,7 +27,6 @@ Get started with constructing a simple flow where you have two operators, one ta
 ```python
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.planners import Michael
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 
 new_flow = Flow("Basic Test")
@@ -45,13 +44,19 @@ goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
 new_flow.add(goal)
 
 pddl, _ = new_flow.compile_to_pddl()
+```
+
+Note that this package is only meant to produce the desired PDDL compilations; you still need to call a [planner](nl2flow/plan) after.
+For the above specfication, the resultant plans looks like this. 
+
+```
+from nl2flow.plan.planners import Michael
 
 planner = Michael(url="PLANNER_URL")
 parsed_plans = new_flow.plan_it(planner)
+
 print(planner.pretty_print(parsed_plans))
 ```
-
-The resultant flow looks like this. Note that this package only produces the compiled PDDL; you still need to call a [planner](nl2flow/plan) after.
 
 ```commadline
 ---- Plan #0 ----
