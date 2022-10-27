@@ -124,7 +124,10 @@ class ClassicPDDL(Compilation):
                 effects=[
                     fs.AddEffect(
                         self.known(x, self.constant_map[MemoryState.KNOWN.value])
-                    )
+                    ),
+                    fs.DelEffect(
+                        self.known(x, self.constant_map[MemoryState.UNCERTAIN.value])
+                    ),
                 ],
                 cost=iofs.AdditiveActionCost(
                     self.problem.language.constant(
@@ -140,8 +143,13 @@ class ClassicPDDL(Compilation):
             precondition_list = [
                 neg(self.known(x, self.constant_map[MemoryState.KNOWN.value])),
                 neg(self.not_slotfillable(x)),
+                neg(self.new_item(x)),
             ]
 
+            del_effect_list = [
+                self.mapped(x),
+                self.known(x, self.constant_map[MemoryState.UNKNOWN.value]),
+            ]
             add_effect_list = [
                 self.known(
                     x,
@@ -155,7 +163,8 @@ class ClassicPDDL(Compilation):
                 BasicOperations.SLOT_FILLER.value,
                 parameters=[x],
                 precondition=land(*precondition_list, flat=True),
-                effects=[fs.AddEffect(add) for add in add_effect_list],
+                effects=[fs.AddEffect(add) for add in add_effect_list]
+                + [fs.DelEffect(dele) for dele in del_effect_list],
                 cost=iofs.AdditiveActionCost(self.slot_goodness(x)),
             )
 
@@ -200,14 +209,22 @@ class ClassicPDDL(Compilation):
                 if constant not in not_slots and self.__is_this_a_datum(constant):
 
                     precondition_list = [
+                        neg(self.new_item(self.constant_map[constant])),
                         neg(
                             self.known(
                                 self.constant_map[constant],
                                 self.constant_map[MemoryState.KNOWN.value],
                             )
-                        )
+                        ),
                     ]
 
+                    del_effect_list = [
+                        self.mapped(self.constant_map[constant]),
+                        self.known(
+                            self.constant_map[constant],
+                            self.constant_map[MemoryState.UNKNOWN.value],
+                        ),
+                    ]
                     add_effect_list = [
                         self.known(
                             self.constant_map[constant],
@@ -231,7 +248,8 @@ class ClassicPDDL(Compilation):
                         f"{BasicOperations.SLOT_FILLER.value}----{constant}",
                         parameters=[],
                         precondition=land(*precondition_list, flat=True),
-                        effects=[fs.AddEffect(add) for add in add_effect_list],
+                        effects=[fs.AddEffect(add) for add in add_effect_list]
+                        + [fs.DelEffect(dele) for dele in del_effect_list],
                         cost=iofs.AdditiveActionCost(
                             self.problem.language.constant(
                                 slot_cost,
@@ -303,6 +321,12 @@ class ClassicPDDL(Compilation):
                         else self.constant_map[MemoryState.KNOWN.value],
                     )
                 ),
+                fs.DelEffect(
+                    self.known(
+                        y,
+                        self.constant_map[MemoryState.UNKNOWN.value],
+                    )
+                ),
                 fs.AddEffect(self.mapped_to(x, y)),
                 fs.AddEffect(self.mapped(x)),
             ],
@@ -340,6 +364,12 @@ class ClassicPDDL(Compilation):
                                 if LifeCycleOptions.confirm_on_mapping
                                 in variable_life_cycle
                                 else self.constant_map[MemoryState.KNOWN.value],
+                            )
+                        ),
+                        fs.DelEffect(
+                            self.known(
+                                y,
+                                self.constant_map[MemoryState.UNKNOWN.value],
                             )
                         ),
                         fs.AddEffect(self.mapped_to(x, y)),
@@ -407,6 +437,7 @@ class ClassicPDDL(Compilation):
             parameter_list: List[Any] = list()
             precondition_list: List[Any] = list()
             add_effect_list = [self.has_done(self.constant_map[operator.name])]
+            del_effect_list = list()
             type_list = list()
 
             for o_input in operator.inputs:
@@ -438,12 +469,29 @@ class ClassicPDDL(Compilation):
                     )
 
                     if LifeCycleOptions.uncertain_on_use in variable_life_cycle:
+                        del_effect_list.append(
+                            self.known(
+                                self.constant_map[param],
+                                self.constant_map[MemoryState.KNOWN.value],
+                            )
+                        )
                         add_effect_list.append(
                             self.known(
                                 self.constant_map[param],
                                 self.constant_map[MemoryState.UNCERTAIN.value],
                             )
                         )
+
+            if multi_instance and not parameter_list:
+                type_of_param = TypeOptions.DUMMY.value
+                self.__add_type_item_to_type_map(
+                    TypeItem(name=type_of_param, parent=TypeOptions.ROOT.value)
+                )
+
+                x = self.lang.variable("x", self.type_map[type_of_param])
+
+                parameter_list.append(x)
+                type_list.append(type_of_param)
 
             if multi_instance:
                 new_has_done_predicate_name = f"has_done_{operator.name}"
@@ -456,9 +504,9 @@ class ClassicPDDL(Compilation):
                 add_effect_list.append(
                     getattr(self, new_has_done_predicate_name)(*parameter_list)
                 )
-                precondition_list.append(
-                    neg(getattr(self, new_has_done_predicate_name)(*parameter_list))
-                )
+                # precondition_list.append(
+                #     neg(getattr(self, new_has_done_predicate_name)(*parameter_list))
+                # )
 
             else:
                 precondition_list.append(
@@ -473,6 +521,13 @@ class ClassicPDDL(Compilation):
                     if isinstance(param, MemoryItem):
                         param = param.item_id
 
+                    del_effect_list.append(self.mapped(self.constant_map[param]))
+                    del_effect_list.append(
+                        self.known(
+                            self.constant_map[param],
+                            self.constant_map[MemoryState.UNKNOWN.value],
+                        )
+                    )
                     add_effect_list.append(
                         self.known(
                             self.constant_map[param],
@@ -487,7 +542,8 @@ class ClassicPDDL(Compilation):
                 operator.name,
                 parameters=parameter_list,
                 precondition=land(*precondition_list, flat=True),
-                effects=[fs.AddEffect(add) for add in add_effect_list],
+                effects=[fs.AddEffect(add) for add in add_effect_list]
+                + [fs.DelEffect(dele) for dele in del_effect_list],
                 cost=iofs.AdditiveActionCost(
                     self.problem.language.constant(
                         operator.cost, self.problem.language.get_sort("Integer")

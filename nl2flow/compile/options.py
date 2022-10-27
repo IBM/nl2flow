@@ -22,6 +22,7 @@ class TypeOptions(enum.Enum):
     MEMORY = "datum-state"
     OPERATOR = "operator"
     ROOT = "generic"
+    DUMMY = "dummy"
     LEAF = "end"
 
 

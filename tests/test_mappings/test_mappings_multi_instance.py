@@ -1,12 +1,17 @@
 from nl2flow.compile.options import BasicOperations
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.options import MemoryState, MappingOptions
+from nl2flow.compile.options import (
+    MemoryState,
+    MappingOptions,
+    LifeCycleOptions,
+)
 from nl2flow.compile.schemas import (
     SignatureItem,
     MemoryItem,
     GoalItem,
     GoalItems,
     MappingItem,
+    SlotProperty,
 )
 
 from tests.testing import BaseTestAgents
@@ -198,16 +203,111 @@ class TestMappingsMultiInstance(BaseTestAgents):
         raise NotImplementedError
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_multi_instance_to_produce_with_multi_skill(self) -> None:
-        """A->x, B->y, (x,y)-> C"""
-        raise NotImplementedError
-
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_multi_instance_with_multi_skill_and_confirmation(self) -> None:
-        """A->x, B->y, (x,y)-> C"""
-        raise NotImplementedError
-
-    @pytest.mark.skip(reason="Coming soon.")
     def test_multi_instance_with_iteration(self) -> None:
         """A->x, B->y, (x,y)-> C"""
         raise NotImplementedError
+
+    def test_multi_instance_to_produce_with_multi_skill(self) -> None:
+        goal = GoalItems(goals=GoalItem(goal_name="Copy Agent"))
+        self.flow.add(goal)
+
+        self.flow.mapping_options.add(MappingOptions.transitive)
+        self.flow.add(
+            MappingItem(source_name="source", target_name="target", probability=0.0)
+        )
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 4, "A plan of length 4."
+        assert all(
+            action.name == BasicOperations.SLOT_FILLER.value
+            for action in poi.plan[: len(poi.plan) - 1]
+        ), "Three slot fills."
+
+        # Testing multi-instance producer pattern with an agent instaed
+        filename_producer_agent = Operator("Filename Producer Agent")
+        filename_producer_agent.add_output(
+            SignatureItem(
+                parameters=[
+                    MemoryItem(item_id="file", item_type="filename"),
+                ]
+            )
+        )
+
+        self.flow.add(filename_producer_agent)
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 6, "A plan of length 6."
+        assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
+            "Filename Producer Agent"
+        ) == 2, "Two instances of the new agent."
+
+        for action in poi.plan:
+            if action.name == BasicOperations.MAPPER.value:
+                assert action.inputs[0].name == "file", "... map file item twice ..."
+                assert action.inputs[1].name in [
+                    "source",
+                    "target",
+                ], "... and map to the target agent inputs."
+
+    def test_multi_instance_with_multi_skill_and_confirmation(self) -> None:
+        goal = GoalItems(goals=GoalItem(goal_name="Copy Agent"))
+        self.flow.add(goal)
+
+        filename_producer_agent = Operator("Filename Producer Agent")
+        filename_producer_agent.add_input(
+            SignatureItem(
+                parameters=[
+                    MemoryItem(item_id="something random", item_type="random"),
+                ]
+            )
+        )
+        filename_producer_agent.add_output(
+            SignatureItem(
+                parameters=[
+                    MemoryItem(item_id="file", item_type="filename"),
+                ]
+            )
+        )
+
+        self.flow.add(filename_producer_agent)
+        self.flow.add(
+            [
+                SlotProperty(slot_name="source", slot_desirability=0),
+                SlotProperty(slot_name="target", slot_desirability=0),
+                SlotProperty(slot_name="file", slot_desirability=0),
+                MappingItem(
+                    source_name="source", target_name="target", probability=0.0
+                ),
+            ]
+        )
+
+        self.flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
+        self.flow.mapping_options.add(MappingOptions.transitive)
+
+        pddl, _ = self.flow.compile_to_pddl()
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 8, "A plan of length 8."
+        assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
+            "Filename Producer Agent"
+        ) == 2, "Two instances of the new agent."
+        assert BasicOperations.CONFIRM.value in [
+            action.name for action in poi.plan[: len(poi.plan) - 1]
+        ], "A confirmation step."
+
+        for action in poi.plan:
+            if action.name == BasicOperations.MAPPER.value:
+                assert action.inputs[0].name == "file", "... map file item twice ..."
+                assert action.inputs[1].name in [
+                    "source",
+                    "target",
+                ], "... and map to the target agent inputs."
