@@ -83,34 +83,10 @@ class ClassicPDDL(Compilation):
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
-    def __compile_slots(
+    def __compile_confirmation(
         self,
-        flow_definition: FlowDefinition,
-        slot_options: Set[SlotOptions],
         variable_life_cycle: Set[LifeCycleOptions],
     ) -> None:
-
-        for slot_item in flow_definition.slot_properties:
-            if not slot_item.slot_desirability:
-                self.init.add(
-                    self.not_slotfillable(self.constant_map[slot_item.slot_name])
-                )
-
-        goodness_map: Dict[str, float] = dict()
-        for constant in self.constant_map:
-            if self.__is_this_a_datum(constant):
-                slot_goodness = SLOT_GOODNESS
-
-                for slot in self.flow_definition.slot_properties:
-                    if slot.slot_name == constant:
-                        slot_goodness = slot.slot_desirability
-                        break
-
-                goodness_map[constant] = slot_goodness
-                self.init.set(
-                    self.slot_goodness(self.constant_map[constant]),
-                    int((2 - slot_goodness) * CostOptions.VERY_HIGH.value),
-                )
 
         if variable_life_cycle:
             x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
@@ -137,6 +113,62 @@ class ClassicPDDL(Compilation):
                 ),
             )
 
+    def __compile_slots(
+        self,
+        flow_definition: FlowDefinition,
+        slot_options: Set[SlotOptions],
+        variable_life_cycle: Set[LifeCycleOptions],
+    ) -> None:
+
+        not_slotfillable_types = list()
+        propagate_types = list()
+
+        for slot_item in flow_definition.slot_properties:
+            if not slot_item.slot_desirability:
+                self.init.add(
+                    self.not_slotfillable(self.constant_map[slot_item.slot_name])
+                )
+
+                if slot_item.propagate_desirability:
+                    not_slotfillable_types.append(
+                        self.__get_type_of_constant(slot_item.slot_name)
+                    )
+
+            else:
+
+                if slot_item.propagate_desirability:
+                    propagate_types.append(
+                        self.__get_type_of_constant(slot_item.slot_name)
+                    )
+
+        goodness_map: Dict[str, float] = dict()
+        for constant in self.constant_map:
+            if self.__is_this_a_datum(constant):
+
+                type_of_datum = self.__get_type_of_constant(constant)
+                if type_of_datum in not_slotfillable_types:
+                    self.init.add(self.not_slotfillable(self.constant_map[constant]))
+
+                slot_goodness = SLOT_GOODNESS
+
+                for slot in self.flow_definition.slot_properties:
+                    if (
+                        type_of_datum == self.__get_type_of_constant(slot.slot_name)
+                        and slot.propagate_desirability
+                    ):
+                        slot_goodness = slot.slot_desirability
+                        break
+
+                    if slot.slot_name == constant:
+                        slot_goodness = slot.slot_desirability
+                        break
+
+                goodness_map[constant] = slot_goodness
+                self.init.set(
+                    self.slot_goodness(self.constant_map[constant]),
+                    int((2 - slot_goodness) * CostOptions.VERY_HIGH.value),
+                )
+
         if SlotOptions.higher_cost in slot_options:
             x = self.lang.variable("x", self.type_map[TypeOptions.ROOT.value])
 
@@ -148,7 +180,6 @@ class ClassicPDDL(Compilation):
 
             del_effect_list = [
                 self.mapped(x),
-                self.known(x, self.constant_map[MemoryState.UNKNOWN.value]),
             ]
             add_effect_list = [
                 self.known(
@@ -169,21 +200,7 @@ class ClassicPDDL(Compilation):
             )
 
         if SlotOptions.last_resort in slot_options:
-            source_map: Dict[str, List[str]] = dict()
-
-            for constant in self.constant_map:
-                source_map[constant] = list()
-
-                for operator in self.flow_definition.operators:
-                    outputs = operator.outputs[0]
-                    for o_output in outputs.outcomes:
-                        params = [
-                            p if isinstance(p, str) else p.item_id
-                            for p in o_output.parameters
-                        ]
-
-                        if constant in params:
-                            source_map[constant].append(operator.name)
+            source_map = self.__get_source_map()
 
             not_slots_as_last_resort = list(
                 map(
@@ -220,10 +237,6 @@ class ClassicPDDL(Compilation):
 
                     del_effect_list = [
                         self.mapped(self.constant_map[constant]),
-                        self.known(
-                            self.constant_map[constant],
-                            self.constant_map[MemoryState.UNKNOWN.value],
-                        ),
                     ]
                     add_effect_list = [
                         self.known(
@@ -321,12 +334,6 @@ class ClassicPDDL(Compilation):
                         else self.constant_map[MemoryState.KNOWN.value],
                     )
                 ),
-                fs.DelEffect(
-                    self.known(
-                        y,
-                        self.constant_map[MemoryState.UNKNOWN.value],
-                    )
-                ),
                 fs.AddEffect(self.mapped_to(x, y)),
                 fs.AddEffect(self.mapped(x)),
             ],
@@ -364,12 +371,6 @@ class ClassicPDDL(Compilation):
                                 if LifeCycleOptions.confirm_on_mapping
                                 in variable_life_cycle
                                 else self.constant_map[MemoryState.KNOWN.value],
-                            )
-                        ),
-                        fs.DelEffect(
-                            self.known(
-                                y,
-                                self.constant_map[MemoryState.UNKNOWN.value],
                             )
                         ),
                         fs.AddEffect(self.mapped_to(x, y)),
@@ -522,12 +523,6 @@ class ClassicPDDL(Compilation):
                         param = param.item_id
 
                     del_effect_list.append(self.mapped(self.constant_map[param]))
-                    del_effect_list.append(
-                        self.known(
-                            self.constant_map[param],
-                            self.constant_map[MemoryState.UNKNOWN.value],
-                        )
-                    )
                     add_effect_list.append(
                         self.known(
                             self.constant_map[param],
@@ -550,6 +545,25 @@ class ClassicPDDL(Compilation):
                     )
                 ),
             )
+
+    def __get_source_map(self) -> Dict[str, List[str]]:
+        source_map: Dict[str, List[str]] = dict()
+
+        for constant in self.constant_map:
+            source_map[constant] = list()
+
+            for operator in self.flow_definition.operators:
+                outputs = operator.outputs[0]
+                for o_output in outputs.outcomes:
+                    params = [
+                        p if isinstance(p, str) else p.item_id
+                        for p in o_output.parameters
+                    ]
+
+                    if constant in params:
+                        source_map[constant].append(operator.name)
+
+        return source_map
 
     def __get_type_of_constant(self, constant: str) -> str:
         constant_type: str = TypeOptions.ROOT.value
@@ -718,6 +732,7 @@ class ClassicPDDL(Compilation):
         self.__add_extra_objects(num_lookahead=lookahead_option)
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+        self.__compile_confirmation(variable_life_cycle)
         self.__compile_slots(self.flow_definition, slot_options, variable_life_cycle)
 
         mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])

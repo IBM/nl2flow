@@ -278,9 +278,9 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(filename_producer_agent)
         self.flow.add(
             [
-                SlotProperty(slot_name="source", slot_desirability=0),
-                SlotProperty(slot_name="target", slot_desirability=0),
-                SlotProperty(slot_name="file", slot_desirability=0),
+                SlotProperty(
+                    slot_name="source", slot_desirability=0, propagate_desirability=True
+                ),
                 MappingItem(
                     source_name="source", target_name="target", probability=0.0
                 ),
@@ -289,8 +289,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         self.flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
         self.flow.mapping_options.add(MappingOptions.transitive)
-
-        pddl, _ = self.flow.compile_to_pddl()
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
