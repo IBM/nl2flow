@@ -1,9 +1,12 @@
-from nl2flow.compile.options import BasicOperations
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
+    BasicOperations,
     MemoryState,
     MappingOptions,
+    SlotOptions,
     LifeCycleOptions,
+    GoalType,
 )
 from nl2flow.compile.schemas import (
     SignatureItem,
@@ -16,10 +19,6 @@ from nl2flow.compile.schemas import (
 
 from tests.testing import BaseTestAgents
 from collections import Counter
-
-# NOTE: This is part of dev dependencies
-# noinspection PyPackageRequirements
-import pytest
 
 
 class TestMappingsMultiInstance(BaseTestAgents):
@@ -197,16 +196,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
                     ["item12321", "from"],
                 ], "Preferred mappings only."
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_multi_instance_from_memory_with_multi_skill(self) -> None:
-        """(x,y); x->A, y->A"""
-        raise NotImplementedError
-
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_multi_instance_with_iteration(self) -> None:
-        """A->x, B->y, (x,y)-> C"""
-        raise NotImplementedError
-
     def test_multi_instance_to_produce_with_multi_skill(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Copy Agent"))
         self.flow.add(goal)
@@ -309,3 +298,88 @@ class TestMappingsMultiInstance(BaseTestAgents):
                     "source",
                     "target",
                 ], "... and map to the target agent inputs."
+
+    def test_multi_instance_from_memory_with_multi_skill(self) -> None:
+        self.set_up_multi_instance_email_tests()
+
+        goal = GoalItems(
+            goals=[
+                GoalItem(goal_name=item.item_id, goal_type=GoalType.OBJECT_USED)
+                for item in self.emails_in_memory
+            ]
+        )
+        self.flow.add(goal)
+
+        pddl, _ = self.flow.compile_to_pddl()
+
+        plans = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(plans)
+
+    def test_multi_instance_from_memory_with_multi_skill_and_confirmation(self) -> None:
+        self.set_up_multi_instance_email_tests()
+        self.flow.variable_life_cycle.update(
+            {LifeCycleOptions.uncertain_on_use, LifeCycleOptions.confirm_on_mapping}
+        )
+
+        goal = GoalItems(
+            goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED)
+        )
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(plans)
+
+        poi = plans.list_of_plans[0]
+        action_names = [action.name for action in poi.plan]
+
+        assert len(action_names) == 18, "Plan of length 18."
+
+        self.flow.slot_options.add(SlotOptions.group_slots)
+
+        plans = self.get_plan()
+
+        poi = plans.list_of_plans[0]
+        action_names = [action.name for action in poi.plan]
+
+        assert len(action_names) == 16, "Plan of length 16."
+        assert (
+            action_names.count(BasicOperations.SLOT_FILLER.value) == 1
+        ), "Only one slot filler."
+
+    def test_multi_instance_with_iteration(self) -> None:
+        self.set_up_multi_instance_email_tests()
+
+        goal = GoalItems(
+            goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED)
+        )
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(plans)
+
+    @staticmethod
+    def multi_email_and_typed_goal_test_should_be_same(plans: PlannerResponse) -> None:
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        action_names = [action.name for action in poi.plan]
+
+        assert action_names.count(BasicOperations.MAPPER.value) == 3, "Three maps."
+        assert (
+            action_names.count(BasicOperations.SLOT_FILLER.value) == 3
+        ), "Three slots."
+        assert action_names.count("Email Agent") == 3, "Three emails full."
+
+    def set_up_multi_instance_email_tests(self) -> None:
+        self.flow.add(self.emails_in_memory)
+        self.flow.add(
+            MappingItem(source_name="to", target_name="from", probability=0.0)
+        )
+        self.flow.add(
+            [
+                MappingItem(
+                    source_name=item.item_id, target_name="from", probability=0.0
+                )
+                for item in self.emails_in_memory
+            ]
+        )

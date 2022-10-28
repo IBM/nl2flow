@@ -8,6 +8,7 @@ from nl2flow.compile.options import (
     CompileOptions,
     SlotOptions,
     MappingOptions,
+    ConfirmOptions,
     LifeCycleOptions,
     GoalOptions,
     LOOKAHEAD,
@@ -19,6 +20,7 @@ class Flow:
     def __init__(self, name: str):
         self.flow_definition = FlowDefinition(name=name)
         self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
+        self._confirm_option: Set[ConfirmOptions] = set()
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
@@ -38,13 +40,25 @@ class Flow:
         self._variable_life_cycle = options
 
     @property
+    def confirm_options(self) -> Set[ConfirmOptions]:
+        return self._mapping_option
+
+    @confirm_options.setter
+    def confirm_options(self, options: Set[ConfirmOptions]) -> None:
+        assert all(
+            [isinstance(option, ConfirmOptions) for option in options]
+        ), "Tried to set unknown mapping option."
+
+        self._confirm_option = options
+
+    @property
     def mapping_options(self) -> Set[MappingOptions]:
         return self._mapping_option
 
     @mapping_options.setter
     def mapping_options(self, options: Set[MappingOptions]) -> None:
         assert all(
-            [isinstance(option, SlotOptions) for option in options]
+            [isinstance(option, MappingOptions) for option in options]
         ), "Tried to set unknown mapping option."
 
         exclusive_set = {
@@ -184,6 +198,7 @@ class Flow:
         pddl, transforms = compilation.compile(
             slot_options=self.slot_options,
             mapping_options=self.mapping_options,
+            confirm_options=self.confirm_options,
             variable_life_cycle=self.variable_life_cycle,
             goal_type=goal_type,
             lookahead=lookahead,

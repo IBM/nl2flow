@@ -2,7 +2,13 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
 from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action, Parameter
 from nl2flow.plan.options import TIMEOUT
-from nl2flow.compile.options import BasicOperations, TypeOptions, SlotOptions
+from nl2flow.compile.options import (
+    BasicOperations,
+    TypeOptions,
+    SlotOptions,
+    MappingOptions,
+    ConfirmOptions,
+)
 from nl2flow.compile.schemas import (
     PDDL,
     OperatorDefinition,
@@ -11,7 +17,7 @@ from nl2flow.compile.schemas import (
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, Dict
+from typing import Any, List, Set, Dict, Union
 
 import requests
 import re
@@ -104,9 +110,25 @@ class Planner(ABC):
         pass
 
     @staticmethod
-    def group_slots(plan: ClassicalPlan, flow: Flow) -> ClassicalPlan:
+    def group_items(
+        plan: ClassicalPlan,
+        flow: Flow,
+        option: Union[SlotOptions, MappingOptions, ConfirmOptions],
+    ) -> ClassicalPlan:
 
-        new_slot_fill_action = Action(name=BasicOperations.SLOT_FILLER.value)
+        if option == SlotOptions.group_slots:
+            action_name = BasicOperations.SLOT_FILLER.value
+
+        elif option == MappingOptions.group_maps:
+            action_name = BasicOperations.MAPPER.value
+
+        elif option == ConfirmOptions.group_confirms:
+            action_name = BasicOperations.CONFIRM.value
+
+        else:
+            raise TypeError("Unknown grouping option.")
+
+        new_action = Action(name=action_name)
         new_plan = ClassicalPlan(
             cost=plan.cost,
             length=plan.length,
@@ -116,16 +138,18 @@ class Planner(ABC):
         new_start_of_plan = 0
         for index, action in enumerate(plan.plan):
 
-            if action.name in [o.name for o in flow.flow_definition.operators]:
-                new_start_of_plan = index
-                break
-            elif action.name == BasicOperations.SLOT_FILLER.value:
-                new_slot_fill_action.inputs += action.inputs
+            if action.name == action_name:
+                new_action.inputs.extend(action.inputs)
 
             else:
-                pass
+                new_start_of_plan = index
+                break
 
-        new_plan.plan = [new_slot_fill_action] + plan.plan[new_start_of_plan:]
+        new_plan.plan = (
+            [new_action] + plan.plan[new_start_of_plan:]
+            if new_start_of_plan
+            else plan.plan
+        )
         return new_plan
 
     @staticmethod
@@ -182,6 +206,8 @@ class Michael(Planner, RemotePlanner):
 
             flow: Flow = kwargs["flow"]
             slot_options: Set[SlotOptions] = flow.slot_options
+            mapping_options: Set[MappingOptions] = flow.mapping_options
+            confirm_options: Set[ConfirmOptions] = flow.confirm_options
 
             for plan in response.get("plans", []):
 
@@ -202,7 +228,17 @@ class Michael(Planner, RemotePlanner):
                     new_plan.plan.append(new_action)
 
                 if SlotOptions.group_slots in slot_options:
-                    new_plan = self.group_slots(new_plan, flow)
+                    new_plan = self.group_items(new_plan, flow, SlotOptions.group_slots)
+
+                if MappingOptions.group_maps in mapping_options:
+                    new_plan = self.group_items(
+                        new_plan, flow, MappingOptions.group_maps
+                    )
+
+                if ConfirmOptions.group_confirms in confirm_options:
+                    new_plan = self.group_items(
+                        new_plan, flow, ConfirmOptions.group_confirms
+                    )
 
                 planner_response.list_of_plans.append(new_plan)
 
@@ -233,6 +269,8 @@ class Christian(Planner, RemotePlanner):
 
             flow: Flow = kwargs["flow"]
             slot_options: Set[SlotOptions] = flow.slot_options
+            mapping_options: Set[MappingOptions] = flow.mapping_options
+            confirm_options: Set[ConfirmOptions] = flow.confirm_options
 
             for action in actions:
                 action = re.search(r"\((.*?)\)", action["name"])
@@ -249,7 +287,15 @@ class Christian(Planner, RemotePlanner):
                 new_plan.plan.append(new_action)
 
             if SlotOptions.group_slots in slot_options:
-                new_plan = self.group_slots(new_plan, flow)
+                new_plan = self.group_items(new_plan, flow, SlotOptions.group_slots)
+
+            if MappingOptions.group_maps in mapping_options:
+                new_plan = self.group_items(new_plan, flow, MappingOptions.group_maps)
+
+            if ConfirmOptions.group_confirms in confirm_options:
+                new_plan = self.group_items(
+                    new_plan, flow, ConfirmOptions.group_confirms
+                )
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response

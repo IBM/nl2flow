@@ -70,6 +70,7 @@ class ClassicPDDL(Compilation):
         self.init = tarski.model.create(self.lang)
 
         self.has_done: Any = None
+        self.been_used: Any = None
         self.new_item: Any = None
         self.known: Any = None
         self.mapped: Any = None
@@ -315,11 +316,12 @@ class ClassicPDDL(Compilation):
 
         precondition_list = [
             self.known(x, self.constant_map[MemoryState.KNOWN.value]),
-            neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
+            # neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
             self.is_mappable(x, y),
             neg(self.not_mappable(x, y)),
             neg(self.mapped_to(x, y)),
             neg(self.new_item(y)),
+            self.been_used(y),
         ]
         self.problem.action(
             BasicOperations.MAPPER.value,
@@ -336,6 +338,7 @@ class ClassicPDDL(Compilation):
                 ),
                 fs.AddEffect(self.mapped_to(x, y)),
                 fs.AddEffect(self.mapped(x)),
+                fs.DelEffect(self.been_used(y)),
             ],
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
@@ -355,11 +358,12 @@ class ClassicPDDL(Compilation):
                             neg(self.mapped(x)),
                             neg(self.not_mappable(x, y)),
                             neg(self.new_item(y)),
-                            neg(
-                                self.known(
-                                    y, self.constant_map[MemoryState.KNOWN.value]
-                                )
-                            ),
+                            self.been_used(y),
+                            # neg(
+                            #     self.known(
+                            #         y, self.constant_map[MemoryState.KNOWN.value]
+                            #     )
+                            # ),
                         ],
                         flat=True,
                     ),
@@ -375,6 +379,7 @@ class ClassicPDDL(Compilation):
                         ),
                         fs.AddEffect(self.mapped_to(x, y)),
                         fs.AddEffect(self.mapped(x)),
+                        fs.DelEffect(self.been_used(y)),
                     ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
@@ -401,6 +406,36 @@ class ClassicPDDL(Compilation):
                         goal_predicates.add(
                             self.has_done(self.constant_map[goal.goal_name])
                         )
+
+                    else:
+
+                        list_of_constants = list()
+                        if goal.goal_name in self.type_map:
+                            for item in self.constant_map:
+                                type_of_item = self.__get_type_of_constant(item)
+
+                                if (
+                                    type_of_item == goal.goal_name
+                                    and "new_object" not in item
+                                ):
+                                    list_of_constants.append(item)
+                        else:
+                            list_of_constants = [goal.goal_name]
+
+                        if goal.goal_type == GoalType.OBJECT_USED:
+                            goal_predicates.update(
+                                self.been_used(self.constant_map[item])
+                                for item in list_of_constants
+                            )
+
+                        elif goal.goal_type == GoalType.OBJECT_KNOWN:
+                            goal_predicates.update(
+                                self.known(self.constant_map[item])
+                                for item in list_of_constants
+                            )
+
+                        else:
+                            raise TypeError("Unrecognized goal type.")
 
                 elif isinstance(goal, Constraint):
                     pass
@@ -459,14 +494,19 @@ class ClassicPDDL(Compilation):
                     parameter_list.append(x)
                     type_list.append(type_of_param)
 
-                    precondition_list.append(
-                        self.mapped_to(x, self.constant_map[param])
+                    self.init.add(self.been_used(self.constant_map[param]))
+
+                    add_effect_list.extend(
+                        [self.been_used(x), self.been_used(self.constant_map[param])]
                     )
-                    precondition_list.append(
-                        self.known(
-                            self.constant_map[param],
-                            self.constant_map[MemoryState.KNOWN.value],
-                        )
+                    precondition_list.extend(
+                        [
+                            self.mapped_to(x, self.constant_map[param]),
+                            self.known(
+                                self.constant_map[param],
+                                self.constant_map[MemoryState.KNOWN.value],
+                            ),
+                        ]
                     )
 
                     if LifeCycleOptions.uncertain_on_use in variable_life_cycle:
@@ -476,6 +516,7 @@ class ClassicPDDL(Compilation):
                                 self.constant_map[MemoryState.KNOWN.value],
                             )
                         )
+
                         add_effect_list.append(
                             self.known(
                                 self.constant_map[param],
@@ -654,6 +695,11 @@ class ClassicPDDL(Compilation):
             "has_done", self.type_map[TypeOptions.OPERATOR.value]
         )
 
+        self.been_used = self.lang.predicate(
+            "been_used",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
         self.new_item = self.lang.predicate(
             "new_item", self.type_map[TypeOptions.ROOT.value]
         )
@@ -726,8 +772,6 @@ class ClassicPDDL(Compilation):
             multi_instance=multi_instance_option,
         )
 
-        self.__compile_goals(self.flow_definition.goal_items)
-
         lookahead_option: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
         self.__add_extra_objects(num_lookahead=lookahead_option)
 
@@ -739,6 +783,8 @@ class ClassicPDDL(Compilation):
         self.__compile_mappings(
             self.flow_definition, mapping_options, variable_life_cycle
         )
+
+        self.__compile_goals(self.flow_definition.goal_items)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

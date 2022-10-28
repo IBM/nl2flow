@@ -36,7 +36,12 @@ class CostOptions(enum.Enum):
     VERY_HIGH = 100000
 
 
+class ConfirmOptions(enum.Enum):
+    group_confirms = "GROUP"
+
+
 class MappingOptions(enum.Enum):
+    group_maps = "GROUP"
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
@@ -74,4 +79,5 @@ class GoalOptions(enum.Enum):
 
 class GoalType(enum.Enum):
     OPERATOR = "OPERATOR"
-    OBJECT = "OBJECT"
+    OBJECT_KNOWN = "OBJECT_KNOWN"
+    OBJECT_USED = "OBJECT_USED"
