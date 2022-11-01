@@ -283,7 +283,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        assert len(poi.plan) == 8, "A plan of length 8."
+        assert len(poi.plan) == 9, "A plan of length 9."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
         ) == 2, "Two instances of the new agent."
@@ -293,11 +293,18 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert action.inputs[0].name == "file", "... map file item twice ..."
-                assert action.inputs[1].name in [
-                    "source",
-                    "target",
-                ], "... and map to the target agent inputs."
+                if "new_object" in action.inputs[0].name:
+                    assert (
+                        action.inputs[1].name == "something random"
+                    ), "Map for extra object."
+                else:
+                    assert (
+                        action.inputs[0].name == "file"
+                    ), "... map file item twice ..."
+                    assert action.inputs[1].name in [
+                        "source",
+                        "target",
+                    ], "... and map to the target agent inputs."
 
     def test_multi_instance_from_memory_with_multi_skill(self) -> None:
         self.set_up_multi_instance_email_tests()
@@ -309,8 +316,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
             ]
         )
         self.flow.add(goal)
-
-        pddl, _ = self.flow.compile_to_pddl()
 
         plans = self.get_plan()
         self.multi_email_and_typed_goal_test_should_be_same(plans)

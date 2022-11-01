@@ -176,7 +176,6 @@ class ClassicPDDL(Compilation):
             precondition_list = [
                 neg(self.known(x, self.constant_map[MemoryState.KNOWN.value])),
                 neg(self.not_slotfillable(x)),
-                neg(self.new_item(x)),
             ]
 
             del_effect_list = [
@@ -227,7 +226,6 @@ class ClassicPDDL(Compilation):
                 if constant not in not_slots and self.__is_this_a_datum(constant):
 
                     precondition_list = [
-                        neg(self.new_item(self.constant_map[constant])),
                         neg(
                             self.known(
                                 self.constant_map[constant],
@@ -316,7 +314,6 @@ class ClassicPDDL(Compilation):
 
         precondition_list = [
             self.known(x, self.constant_map[MemoryState.KNOWN.value]),
-            # neg(self.known(y, self.constant_map[MemoryState.KNOWN.value])),
             self.is_mappable(x, y),
             neg(self.not_mappable(x, y)),
             neg(self.mapped_to(x, y)),
@@ -359,11 +356,6 @@ class ClassicPDDL(Compilation):
                             neg(self.not_mappable(x, y)),
                             neg(self.new_item(y)),
                             self.been_used(y),
-                            # neg(
-                            #     self.known(
-                            #         y, self.constant_map[MemoryState.KNOWN.value]
-                            #     )
-                            # ),
                         ],
                         flat=True,
                     ),
@@ -524,17 +516,6 @@ class ClassicPDDL(Compilation):
                             )
                         )
 
-            if multi_instance and not parameter_list:
-                type_of_param = TypeOptions.DUMMY.value
-                self.__add_type_item_to_type_map(
-                    TypeItem(name=type_of_param, parent=TypeOptions.ROOT.value)
-                )
-
-                x = self.lang.variable("x", self.type_map[type_of_param])
-
-                parameter_list.append(x)
-                type_list.append(type_of_param)
-
             if multi_instance:
                 new_has_done_predicate_name = f"has_done_{operator.name}"
                 new_has_done_predicate = self.lang.predicate(
@@ -546,9 +527,22 @@ class ClassicPDDL(Compilation):
                 add_effect_list.append(
                     getattr(self, new_has_done_predicate_name)(*parameter_list)
                 )
-                # precondition_list.append(
-                #     neg(getattr(self, new_has_done_predicate_name)(*parameter_list))
-                # )
+
+                if not parameter_list:
+                    type_of_param = TypeOptions.DUMMY.value
+                    self.__add_type_item_to_type_map(
+                        TypeItem(name=type_of_param, parent=TypeOptions.ROOT.value)
+                    )
+
+                    x = self.lang.variable("x", self.type_map[type_of_param])
+
+                    parameter_list.append(x)
+                    type_list.append(type_of_param)
+
+                else:
+                    precondition_list.append(
+                        neg(getattr(self, new_has_done_predicate_name)(*parameter_list))
+                    )
 
             else:
                 precondition_list.append(

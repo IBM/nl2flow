@@ -124,10 +124,10 @@ class FlowValidator(Validator):
                             error_message=f"Attempt to add unknown operator: {goal_item.goal_name}.",
                         )
 
-                    operator_object_check = (
-                        goal_item.goal_type == GoalType.OBJECT
-                        and not __is_name_a_type_name__(goal_item.goal_name, flow)
-                    )
+                    operator_object_check = goal_item.goal_type in [
+                        GoalType.OBJECT_KNOWN,
+                        GoalType.OBJECT_USED,
+                    ] and not __is_name_a_type_name__(goal_item.goal_name, flow)
                     if operator_object_check:
                         return ValidationMessage(
                             truth_value=not operator_object_check,
