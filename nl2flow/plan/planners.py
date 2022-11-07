@@ -37,8 +37,8 @@ def parse_action(
                 if isinstance(parameter, MemoryItem):
                     list_of_parameters.append(
                         Parameter(
-                            name=parameter.item_id,
-                            type=parameter.item_type or TypeOptions.ROOT.value,
+                            item_id=parameter.item_id,
+                            item_type=parameter.item_type or TypeOptions.ROOT.value,
                         )
                     )
 
@@ -55,13 +55,16 @@ def parse_action(
                         memory_item: MemoryItem = find_in_memory[0]
                         list_of_parameters.append(
                             Parameter(
-                                name=memory_item.item_id, type=memory_item.item_type
+                                item_id=memory_item.item_id,
+                                item_type=memory_item.item_type,
                             )
                         )
 
                     else:
                         list_of_parameters.append(
-                            Parameter(name=parameter, type=TypeOptions.ROOT.value)
+                            Parameter(
+                                item_id=parameter, item_type=TypeOptions.ROOT.value
+                            )
                         )
 
         return list_of_parameters
@@ -83,8 +86,8 @@ def parse_action(
 
         new_action.inputs = [
             Parameter(
-                name=revert_string_transform(param, kwargs["transforms"]),
-                type=TypeOptions.ROOT.value,
+                item_id=revert_string_transform(param, kwargs["transforms"]),
+                item_type=TypeOptions.ROOT.value,
             )
             for param in parameters
         ]
@@ -162,10 +165,10 @@ class Planner(ABC):
 
             for step, action in enumerate(plan.plan):
                 inputs = ", ".join(
-                    [f"{item.name} ({item.type})" for item in action.inputs]
+                    [f"{item.item_id} ({item.item_type})" for item in action.inputs]
                 )
                 outputs = ", ".join(
-                    [f"{item.name} ({item.type})" for item in action.outputs]
+                    [f"{item.item_id} ({item.item_type})" for item in action.outputs]
                 )
 
                 pretty += (
@@ -240,7 +243,8 @@ class Michael(Planner, RemotePlanner):
                         new_plan, flow, ConfirmOptions.group_confirms
                     )
 
-                planner_response.list_of_plans.append(new_plan)
+                if new_plan.length:
+                    planner_response.list_of_plans.append(new_plan)
 
             return planner_response
 

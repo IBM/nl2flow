@@ -3,17 +3,20 @@ from pydantic import BaseModel
 from typing import List, Any, Optional
 
 from nl2flow.compile.utils import string_transform, Transform
+from nl2flow.compile.options import TypeOptions
 
 
 class Parameter(BaseModel):
-    name: str
-    type: str
+    item_id: str
+    item_type: Optional[str]
 
     @classmethod
-    def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Step:
+    def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
         return Parameter(
-            name=string_transform(parameter.name, transforms),
-            type=string_transform(parameter.type, transforms),
+            item_id=string_transform(parameter.item_id, transforms),
+            item_type=string_transform(parameter.item_type, transforms)
+            if parameter.item_type is not None
+            else TypeOptions.ROOT.value,
         )
 
 
@@ -24,6 +27,20 @@ class Step(BaseModel):
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
         return Step(
+            name=string_transform(step.name, transforms),
+            parameters=[p.transform(p, transforms) for p in step.parameters],
+        )
+
+
+class HistoricalStep(Step):
+    attempt_id: int = 0
+
+    @classmethod
+    def transform(
+        cls, step: HistoricalStep, transforms: List[Transform]
+    ) -> HistoricalStep:
+        return HistoricalStep(
+            attempt_id=step.attempt_id,
             name=string_transform(step.name, transforms),
             parameters=[p.transform(p, transforms) for p in step.parameters],
         )

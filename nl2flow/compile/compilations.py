@@ -32,6 +32,7 @@ from nl2flow.compile.options import (
     BasicOperations,
     CostOptions,
     MemoryState,
+    HasDoneState,
 )
 
 
@@ -71,6 +72,7 @@ class ClassicPDDL(Compilation):
 
         self.has_done: Any = None
         self.been_used: Any = None
+        self.not_usable: Any = None
         self.new_item: Any = None
         self.known: Any = None
         self.mapped: Any = None
@@ -119,6 +121,7 @@ class ClassicPDDL(Compilation):
         flow_definition: FlowDefinition,
         slot_options: Set[SlotOptions],
         variable_life_cycle: Set[LifeCycleOptions],
+        num_lookahead: int = LOOKAHEAD,
     ) -> None:
 
         not_slotfillable_types = list()
@@ -179,15 +182,17 @@ class ClassicPDDL(Compilation):
             ]
 
             del_effect_list = [
+                self.not_usable(x),
                 self.mapped(x),
             ]
             add_effect_list = [
+                self.mapped_to(x, x),
                 self.known(
                     x,
                     self.constant_map[MemoryState.UNCERTAIN.value]
                     if LifeCycleOptions.confirm_on_slot in variable_life_cycle
                     else self.constant_map[MemoryState.KNOWN.value],
-                )
+                ),
             ]
 
             self.problem.action(
@@ -198,6 +203,16 @@ class ClassicPDDL(Compilation):
                 + [fs.DelEffect(dele) for dele in del_effect_list],
                 cost=iofs.AdditiveActionCost(self.slot_goodness(x)),
             )
+
+        not_slots = list(
+            map(
+                lambda ns: str(ns.slot_name),
+                filter(
+                    lambda sp: not sp.slot_desirability,
+                    flow_definition.slot_properties,
+                ),
+            )
+        )
 
         if SlotOptions.last_resort in slot_options:
             source_map = self.__get_source_map()
@@ -212,19 +227,8 @@ class ClassicPDDL(Compilation):
                 )
             )
 
-            not_slots = list(
-                map(
-                    lambda ns: str(ns.slot_name),
-                    filter(
-                        lambda sp: not sp.slot_desirability,
-                        flow_definition.slot_properties,
-                    ),
-                )
-            )
-
             for constant in self.constant_map:
                 if constant not in not_slots and self.__is_this_a_datum(constant):
-
                     precondition_list = [
                         neg(
                             self.known(
@@ -235,21 +239,28 @@ class ClassicPDDL(Compilation):
                     ]
 
                     del_effect_list = [
+                        self.not_usable(self.constant_map[constant]),
                         self.mapped(self.constant_map[constant]),
                     ]
                     add_effect_list = [
+                        self.mapped_to(
+                            self.constant_map[constant], self.constant_map[constant]
+                        ),
                         self.known(
                             self.constant_map[constant],
                             self.constant_map[MemoryState.UNCERTAIN.value]
                             if LifeCycleOptions.confirm_on_slot in variable_life_cycle
                             else self.constant_map[MemoryState.KNOWN.value],
-                        )
+                        ),
                     ]
 
                     if constant not in not_slots_as_last_resort:
                         for operator in source_map[constant]:
                             precondition_list.append(
-                                self.has_done(self.constant_map[operator])
+                                self.has_done(
+                                    self.constant_map[operator],
+                                    self.constant_map[HasDoneState.past.value],
+                                )
                             )
 
                     slot_cost = int(
@@ -270,6 +281,28 @@ class ClassicPDDL(Compilation):
                         ),
                     )
 
+        self.__compile_new_object_maps(not_slots, not_slotfillable_types, num_lookahead)
+
+    def __compile_new_object_maps(
+        self,
+        not_slots: List[str],
+        not_slotfillable_types: List[str],
+        num_lookahead: int,
+    ) -> None:
+        for constant in self.constant_map:
+            type_of_datum = self.__get_type_of_constant(constant)
+            if constant in not_slots or type_of_datum in not_slotfillable_types:
+                new_object_names = self.__generate_new_objects(
+                    type_of_datum, num_lookahead
+                )
+
+                for new_object in new_object_names:
+                    self.init.add(
+                        self.not_mappable(
+                            self.constant_map[new_object], self.constant_map[constant]
+                        )
+                    )
+
     def __compile_mappings(
         self,
         flow_definition: FlowDefinition,
@@ -278,7 +311,10 @@ class ClassicPDDL(Compilation):
     ) -> None:
 
         for constant in self.constant_map:
-            if self.__is_this_a_datum(constant):
+            if (
+                self.__is_this_a_datum(constant)
+                and MappingOptions.prohibit_direct not in mapping_options
+            ):
                 self.init.add(
                     self.mapped_to(
                         self.constant_map[constant], self.constant_map[constant]
@@ -320,6 +356,7 @@ class ClassicPDDL(Compilation):
             neg(self.new_item(y)),
             self.been_used(y),
         ]
+
         self.problem.action(
             BasicOperations.MAPPER.value,
             parameters=[x, y],
@@ -336,6 +373,8 @@ class ClassicPDDL(Compilation):
                 fs.AddEffect(self.mapped_to(x, y)),
                 fs.AddEffect(self.mapped(x)),
                 fs.DelEffect(self.been_used(y)),
+                fs.DelEffect(self.been_used(y)),
+                fs.DelEffect(self.not_usable(y)),
             ],
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
@@ -345,20 +384,19 @@ class ClassicPDDL(Compilation):
                 x = self.lang.variable("x", self.type_map[typing])
                 y = self.lang.variable("y", self.type_map[typing])
 
+                precondition_list = [
+                    self.known(x, self.constant_map[MemoryState.KNOWN.value]),
+                    neg(self.mapped_to(x, y)),
+                    neg(self.mapped(x)),
+                    neg(self.not_mappable(x, y)),
+                    neg(self.new_item(y)),
+                    self.been_used(y),
+                ]
+
                 self.problem.action(
                     f"{BasicOperations.MAPPER.value}----{typing}",
                     parameters=[x, y],
-                    precondition=land(
-                        *[
-                            self.known(x, self.constant_map[MemoryState.KNOWN.value]),
-                            neg(self.mapped_to(x, y)),
-                            neg(self.mapped(x)),
-                            neg(self.not_mappable(x, y)),
-                            neg(self.new_item(y)),
-                            self.been_used(y),
-                        ],
-                        flat=True,
-                    ),
+                    precondition=land(*precondition_list, flat=True),
                     effects=[
                         fs.AddEffect(
                             self.known(
@@ -372,6 +410,7 @@ class ClassicPDDL(Compilation):
                         fs.AddEffect(self.mapped_to(x, y)),
                         fs.AddEffect(self.mapped(x)),
                         fs.DelEffect(self.been_used(y)),
+                        fs.DelEffect(self.not_usable(y)),
                     ],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
@@ -396,7 +435,10 @@ class ClassicPDDL(Compilation):
 
                     if goal.goal_type == GoalType.OPERATOR:
                         goal_predicates.add(
-                            self.has_done(self.constant_map[goal.goal_name])
+                            self.has_done(
+                                self.constant_map[goal.goal_name],
+                                self.constant_map[HasDoneState.present.value],
+                            )
                         )
 
                     else:
@@ -441,6 +483,7 @@ class ClassicPDDL(Compilation):
         self,
         list_of_actions: List[OperatorDefinition],
         variable_life_cycle: Set[LifeCycleOptions],
+        mapping_options: Set[MappingOptions],
         multi_instance: bool = True,
     ) -> None:
         def __add_to_condition_list_pre_check(
@@ -464,7 +507,12 @@ class ClassicPDDL(Compilation):
 
             parameter_list: List[Any] = list()
             precondition_list: List[Any] = list()
-            add_effect_list = [self.has_done(self.constant_map[operator.name])]
+            add_effect_list = [
+                self.has_done(
+                    self.constant_map[operator.name],
+                    self.constant_map[HasDoneState.present.value],
+                )
+            ]
             del_effect_list = list()
             type_list = list()
 
@@ -500,6 +548,10 @@ class ClassicPDDL(Compilation):
                             ),
                         ]
                     )
+
+                    if MappingOptions.prohibit_direct in mapping_options:
+                        self.init.add(self.not_usable(self.constant_map[param]))
+                        precondition_list.append(neg(self.not_usable(x)))
 
                     if LifeCycleOptions.uncertain_on_use in variable_life_cycle:
                         del_effect_list.append(
@@ -546,7 +598,12 @@ class ClassicPDDL(Compilation):
 
             else:
                 precondition_list.append(
-                    neg(self.has_done(self.constant_map[operator.name]))
+                    neg(
+                        self.has_done(
+                            self.constant_map[operator.name],
+                            self.constant_map[HasDoneState.past.value],
+                        )
+                    )
                 )
 
             outputs = operator.outputs[0]
@@ -581,6 +638,33 @@ class ClassicPDDL(Compilation):
                 ),
             )
 
+    def __compile_history(
+        self, flow: FlowDefinition, num_lookahead: int, multi_instance: bool = True
+    ) -> None:
+        for history_item in flow.history:
+            operator_name = history_item.name
+            self.init.add(
+                self.has_done(
+                    self.constant_map[operator_name],
+                    self.constant_map[HasDoneState.past.value],
+                )
+            )
+
+            if multi_instance:
+                has_done_predicate_name = f"has_done_{operator_name}"
+                parameter_names = [p.item_id for p in history_item.parameters]
+
+                if not parameter_names:
+                    parameter_names = self.__generate_new_objects(
+                        TypeOptions.DUMMY.value, num_lookahead
+                    )[:1]
+
+                self.init.add(
+                    getattr(self, has_done_predicate_name)(
+                        *[self.constant_map[p] for p in parameter_names]
+                    )
+                )
+
     def __get_source_map(self) -> Dict[str, List[str]]:
         source_map: Dict[str, List[str]] = dict()
 
@@ -613,14 +697,22 @@ class ClassicPDDL(Compilation):
     def __is_this_a_datum(self, constant: str) -> bool:
         return constant not in [
             o.name for o in self.flow_definition.operators
-        ] and constant not in [m.value for m in MemoryState]
+        ] and constant not in [m.value for m in MemoryState] + [
+            hs.value for hs in HasDoneState
+        ]
+
+    @staticmethod
+    def __generate_new_objects(type_name: str, num_lookahead: int) -> List[str]:
+        return [f"new_object_{type_name}_{index}" for index in range(num_lookahead)]
 
     def __add_extra_objects(self, num_lookahead: int) -> None:
         for type_name in self.type_map:
-            if type_name not in [TypeOptions.MEMORY.value, TypeOptions.OPERATOR.value]:
-                new_objects = [
-                    f"new_object_{type_name}_{index}" for index in range(num_lookahead)
-                ]
+            if type_name not in [
+                TypeOptions.MEMORY.value,
+                TypeOptions.OPERATOR.value,
+                TypeOptions.HASDONE.value,
+            ]:
+                new_objects = self.__generate_new_objects(type_name, num_lookahead)
 
                 for new_object in new_objects:
                     self.__add_memory_item_to_constant_map(
@@ -676,6 +768,15 @@ class ClassicPDDL(Compilation):
             TypeOptions.OPERATOR.value
         )
 
+        self.type_map[TypeOptions.HASDONE.value] = self.lang.sort(
+            TypeOptions.HASDONE.value
+        )
+
+        for has_done_state in HasDoneState:
+            self.constant_map[has_done_state.value] = self.lang.constant(
+                has_done_state.value, TypeOptions.HASDONE.value
+            )
+
         self.type_map[TypeOptions.MEMORY.value] = self.lang.sort(
             TypeOptions.MEMORY.value
         )
@@ -686,7 +787,9 @@ class ClassicPDDL(Compilation):
             )
 
         self.has_done = self.lang.predicate(
-            "has_done", self.type_map[TypeOptions.OPERATOR.value]
+            "has_done",
+            self.type_map[TypeOptions.OPERATOR.value],
+            self.type_map[TypeOptions.HASDONE.value],
         )
 
         self.been_used = self.lang.predicate(
@@ -731,6 +834,11 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.ROOT.value],
         )
 
+        self.not_usable = self.lang.predicate(
+            "not_usable",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
         self.mapped_to = self.lang.predicate(
             "mapped_to",
             self.type_map[TypeOptions.ROOT.value],
@@ -760,24 +868,32 @@ class ClassicPDDL(Compilation):
 
         multi_instance_option: bool = kwargs.get("multi_instance", True)  # type: ignore
         variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
+
+        lookahead_option: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+        mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
+
         self.__compile_actions(
             self.flow_definition.operators,
             variable_life_cycle,
+            mapping_options,
             multi_instance=multi_instance_option,
         )
 
-        lookahead_option: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
         self.__add_extra_objects(num_lookahead=lookahead_option)
-
-        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         self.__compile_confirmation(variable_life_cycle)
-        self.__compile_slots(self.flow_definition, slot_options, variable_life_cycle)
 
-        mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
+        self.__compile_slots(
+            self.flow_definition, slot_options, variable_life_cycle, lookahead_option
+        )
+
         self.__compile_mappings(
             self.flow_definition, mapping_options, variable_life_cycle
         )
 
+        self.__compile_history(
+            self.flow_definition, lookahead_option, multi_instance_option
+        )
         self.__compile_goals(self.flow_definition.goal_items)
 
         self.init.set(self.cost(), 0)

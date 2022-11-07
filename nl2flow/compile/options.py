@@ -19,6 +19,7 @@ class CompileOptions(enum.Enum):
 
 
 class TypeOptions(enum.Enum):
+    HASDONE = "has-done-state"
     MEMORY = "datum-state"
     OPERATOR = "operator"
     ROOT = "generic"
@@ -46,6 +47,7 @@ class MappingOptions(enum.Enum):
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
     transitive = "TRANSITIVE"
+    prohibit_direct = "INDIRECTMAP"
 
 
 class SlotOptions(enum.Enum):
@@ -56,6 +58,12 @@ class SlotOptions(enum.Enum):
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
+
+
+class HasDoneState(enum.Enum):
+    past = "past"
+    present = "present"
+    future = "future"
 
 
 class MemoryState(enum.Enum):

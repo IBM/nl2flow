@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Set, List, Optional, Union
 from pydantic import BaseModel
 
+from nl2flow.plan.schemas import HistoricalStep, Parameter
 from nl2flow.compile.utils import string_transform, Transform
 from nl2flow.compile.options import (
     TypeOptions,
@@ -10,7 +11,6 @@ from nl2flow.compile.options import (
     MemoryState,
     SLOT_GOODNESS,
 )
-from nl2flow.plan.schemas import Step
 
 
 class MappingItem(BaseModel):
@@ -29,9 +29,7 @@ class MappingItem(BaseModel):
         )
 
 
-class MemoryItem(BaseModel):
-    item_id: str
-    item_type: Optional[str]
+class MemoryItem(Parameter):
     item_state: MemoryState = MemoryState.UNKNOWN
 
     @classmethod
@@ -214,7 +212,7 @@ class FlowDefinition(BaseModel):
     constraints: List[Constraint] = []
     partial_orders: List[PartialOrder] = []
     list_of_mappings: List[MappingItem] = []
-    history: List[Step] = []
+    history: List[Union[HistoricalStep]] = []
     slot_properties: List[SlotProperty] = []
     goal_items: List[GoalItems] = []
     starts_with: Optional[str]

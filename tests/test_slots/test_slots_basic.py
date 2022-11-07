@@ -22,7 +22,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         assert len(poi.plan) == 3, "There should be 3 steps."
 
         assert Counter(["AccountID", "Email"]) == Counter(
-            [step.inputs[0].name for step in poi.plan[:2]]
+            [step.inputs[0].item_id for step in poi.plan[:2]]
         ), "Two slot fills for account ID and email."
 
         assert (
@@ -35,7 +35,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.add(SlotProperty(slot_name="AccountID", slot_desirability=0))
 
         plans = self.get_plan()
-        assert not plans.list_of_plans, "There should be no empty plans."
+        assert not plans.list_of_plans, "There should be no plans."
 
     @staticmethod
     def fallback_and_last_resort_tests_should_look_the_same(
@@ -49,7 +49,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         step_1: Action = poi.plan[0]
         assert (
             step_1.name == BasicOperations.SLOT_FILLER.value
-            and step_1.inputs[0].name == "database link"
+            and step_1.inputs[0].item_id == "database link"
         ), "The first step should be looking to slot fill database link."
 
         step_2: Action = poi.plan[1]
@@ -107,7 +107,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         step_1: Action = poi.plan[0]
         assert (
             step_1.name == BasicOperations.SLOT_FILLER.value
-            and step_1.inputs[0].name == "name of database"
+            and step_1.inputs[0].item_id == "name of database"
         ), "The first step should be looking to slot fill name of database instead of database link."
 
         step_2: Action = poi.plan[1]

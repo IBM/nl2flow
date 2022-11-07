@@ -32,7 +32,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
 
         assert (
             poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].name == "list of errors"
+            and poi.plan[0].inputs[0].item_id == "list of errors"
         ), "Directly fill slot instead of mapping as last resort."
 
     def test_slot_filler_grouping(self) -> None:
@@ -49,7 +49,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         step_1: Action = poi.plan[0]
         assert step_1.name == BasicOperations.SLOT_FILLER.value, "Slot fill first."
         assert Counter(["AccountID", "Email"]) == Counter(
-            [param.name for param in step_1.inputs]
+            [param.item_id for param in step_1.inputs]
         ), "Slot fill AccountID and Email together."
 
         step_2: Action = poi.plan[1]
@@ -71,7 +71,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         assert len(poi.plan) == 5, "There should be 5 steps."
 
         assert Counter(["AccountID", "Email"]) == Counter(
-            set([step.inputs[0].name for step in poi.plan[: len(poi.plan) - 1]])
+            set([step.inputs[0].item_id for step in poi.plan[: len(poi.plan) - 1]])
         )
 
         assert [step.name for step in poi.plan].count(

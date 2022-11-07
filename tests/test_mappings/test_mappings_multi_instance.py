@@ -89,7 +89,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         )
 
         assert index_of_map > 0, "There should be a rogue mapping action"
-        assert Counter([o.name for o in poi.plan[index_of_map].inputs]) == Counter(
+        assert Counter([o.item_id for o in poi.plan[index_of_map].inputs]) == Counter(
             ["to", "from"]
         ), "A rogue to-from mapping."
 
@@ -135,7 +135,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
                 assert (
-                    action.inputs[0].name == "item12321"
+                    action.inputs[0].item_id == "item12321"
                 ), "Item item12321 mapped twice"
 
     def test_multi_instance_from_memory_with_same_skill_no_preference(self) -> None:
@@ -191,7 +191,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
             ], "Either mapping or slot fill."
 
             if action.name == BasicOperations.MAPPER.value:
-                assert [i.name for i in action.inputs] in [
+                assert [i.item_id for i in action.inputs] in [
                     ["item55132", "to"],
                     ["item12321", "from"],
                 ], "Preferred mappings only."
@@ -238,8 +238,8 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert action.inputs[0].name == "file", "... map file item twice ..."
-                assert action.inputs[1].name in [
+                assert action.inputs[0].item_id == "file", "... map file item twice ..."
+                assert action.inputs[1].item_id in [
                     "source",
                     "target",
                 ], "... and map to the target agent inputs."
@@ -293,15 +293,15 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                if "new_object" in action.inputs[0].name:
+                if "new_object" in action.inputs[0].item_id:
                     assert (
-                        action.inputs[1].name == "something random"
+                        action.inputs[1].item_id == "something random"
                     ), "Map for extra object."
                 else:
                     assert (
-                        action.inputs[0].name == "file"
+                        action.inputs[0].item_id == "file"
                     ), "... map file item twice ..."
-                    assert action.inputs[1].name in [
+                    assert action.inputs[1].item_id in [
                         "source",
                         "target",
                     ], "... and map to the target agent inputs."
