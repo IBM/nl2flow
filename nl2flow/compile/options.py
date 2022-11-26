@@ -1,8 +1,13 @@
 import enum
 
 LOOKAHEAD: int = 1
-RETRY: int = 3
+RETRY: int = 1
+MAX_RETRY: int = 5
 SLOT_GOODNESS: float = 0.5
+
+
+class RestrictedOperations(enum.Enum):
+    ENABLER = "enabler_operator"
 
 
 class BasicOperations(enum.Enum):
@@ -19,11 +24,11 @@ class CompileOptions(enum.Enum):
 
 
 class TypeOptions(enum.Enum):
+    RETRY = "num-retries"
     HASDONE = "has-done-state"
     MEMORY = "datum-state"
     OPERATOR = "operator"
     ROOT = "generic"
-    DUMMY = "dummy"
     LEAF = "end"
 
 

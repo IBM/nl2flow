@@ -4,6 +4,7 @@ from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan, Action, Paramet
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.compile.options import (
     BasicOperations,
+    RestrictedOperations,
     TypeOptions,
     SlotOptions,
     MappingOptions,
@@ -17,7 +18,7 @@ from nl2flow.compile.schemas import (
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, Dict, Union
+from typing import Any, List, Set, Dict, Optional, Union
 
 import requests
 import re
@@ -27,7 +28,7 @@ def parse_action(
     action_name: str,
     parameters: List[str],
     **kwargs: Dict[str, Any],
-) -> Action:
+) -> Optional[Action]:
     def __add_parameters(signatures: List[SignatureItem]) -> List[SignatureItem]:
         list_of_parameters: List[SignatureItem] = list()
 
@@ -92,6 +93,9 @@ def parse_action(
             for param in parameters
         ]
 
+    elif any([action_name.startswith(item.value) for item in RestrictedOperations]):
+        return None
+
     else:
         operator: OperatorDefinition = list(
             filter(lambda x: x.name == action_name, flow.flow_definition.operators)
@@ -118,6 +122,8 @@ class Planner(ABC):
         flow: Flow,
         option: Union[SlotOptions, MappingOptions, ConfirmOptions],
     ) -> ClassicalPlan:
+
+        _ = flow
 
         if option == SlotOptions.group_slots:
             action_name = BasicOperations.SLOT_FILLER.value
@@ -225,10 +231,12 @@ class Michael(Planner, RemotePlanner):
                         action[0], kwargs["transforms"]
                     )
 
-                    new_action: Action = parse_action(
+                    new_action = parse_action(
                         action_name=action_name, parameters=action[1:], **kwargs
                     )
-                    new_plan.plan.append(new_action)
+
+                    if new_action:
+                        new_plan.plan.append(new_action)
 
                 if SlotOptions.group_slots in slot_options:
                     new_plan = self.group_items(new_plan, flow, SlotOptions.group_slots)
@@ -285,10 +293,12 @@ class Christian(Planner, RemotePlanner):
                 action = action.split()
                 action_name = revert_string_transform(action[0], kwargs["transforms"])
 
-                new_action: Action = parse_action(
+                new_action = parse_action(
                     action_name=action_name, parameters=action[1:], **kwargs
                 )
-                new_plan.plan.append(new_action)
+
+                if new_action:
+                    new_plan.plan.append(new_action)
 
             if SlotOptions.group_slots in slot_options:
                 new_plan = self.group_items(new_plan, flow, SlotOptions.group_slots)

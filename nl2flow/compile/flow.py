@@ -12,7 +12,6 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     GoalOptions,
     LOOKAHEAD,
-    RETRY,
 )
 
 
@@ -175,7 +174,6 @@ class Flow:
         self,
         goal_type: GoalOptions = GoalOptions.AND,
         lookahead: int = LOOKAHEAD,
-        retry: int = RETRY,
         multi_instance: bool = True,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
@@ -202,7 +200,6 @@ class Flow:
             variable_life_cycle=self.variable_life_cycle,
             goal_type=goal_type,
             lookahead=lookahead,
-            retry=retry,
             multi_instance=multi_instance,
         )
 

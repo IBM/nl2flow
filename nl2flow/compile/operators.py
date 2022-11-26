@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 from abc import ABC, abstractmethod
 
-from nl2flow.compile.options import CostOptions
+from nl2flow.compile.options import CostOptions, MAX_RETRY
 from nl2flow.compile.schemas import OperatorDefinition, SignatureItem, Outcome
 
 
@@ -16,6 +16,30 @@ class Operator(ABC):
     @property
     def definition(self) -> OperatorDefinition:
         return self.operator_definition
+
+    @property
+    def max_try(self) -> int:
+        return int(self.operator_definition.max_try)
+
+    @max_try.setter
+    def max_try(self, max_try: int) -> None:
+        if isinstance(max_try, int):
+
+            if max_try > MAX_RETRY:
+                raise ValueError(
+                    f"Max retries too high! Tried to set {max_try}, maximum allowed {MAX_RETRY}."
+                )
+
+            elif max_try < 0:
+                raise ValueError(
+                    f"Max try too low! Tried to set {max_try}, minimum allowed is 0."
+                )
+
+            else:
+                self.operator_definition.max_retry = max_try
+
+        else:
+            raise TypeError("Max retries must be integers")
 
     @property
     def cost(self) -> float:

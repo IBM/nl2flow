@@ -10,6 +10,7 @@ from nl2flow.compile.options import (
     GoalType,
     MemoryState,
     SLOT_GOODNESS,
+    RETRY,
 )
 
 
@@ -159,6 +160,7 @@ class TypeItem(BaseModel):
 class OperatorDefinition(BaseModel):
     name: str
     cost: int = CostOptions.UNIT.value
+    max_try: int = RETRY
     inputs: List[SignatureItem] = []
     outputs: Union[Outcome, List[Outcome]] = []
 
@@ -173,6 +175,7 @@ class OperatorDefinition(BaseModel):
         return OperatorDefinition(
             name=string_transform(operator.name, transforms),
             cost=operator.cost,
+            max_try=operator.max_try,
             inputs=[
                 signature.transform(signature, transforms)
                 for signature in operator.inputs

@@ -279,11 +279,13 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
         self.flow.mapping_options.add(MappingOptions.transitive)
 
+        pddl, _ = self.flow.compile_to_pddl()
+
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        assert len(poi.plan) == 9, "A plan of length 9."
+        assert len(poi.plan) == 8, "A plan of length 8."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
         ) == 2, "Two instances of the new agent."
@@ -293,18 +295,11 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                if "new_object" in action.inputs[0].item_id:
-                    assert (
-                        action.inputs[1].item_id == "something random"
-                    ), "Map for extra object."
-                else:
-                    assert (
-                        action.inputs[0].item_id == "file"
-                    ), "... map file item twice ..."
-                    assert action.inputs[1].item_id in [
-                        "source",
-                        "target",
-                    ], "... and map to the target agent inputs."
+                assert action.inputs[0].item_id == "file", "... map file item twice ..."
+                assert action.inputs[1].item_id in [
+                    "source",
+                    "target",
+                ], "... and map to the target agent inputs."
 
     def test_multi_instance_from_memory_with_multi_skill(self) -> None:
         self.set_up_multi_instance_email_tests()

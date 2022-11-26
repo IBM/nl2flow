@@ -1,3 +1,4 @@
+import copy
 import tarski
 import tarski.fstrips as fs
 from tarski.theories import Theory
@@ -22,6 +23,7 @@ from nl2flow.compile.schemas import (
 )
 
 from nl2flow.compile.options import (
+    MAX_RETRY,
     SLOT_GOODNESS,
     LOOKAHEAD,
     TypeOptions,
@@ -30,6 +32,7 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     MappingOptions,
     BasicOperations,
+    RestrictedOperations,
     CostOptions,
     MemoryState,
     HasDoneState,
@@ -82,6 +85,7 @@ class ClassicPDDL(Compilation):
         self.not_mappable: Any = None
         self.map_affinity: Any = None
         self.slot_goodness: Any = None
+        self.connected: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
@@ -570,31 +574,74 @@ class ClassicPDDL(Compilation):
 
             if multi_instance:
                 new_has_done_predicate_name = f"has_done_{operator.name}"
+                has_done_parameters = [
+                    self.type_map[type_name] for type_name in type_list
+                ]
+                has_done_parameters.append(self.type_map[TypeOptions.RETRY.value])
+
                 new_has_done_predicate = self.lang.predicate(
                     new_has_done_predicate_name,
-                    *[self.type_map[type_name] for type_name in type_list],
+                    *has_done_parameters,
                 )
 
                 setattr(self, new_has_done_predicate_name, new_has_done_predicate)
-                add_effect_list.append(
-                    getattr(self, new_has_done_predicate_name)(*parameter_list)
+
+                pre_level = self.lang.variable(
+                    "pre_level", self.type_map[TypeOptions.RETRY.value]
+                )
+                post_level = self.lang.variable(
+                    "post_level", self.type_map[TypeOptions.RETRY.value]
                 )
 
-                if not parameter_list:
-                    type_of_param = TypeOptions.DUMMY.value
-                    self.__add_type_item_to_type_map(
-                        TypeItem(name=type_of_param, parent=TypeOptions.ROOT.value)
+                precondition_list.extend(
+                    [
+                        getattr(self, new_has_done_predicate_name)(
+                            *parameter_list, pre_level
+                        ),
+                        self.connected(
+                            self.constant_map[operator.name], pre_level, post_level
+                        ),
+                    ]
+                )
+
+                add_effect_list.append(
+                    getattr(self, new_has_done_predicate_name)(
+                        *parameter_list, post_level
+                    )
+                )
+
+                for try_level in range(operator.max_try):
+                    self.init.add(
+                        self.connected(
+                            self.constant_map[operator.name],
+                            self.constant_map[f"try_level_{try_level}"],
+                            self.constant_map[f"try_level_{try_level+1}"],
+                        )
                     )
 
-                    x = self.lang.variable("x", self.type_map[type_of_param])
+                enabler_predicate = getattr(self, new_has_done_predicate_name)(
+                    *parameter_list, self.constant_map["try_level_0"]
+                )
+                shadow_predicate = getattr(self, new_has_done_predicate_name)(
+                    *parameter_list, self.constant_map["try_level_1"]
+                )
 
-                    parameter_list.append(x)
-                    type_list.append(type_of_param)
+                self.problem.action(
+                    f"{RestrictedOperations.ENABLER.value}__{operator.name}",
+                    parameters=copy.deepcopy(parameter_list),
+                    precondition=land(
+                        *[neg(enabler_predicate), neg(shadow_predicate)], flat=True
+                    ),
+                    effects=[fs.AddEffect(enabler_predicate)],
+                    cost=iofs.AdditiveActionCost(
+                        self.problem.language.constant(
+                            CostOptions.VERY_HIGH.value,
+                            self.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
 
-                else:
-                    precondition_list.append(
-                        neg(getattr(self, new_has_done_predicate_name)(*parameter_list))
-                    )
+                parameter_list.extend([pre_level, post_level])
 
             else:
                 precondition_list.append(
@@ -641,7 +688,7 @@ class ClassicPDDL(Compilation):
     def __compile_history(
         self, flow: FlowDefinition, num_lookahead: int, multi_instance: bool = True
     ) -> None:
-        for history_item in flow.history:
+        for idx, history_item in enumerate(flow.history):
             operator_name = history_item.name
             self.init.add(
                 self.has_done(
@@ -651,13 +698,16 @@ class ClassicPDDL(Compilation):
             )
 
             if multi_instance:
+                indices_of_interest = [
+                    index
+                    for index, item in enumerate(flow.history)
+                    if item.name == operator_name
+                ]
+                num_try = indices_of_interest.index(idx) + 1
+
                 has_done_predicate_name = f"has_done_{operator_name}"
                 parameter_names = [p.item_id for p in history_item.parameters]
-
-                if not parameter_names:
-                    parameter_names = self.__generate_new_objects(
-                        TypeOptions.DUMMY.value, num_lookahead
-                    )[:1]
+                parameter_names.append(f"try_level_{num_try}")
 
                 self.init.add(
                     getattr(self, has_done_predicate_name)(
@@ -694,12 +744,26 @@ class ClassicPDDL(Compilation):
 
         return constant_type
 
-    def __is_this_a_datum(self, constant: str) -> bool:
-        return constant not in [
-            o.name for o in self.flow_definition.operators
-        ] and constant not in [m.value for m in MemoryState] + [
-            hs.value for hs in HasDoneState
+    @staticmethod
+    def __is_this_a_datum_type(type_name: str) -> bool:
+        return type_name not in [
+            TypeOptions.MEMORY.value,
+            TypeOptions.OPERATOR.value,
+            TypeOptions.HASDONE.value,
+            TypeOptions.RETRY.value,
         ]
+
+    def __is_this_a_datum(self, constant: str) -> bool:
+        type_name = self.__get_type_of_constant(constant)
+        return self.__is_this_a_datum_type(type_name)
+
+    def __add_retry_states(self, max_retry: int) -> None:
+        for item in range(max_retry + 2):
+            self.__add_memory_item_to_constant_map(
+                MemoryItem(
+                    item_id=f"try_level_{item}", item_type=TypeOptions.RETRY.value
+                )
+            )
 
     @staticmethod
     def __generate_new_objects(type_name: str, num_lookahead: int) -> List[str]:
@@ -707,11 +771,7 @@ class ClassicPDDL(Compilation):
 
     def __add_extra_objects(self, num_lookahead: int) -> None:
         for type_name in self.type_map:
-            if type_name not in [
-                TypeOptions.MEMORY.value,
-                TypeOptions.OPERATOR.value,
-                TypeOptions.HASDONE.value,
-            ]:
+            if self.__is_this_a_datum_type(type_name):
                 new_objects = self.__generate_new_objects(type_name, num_lookahead)
 
                 for new_object in new_objects:
@@ -852,6 +912,15 @@ class ClassicPDDL(Compilation):
             self.lang.Real,
         )
 
+        self.type_map[TypeOptions.RETRY.value] = self.lang.sort(TypeOptions.RETRY.value)
+
+        self.connected = self.lang.predicate(
+            "connected",
+            self.type_map[TypeOptions.OPERATOR.value],
+            self.type_map[TypeOptions.RETRY.value],
+            self.type_map[TypeOptions.RETRY.value],
+        )
+
         for type_item in self.flow_definition.type_hierarchy:
             self.__add_type_item_to_type_map(type_item)
 
@@ -873,6 +942,7 @@ class ClassicPDDL(Compilation):
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
 
+        self.__add_retry_states(MAX_RETRY)
         self.__compile_actions(
             self.flow_definition.operators,
             variable_life_cycle,
