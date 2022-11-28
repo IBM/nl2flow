@@ -279,8 +279,6 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
         self.flow.mapping_options.add(MappingOptions.transitive)
 
-        pddl, _ = self.flow.compile_to_pddl()
-
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 

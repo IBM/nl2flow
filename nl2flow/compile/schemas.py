@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Set, List, Optional, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from nl2flow.plan.schemas import HistoricalStep, Parameter
 from nl2flow.compile.utils import string_transform, Transform
@@ -28,6 +28,11 @@ class MappingItem(BaseModel):
             target_name=string_transform(mapping_item.target_name, transforms),
             probability=mapping_item.probability,
         )
+
+    @validator("probability")
+    def _(cls, value: float) -> float:
+        assert 0.0 <= value <= 1.0, "Probability must be between 0 and 1."
+        return value
 
 
 class MemoryItem(Parameter):
@@ -109,16 +114,16 @@ class SignatureItem(BaseModel):
 
 
 class Outcome(BaseModel):
-    conditions: List[SignatureItem] = []
+    constraints: List[Constraint] = []
     outcomes: List[SignatureItem] = []
     probability: Optional[float]
 
     @classmethod
     def transform(cls, outcome: Outcome, transforms: List[Transform]) -> Outcome:
         return Outcome(
-            conditions=[
-                condition.transform(condition, transforms)
-                for condition in outcome.conditions
+            constraints=[
+                constraint.transform(constraint, transforms)
+                for constraint in outcome.constraints
             ],
             outcomes=[
                 outcome.transform(outcome, transforms) for outcome in outcome.outcomes
@@ -200,6 +205,11 @@ class SlotProperty(BaseModel):
             propagate_desirability=slot_property.propagate_desirability,
             do_not_last_resort=slot_property.do_not_last_resort,
         )
+
+    @validator("slot_desirability")
+    def _(cls, value: float) -> float:
+        assert 0.0 <= value <= 1.0, "Probability must be between 0 and 1."
+        return value
 
 
 class PDDL(BaseModel):

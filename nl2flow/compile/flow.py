@@ -191,7 +191,7 @@ class Flow:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
 
-        # assert self.validate(), "Invalid Flow definition!"
+        assert self.validate(), "Invalid Flow definition!"
         compilation = ClassicPDDL(self.flow_definition)
         pddl, transforms = compilation.compile(
             slot_options=self.slot_options,
