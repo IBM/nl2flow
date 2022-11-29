@@ -17,7 +17,7 @@ from nl2flow.compile.schemas import (
 )
 
 
-class TestHistoryBasic(BaseTestAgents):
+class TestHistoryReplan(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 

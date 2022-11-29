@@ -10,5 +10,17 @@ class TestDuplicates(BaseTestAgents):
         BaseTestAgents.setup_method(self)
 
     @pytest.mark.skip(reason="Coming soon.")
-    def test_duplicate_names(self) -> None:
+    def test_duplicate_operators(self) -> None:
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_duplicate_memory_items(self) -> None:
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_duplicate_types(self) -> None:
+        raise NotImplementedError
+
+    @pytest.mark.skip(reason="Coming soon.")
+    def test_duplicate_signature_names(self) -> None:
         raise NotImplementedError
