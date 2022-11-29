@@ -3,7 +3,9 @@ from nl2flow.compile.options import BasicOperations, SlotOptions, LifeCycleOptio
 from nl2flow.plan.schemas import Action
 
 from tests.testing import BaseTestAgents
-from tests.test_slots.test_slots_basic import TestSlotFillerBasic
+from tests.test_slots.test_slots_basic import (
+    fallback_and_last_resort_tests_should_look_the_same,
+)
 
 from collections import Counter
 import pytest
@@ -23,9 +25,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         plans = self.get_plan()
 
         with pytest.raises(Exception):
-            TestSlotFillerBasic.fallback_and_last_resort_tests_should_look_the_same(
-                plans
-            )
+            fallback_and_last_resort_tests_should_look_the_same(plans)
 
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 2, "There should be 2 steps."

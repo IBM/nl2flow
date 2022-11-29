@@ -1,5 +1,7 @@
 from tests.testing import BaseTestAgents
-from tests.test_slots.test_slots_basic import TestSlotFillerBasic
+from tests.test_slots.test_slots_basic import (
+    fallback_and_last_resort_tests_should_look_the_same,
+)
 
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
@@ -16,6 +18,20 @@ from nl2flow.compile.schemas import (
     GoalItems,
     GoalItem,
 )
+
+
+def basic_plan_with_two_steps(planner_response: PlannerResponse) -> None:
+    assert planner_response.list_of_plans, "There should be plans."
+
+    poi = planner_response.list_of_plans[0]
+    assert len(poi.plan) == 2, "There should be 2 step plan."
+
+    first_step = poi.plan[0]
+    first_step_parameter = first_step.inputs[0]
+    assert (
+        first_step.name == BasicOperations.SLOT_FILLER.value
+        and first_step_parameter.item_id == "list of errors"
+    ), "First step should slot fill list of errors directly."
 
 
 class TestHistoryProgression(BaseTestAgents):
@@ -40,26 +56,12 @@ class TestHistoryProgression(BaseTestAgents):
 
         self.flow.add([w3_agent, account_agent])
 
-    @staticmethod
-    def basic_plan_with_two_steps(planner_response: PlannerResponse) -> None:
-        assert planner_response.list_of_plans, "There should be plans."
-
-        poi = planner_response.list_of_plans[0]
-        assert len(poi.plan) == 2, "There should be 2 step plan."
-
-        first_step = poi.plan[0]
-        first_step_parameter = first_step.inputs[0]
-        assert (
-            first_step.name == BasicOperations.SLOT_FILLER.value
-            and first_step_parameter.item_id == "list of errors"
-        ), "First step should slot fill list of errors directly."
-
     def test_history_progress(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
         self.flow.add(goal)
 
         plans = self.get_plan()
-        self.basic_plan_with_two_steps(plans)
+        basic_plan_with_two_steps(plans)
 
         self.flow.add(
             MemoryItem(item_id="list of errors", item_state=MemoryState.KNOWN)
@@ -77,12 +79,12 @@ class TestHistoryProgression(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        self.basic_plan_with_two_steps(plans)
+        basic_plan_with_two_steps(plans)
 
         self.flow.add(SlotProperty(slot_name="list of errors", slot_desirability=0))
 
         plans = self.get_plan()
-        TestSlotFillerBasic.fallback_and_last_resort_tests_should_look_the_same(plans)
+        fallback_and_last_resort_tests_should_look_the_same(plans)
 
     def test_history_progress_with_types(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="W3 Agent"))
