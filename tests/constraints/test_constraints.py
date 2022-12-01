@@ -1,22 +1,108 @@
 from tests.testing import BaseTestAgents
-
-# NOTE: This is part of dev dependencies
-# noinspection PyPackageRequirements
-import pytest
+from nl2flow.compile.operators import ClassicalOperator as Operator
+from nl2flow.compile.options import (
+    MemoryState,
+    ConstraintState,
+    BasicOperations,
+)
+from nl2flow.compile.schemas import (
+    Constraint,
+    MemoryItem,
+    SignatureItem,
+    GoalItems,
+    GoalItem,
+)
 
 
 class TestConstraints(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 
-    @pytest.mark.skip(reason="Coming soon.")
+        twitter_agent = Operator("Twitter")
+        twitter_agent.add_input(
+            SignatureItem(
+                parameters=[MemoryItem(item_id="tweet", item_type="Text")],
+                constraints=[
+                    Constraint(
+                        constraint_id="Char limit for a tweet",
+                        constraint="len(tweet) <= 240",
+                        parameters=["tweet"],
+                    )
+                ],
+            )
+        )
+
+        bitly_agent = Operator("Bitly")
+        bitly_agent.add_input(
+            SignatureItem(parameters=[MemoryItem(item_id="url", item_type="Text")])
+        )
+        bitly_agent.add_output(
+            SignatureItem(parameters=[MemoryItem(item_id="url", item_type="Text")])
+        )
+
+        self.flow.add([twitter_agent, bitly_agent])
+
     def test_constraints_basic(self) -> None:
-        raise NotImplementedError
+        goal = GoalItems(goals=GoalItem(goal_name="Twitter"))
+        self.flow.add(goal)
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_constraints_in_goal(self) -> None:
-        raise NotImplementedError
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
 
-    @pytest.mark.skip(reason="Coming soon.")
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 3, "There should be 3 step plan."
+
+        step_2 = poi.plan[1]
+        assert step_2.name.startswith(
+            BasicOperations.CONSTRAINT.value
+        ), "With a constraint check."
+
     def test_constraints_with_replan(self) -> None:
-        raise NotImplementedError
+        goal = GoalItems(goals=GoalItem(goal_name="Twitter"))
+        self.flow.add(goal)
+        self.flow.add(
+            [
+                MemoryItem(
+                    item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN
+                ),
+                Constraint(
+                    constraint_id="Char limit for a tweet",
+                    constraint="len(tweet) <= 240",
+                    parameters=["tweet"],
+                    truth_value=ConstraintState.FALSE.value,
+                ),
+            ]
+        )
+
+        pddl, _ = self.flow.compile_to_pddl()
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 3, "There should be 3 step plan."
+
+    def test_constraints_in_output(self) -> None:
+        tweet_generator_agent = Operator("TweetGen")
+        tweet_generator_agent.add_output(
+            SignatureItem(
+                parameters=[MemoryItem(item_id="tweet", item_type="Text")],
+                constraints=[
+                    Constraint(
+                        constraint_id="Char limit for a tweet",
+                        constraint="len(tweet) <= 240",
+                        parameters=["tweet"],
+                    )
+                ],
+            )
+        )
+
+        goal = GoalItems(goals=GoalItem(goal_name="Twitter"))
+        self.flow.add([goal, tweet_generator_agent])
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        poi = plans.list_of_plans[0]
+        assert len(poi.plan) == 2, "There should be a 2 step plan."
+        assert poi.plan[0].name == "TweetGen", "No extra constraint check."

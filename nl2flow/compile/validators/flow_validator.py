@@ -92,7 +92,6 @@ class FlowValidator(Validator):
             "operators": "name",
             "memory_items": "item_id",
             "type_hierarchy": "name",
-            "constraints": "name",
         }
 
         for item in check_list_key:

@@ -8,6 +8,7 @@ SLOT_GOODNESS: float = 0.5
 
 class RestrictedOperations(enum.Enum):
     ENABLER = "enabler_operator"
+    GOAL = "goal_operator"
 
 
 class BasicOperations(enum.Enum):
@@ -15,6 +16,7 @@ class BasicOperations(enum.Enum):
     MAPPER = "map"
     TRANSFORM = "transform"
     CONFIRM = "confirm"
+    CONSTRAINT = "check"
 
 
 class CompileOptions(enum.Enum):
@@ -27,7 +29,9 @@ class TypeOptions(enum.Enum):
     RETRY = "num-retries"
     HASDONE = "has-done-state"
     MEMORY = "datum-state"
+    STATUS = "constraint-status"
     OPERATOR = "operator"
+    CONSTRAINT = "constraint"
     ROOT = "generic"
     LEAF = "end"
 
@@ -75,6 +79,11 @@ class MemoryState(enum.Enum):
     KNOWN = "certain"
     UNKNOWN = "unknown"
     UNCERTAIN = "uncertain"
+
+
+class ConstraintState(enum.Enum):
+    TRUE = True
+    FALSE = False
 
 
 class LifeCycleOptions(enum.Enum):

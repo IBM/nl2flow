@@ -35,6 +35,7 @@ from nl2flow.compile.options import (
     RestrictedOperations,
     CostOptions,
     MemoryState,
+    ConstraintState,
     HasDoneState,
 )
 
@@ -74,6 +75,7 @@ class ClassicPDDL(Compilation):
         self.init = tarski.model.create(self.lang)
 
         self.has_done: Any = None
+        self.free: Any = None
         self.been_used: Any = None
         self.not_usable: Any = None
         self.new_item: Any = None
@@ -190,6 +192,7 @@ class ClassicPDDL(Compilation):
                 self.mapped(x),
             ]
             add_effect_list = [
+                self.free(x),
                 self.mapped_to(x, x),
                 self.known(
                     x,
@@ -247,6 +250,7 @@ class ClassicPDDL(Compilation):
                         self.mapped(self.constant_map[constant]),
                     ]
                     add_effect_list = [
+                        self.free(self.constant_map[constant]),
                         self.mapped_to(
                             self.constant_map[constant], self.constant_map[constant]
                         ),
@@ -376,7 +380,6 @@ class ClassicPDDL(Compilation):
                 ),
                 fs.AddEffect(self.mapped_to(x, y)),
                 fs.AddEffect(self.mapped(x)),
-                fs.DelEffect(self.been_used(y)),
                 fs.DelEffect(self.been_used(y)),
                 fs.DelEffect(self.not_usable(y)),
             ],
@@ -572,6 +575,10 @@ class ClassicPDDL(Compilation):
                             )
                         )
 
+                for constraint in o_input.constraints:
+                    constraint_predicate = self.__compile_constraints(constraint)
+                    precondition_list.append(constraint_predicate)
+
             if multi_instance:
                 new_has_done_predicate_name = f"has_done_{operator.name}"
                 has_done_parameters = [
@@ -662,15 +669,22 @@ class ClassicPDDL(Compilation):
                         param = param.item_id
 
                     del_effect_list.append(self.mapped(self.constant_map[param]))
-                    add_effect_list.append(
-                        self.known(
-                            self.constant_map[param],
-                            self.constant_map[MemoryState.UNCERTAIN.value]
-                            if LifeCycleOptions.confirm_on_determination
-                            in variable_life_cycle
-                            else self.constant_map[MemoryState.KNOWN.value],
-                        )
+                    add_effect_list.extend(
+                        [
+                            self.free(self.constant_map[param]),
+                            self.known(
+                                self.constant_map[param],
+                                self.constant_map[MemoryState.UNCERTAIN.value]
+                                if LifeCycleOptions.confirm_on_determination
+                                in variable_life_cycle
+                                else self.constant_map[MemoryState.KNOWN.value],
+                            ),
+                        ]
                     )
+
+                for constraint in o_output.constraints:
+                    constraint_predicate = self.__compile_constraints(constraint)
+                    add_effect_list.append(constraint_predicate)
 
             self.problem.action(
                 operator.name,
@@ -685,8 +699,133 @@ class ClassicPDDL(Compilation):
                 ),
             )
 
+    def __compile_constraints(
+        self,
+        constraint: Constraint,
+    ) -> Any:
+
+        new_constraint_variable = f"status_{constraint.constraint_id}"
+        closed_variables = [
+            self.type_map[self.__get_type_of_constant(item)]
+            for item in constraint.parameters
+        ] + [self.type_map[TypeOptions.STATUS.value]]
+
+        if new_constraint_variable not in [
+            item.symbol for item in self.lang.predicates
+        ]:
+            new_constraint_predicate = self.lang.predicate(
+                new_constraint_variable,
+                *closed_variables,
+            )
+
+            setattr(self, new_constraint_variable, new_constraint_predicate)
+
+            for truth_value in ConstraintState:
+                operator_name = f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint_id}_to_{truth_value.value}"
+
+                parameter_list = list()
+                precondition_list = list()
+                add_effect_list = list()
+                del_effect_list = list()
+
+                for index, parameter in enumerate(constraint.parameters):
+
+                    if parameter not in self.constant_map:
+                        self.__add_memory_item_to_constant_map(
+                            MemoryItem(
+                                item_id=parameter, item_type=TypeOptions.ROOT.value
+                            )
+                        )
+
+                    type_of_param = self.__get_type_of_constant(parameter)
+
+                    cs = self.lang.variable(f"cs{index}", self.type_map[type_of_param])
+
+                    parameter_list.append(cs)
+                    del_effect_list.append(self.free(self.constant_map[parameter]))
+                    precondition_list.extend(
+                        [
+                            self.mapped_to(cs, self.constant_map[parameter]),
+                            self.known(
+                                self.constant_map[parameter],
+                                self.constant_map[MemoryState.KNOWN.value],
+                            ),
+                        ]
+                    )
+
+                    set_variables = [
+                        self.constant_map[item] for item in constraint.parameters
+                    ]
+                    set_predicate = getattr(self, new_constraint_variable)(
+                        *set_variables, self.constant_map[str(truth_value.value)]
+                    )
+                    shadow_predicate = getattr(self, new_constraint_variable)(
+                        *set_variables, self.constant_map[str(not truth_value.value)]
+                    )
+
+                    enabler_name = f"{RestrictedOperations.ENABLER.value}__{constraint.constraint_id}_{parameter}"
+
+                    if enabler_name not in self.problem.actions:
+                        self.problem.action(
+                            enabler_name,
+                            parameters=list(),
+                            precondition=land(self.free(self.constant_map[parameter])),
+                            effects=[
+                                fs.DelEffect(set_predicate),
+                                fs.DelEffect(shadow_predicate),
+                            ],
+                            cost=iofs.AdditiveActionCost(
+                                self.problem.language.constant(
+                                    CostOptions.UNIT.value,
+                                    self.problem.language.get_sort("Integer"),
+                                )
+                            ),
+                        )
+
+                set_predicate = getattr(self, new_constraint_variable)(
+                    *parameter_list, self.constant_map[str(truth_value.value)]
+                )
+                shadow_predicate = getattr(self, new_constraint_variable)(
+                    *parameter_list, self.constant_map[str(not truth_value.value)]
+                )
+                add_effect_list.append(set_predicate)
+                precondition_list.extend(
+                    [
+                        neg(set_predicate),
+                        neg(shadow_predicate),
+                    ]
+                )
+
+                if operator_name not in self.problem.actions:
+                    self.problem.action(
+                        operator_name,
+                        parameters=parameter_list,
+                        precondition=land(*precondition_list, flat=True),
+                        effects=[fs.AddEffect(add) for add in add_effect_list]
+                        + [fs.DelEffect(dele) for dele in del_effect_list],
+                        cost=iofs.AdditiveActionCost(
+                            self.problem.language.constant(
+                                CostOptions.UNIT.value,
+                                self.problem.language.get_sort("Integer"),
+                            )
+                        ),
+                    )
+
+        for known_constraint in self.flow_definition.constraints:
+            if known_constraint.constraint_id == constraint.constraint_id:
+                set_variables = [
+                    self.constant_map[item] for item in known_constraint.parameters
+                ] + [self.constant_map[str(known_constraint.truth_value)]]
+
+                self.init.add(getattr(self, new_constraint_variable)(*set_variables))
+
+        set_variables = [self.constant_map[item] for item in constraint.parameters] + [
+            self.constant_map[str(constraint.truth_value)]
+        ]
+        return getattr(self, new_constraint_variable)(*set_variables)
+
     def __compile_history(
-        self, flow: FlowDefinition, num_lookahead: int, multi_instance: bool = True
+        self, flow: FlowDefinition, multi_instance: bool = True
     ) -> None:
         for idx, history_item in enumerate(flow.history):
             operator_name = history_item.name
@@ -751,6 +890,7 @@ class ClassicPDDL(Compilation):
             TypeOptions.OPERATOR.value,
             TypeOptions.HASDONE.value,
             TypeOptions.RETRY.value,
+            TypeOptions.STATUS.value,
         ]
 
     def __is_this_a_datum(self, constant: str) -> bool:
@@ -837,6 +977,15 @@ class ClassicPDDL(Compilation):
                 has_done_state.value, TypeOptions.HASDONE.value
             )
 
+        self.type_map[TypeOptions.STATUS.value] = self.lang.sort(
+            TypeOptions.STATUS.value
+        )
+
+        for constraint_state in ConstraintState:
+            self.constant_map[str(constraint_state.value)] = self.lang.constant(
+                str(constraint_state.value), TypeOptions.STATUS.value
+            )
+
         self.type_map[TypeOptions.MEMORY.value] = self.lang.sort(
             TypeOptions.MEMORY.value
         )
@@ -921,6 +1070,11 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.RETRY.value],
         )
 
+        self.free = self.lang.predicate(
+            "free",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
         for type_item in self.flow_definition.type_hierarchy:
             self.__add_type_item_to_type_map(type_item)
 
@@ -961,9 +1115,7 @@ class ClassicPDDL(Compilation):
             self.flow_definition, mapping_options, variable_life_cycle
         )
 
-        self.__compile_history(
-            self.flow_definition, lookahead_option, multi_instance_option
-        )
+        self.__compile_history(self.flow_definition, multi_instance_option)
         self.__compile_goals(self.flow_definition.goal_items)
 
         self.init.set(self.cost(), 0)

@@ -51,7 +51,8 @@ class MemoryItem(Parameter):
 
 class Constraint(BaseModel):
     constraint_id: str
-    parameters: Set[str]
+    constraint: str
+    parameters: List[str]
     truth_value: Optional[bool]
 
     @classmethod
@@ -60,10 +61,13 @@ class Constraint(BaseModel):
     ) -> Constraint:
         return Constraint(
             constraint_id=string_transform(constraint.constraint_id, transforms),
+            constraint=constraint.constraint,
             parameters=[
                 string_transform(param, transforms) for param in constraint.parameters
             ],
-            truth_value=constraint.truth_value,
+            truth_value=constraint.truth_value
+            if constraint.truth_value is not None
+            else True,
         )
 
 
@@ -80,7 +84,7 @@ class GoalItem(BaseModel):
 
 
 class GoalItems(BaseModel):
-    goals: Union[GoalItem, Constraint, List[Union[GoalItem, Constraint]]]
+    goals: Union[GoalItem, List[GoalItem]]
 
     @classmethod
     def transform(cls, goal_items: GoalItems, transforms: List[Transform]) -> GoalItems:
@@ -225,7 +229,7 @@ class FlowDefinition(BaseModel):
     constraints: List[Constraint] = []
     partial_orders: List[PartialOrder] = []
     list_of_mappings: List[MappingItem] = []
-    history: List[Union[HistoricalStep]] = []
+    history: List[HistoricalStep] = []
     slot_properties: List[SlotProperty] = []
     goal_items: List[GoalItems] = []
     starts_with: Optional[str]
