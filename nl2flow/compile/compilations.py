@@ -386,6 +386,33 @@ class ClassicPDDL(Compilation):
             cost=iofs.AdditiveActionCost(self.map_affinity(x, y)),
         )
 
+        self.problem.action(
+            f"{BasicOperations.MAPPER.value}--free-alt",
+            parameters=[x, y],
+            precondition=land(*precondition_list, self.free(x), flat=True),
+            effects=[
+                fs.AddEffect(
+                    self.known(
+                        y,
+                        self.constant_map[MemoryState.UNCERTAIN.value]
+                        if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
+                        else self.constant_map[MemoryState.KNOWN.value],
+                    )
+                ),
+                fs.AddEffect(self.mapped_to(x, y)),
+                fs.AddEffect(self.mapped(x)),
+                fs.AddEffect(self.free(y)),
+                fs.DelEffect(self.been_used(y)),
+                fs.DelEffect(self.not_usable(y)),
+            ],
+            cost=iofs.AdditiveActionCost(
+                self.problem.language.constant(
+                    CostOptions.INTERMEDIATE.value,
+                    self.problem.language.get_sort("Integer"),
+                )
+            ),
+        )
+
         for typing in self.type_map:
             if typing not in [t.value for t in TypeOptions]:
                 x = self.lang.variable("x", self.type_map[typing])
@@ -422,6 +449,34 @@ class ClassicPDDL(Compilation):
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
                             CostOptions.LOW.value,
+                            self.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
+
+                self.problem.action(
+                    f"{BasicOperations.MAPPER.value}----{typing}--free-alt",
+                    parameters=[x, y],
+                    precondition=land(*precondition_list, self.free(x), flat=True),
+                    effects=[
+                        fs.AddEffect(
+                            self.known(
+                                y,
+                                self.constant_map[MemoryState.UNCERTAIN.value]
+                                if LifeCycleOptions.confirm_on_mapping
+                                in variable_life_cycle
+                                else self.constant_map[MemoryState.KNOWN.value],
+                            )
+                        ),
+                        fs.AddEffect(self.mapped_to(x, y)),
+                        fs.AddEffect(self.mapped(x)),
+                        fs.AddEffect(self.free(y)),
+                        fs.DelEffect(self.been_used(y)),
+                        fs.DelEffect(self.not_usable(y)),
+                    ],
+                    cost=iofs.AdditiveActionCost(
+                        self.problem.language.constant(
+                            CostOptions.INTERMEDIATE.value,
                             self.problem.language.get_sort("Integer"),
                         )
                     ),
@@ -705,6 +760,7 @@ class ClassicPDDL(Compilation):
     ) -> Any:
 
         new_constraint_variable = f"status_{constraint.constraint_id}"
+        set_variables = [self.constant_map[item] for item in constraint.parameters]
         closed_variables = [
             self.type_map[self.__get_type_of_constant(item)]
             for item in constraint.parameters
@@ -723,7 +779,6 @@ class ClassicPDDL(Compilation):
             for truth_value in ConstraintState:
                 operator_name = f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint_id}_to_{truth_value.value}"
 
-                parameter_list = list()
                 precondition_list = list()
                 add_effect_list = list()
                 del_effect_list = list()
@@ -737,15 +792,9 @@ class ClassicPDDL(Compilation):
                             )
                         )
 
-                    type_of_param = self.__get_type_of_constant(parameter)
-
-                    cs = self.lang.variable(f"cs{index}", self.type_map[type_of_param])
-
-                    parameter_list.append(cs)
                     del_effect_list.append(self.free(self.constant_map[parameter]))
                     precondition_list.extend(
                         [
-                            self.mapped_to(cs, self.constant_map[parameter]),
                             self.known(
                                 self.constant_map[parameter],
                                 self.constant_map[MemoryState.KNOWN.value],
@@ -753,9 +802,6 @@ class ClassicPDDL(Compilation):
                         ]
                     )
 
-                    set_variables = [
-                        self.constant_map[item] for item in constraint.parameters
-                    ]
                     set_predicate = getattr(self, new_constraint_variable)(
                         *set_variables, self.constant_map[str(truth_value.value)]
                     )
@@ -783,10 +829,10 @@ class ClassicPDDL(Compilation):
                         )
 
                 set_predicate = getattr(self, new_constraint_variable)(
-                    *parameter_list, self.constant_map[str(truth_value.value)]
+                    *set_variables, self.constant_map[str(truth_value.value)]
                 )
                 shadow_predicate = getattr(self, new_constraint_variable)(
-                    *parameter_list, self.constant_map[str(not truth_value.value)]
+                    *set_variables, self.constant_map[str(not truth_value.value)]
                 )
                 add_effect_list.append(set_predicate)
                 precondition_list.extend(
@@ -799,7 +845,7 @@ class ClassicPDDL(Compilation):
                 if operator_name not in self.problem.actions:
                     self.problem.action(
                         operator_name,
-                        parameters=parameter_list,
+                        parameters=list(),
                         precondition=land(*precondition_list, flat=True),
                         effects=[fs.AddEffect(add) for add in add_effect_list]
                         + [fs.DelEffect(dele) for dele in del_effect_list],
@@ -813,16 +859,16 @@ class ClassicPDDL(Compilation):
 
         for known_constraint in self.flow_definition.constraints:
             if known_constraint.constraint_id == constraint.constraint_id:
-                set_variables = [
-                    self.constant_map[item] for item in known_constraint.parameters
-                ] + [self.constant_map[str(known_constraint.truth_value)]]
+                self.init.add(
+                    getattr(self, new_constraint_variable)(
+                        *set_variables,
+                        self.constant_map[str(known_constraint.truth_value)],
+                    )
+                )
 
-                self.init.add(getattr(self, new_constraint_variable)(*set_variables))
-
-        set_variables = [self.constant_map[item] for item in constraint.parameters] + [
-            self.constant_map[str(constraint.truth_value)]
-        ]
-        return getattr(self, new_constraint_variable)(*set_variables)
+        return getattr(self, new_constraint_variable)(
+            *set_variables, self.constant_map[str(constraint.truth_value)]
+        )
 
     def __compile_history(
         self, flow: FlowDefinition, multi_instance: bool = True

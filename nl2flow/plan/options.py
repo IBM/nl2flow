@@ -1,2 +1,2 @@
 DEFAULT_PLANNER_URL = "http://solver.planning.domains/solve"
-TIMEOUT = 5
+TIMEOUT = 10

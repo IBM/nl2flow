@@ -74,13 +74,18 @@ class TestConstraints(BaseTestAgents):
             ]
         )
 
-        pddl, _ = self.flow.compile_to_pddl()
-
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        assert len(poi.plan) == 3, "There should be 3 step plan."
+        assert len(poi.plan) == 5, "There should be 5 step plan."
+        assert poi.plan[1].name == "Bitly", "Use Bitly to redo constraint check."
+        assert {poi.plan[0].name, poi.plan[2].name} == {
+            BasicOperations.MAPPER.value
+        }, "Surrounded by two mappings."
+        assert poi.plan[3].name.startswith(
+            BasicOperations.CONSTRAINT.value
+        ), "Redo constraint check."
 
     def test_constraints_in_output(self) -> None:
         tweet_generator_agent = Operator("TweetGen")
