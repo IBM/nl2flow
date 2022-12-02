@@ -138,7 +138,7 @@ class Outcome(BaseModel):
 
 class PartialOrder(BaseModel):
     antecedent: str
-    precedent: str
+    consequent: str
 
     @classmethod
     def transform(
@@ -146,7 +146,7 @@ class PartialOrder(BaseModel):
     ) -> PartialOrder:
         return PartialOrder(
             antecedent=string_transform(partial_order.antecedent, transforms),
-            precedent=string_transform(partial_order.precedent, transforms),
+            consequent=string_transform(partial_order.consequent, transforms),
         )
 
 
@@ -223,15 +223,15 @@ class PDDL(BaseModel):
 
 class FlowDefinition(BaseModel):
     name: str
-    operators: List[OperatorDefinition] = []
     type_hierarchy: List[TypeItem] = []
-    memory_items: List[MemoryItem] = []
-    constraints: List[Constraint] = []
-    partial_orders: List[PartialOrder] = []
-    list_of_mappings: List[MappingItem] = []
-    history: List[HistoricalStep] = []
-    slot_properties: List[SlotProperty] = []
+    operators: List[OperatorDefinition] = []
     goal_items: List[GoalItems] = []
+    history: List[HistoricalStep] = []
+    constraints: List[Constraint] = []
+    memory_items: List[MemoryItem] = []
+    slot_properties: List[SlotProperty] = []
+    list_of_mappings: List[MappingItem] = []
+    partial_orders: List[PartialOrder] = []
     starts_with: Optional[str]
     ends_with: Optional[str]
 

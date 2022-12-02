@@ -36,7 +36,7 @@ class Operator(ABC):
                 )
 
             else:
-                self.operator_definition.max_retry = max_try
+                self.operator_definition.max_try = max_try
 
         else:
             raise TypeError("Max retries must be integers")

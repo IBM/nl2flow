@@ -544,6 +544,19 @@ class ClassicPDDL(Compilation):
 
             self.problem.goal = land(*goal_predicates, flat=True)
 
+    def __add_to_condition_list_pre_check(
+        self, parameter: Union[str, MemoryItem]
+    ) -> None:
+        if isinstance(parameter, str):
+            self.__add_memory_item_to_constant_map(
+                MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value)
+            )
+
+        elif isinstance(parameter, MemoryItem):
+            self.__add_memory_item_to_constant_map(parameter)
+        else:
+            raise TypeError
+
     def __compile_actions(
         self,
         list_of_actions: List[OperatorDefinition],
@@ -551,25 +564,13 @@ class ClassicPDDL(Compilation):
         mapping_options: Set[MappingOptions],
         multi_instance: bool = True,
     ) -> None:
-        def __add_to_condition_list_pre_check(
-            parameter: Union[str, MemoryItem]
-        ) -> None:
-            if isinstance(parameter, str):
-                self.__add_memory_item_to_constant_map(
-                    MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value)
-                )
-
-            elif isinstance(parameter, MemoryItem):
-                self.__add_memory_item_to_constant_map(parameter)
-            else:
-                raise TypeError
 
         for operator in list_of_actions:
-
             self.constant_map[operator.name] = self.lang.constant(
                 operator.name, TypeOptions.OPERATOR.value
             )
 
+        for operator in list_of_actions:
             parameter_list: List[Any] = list()
             precondition_list: List[Any] = list()
             add_effect_list = [
@@ -583,7 +584,7 @@ class ClassicPDDL(Compilation):
 
             for o_input in operator.inputs:
                 for param in o_input.parameters:
-                    __add_to_condition_list_pre_check(param)
+                    self.__add_to_condition_list_pre_check(param)
                     index_of_param = list(o_input.parameters).index(param)
 
                     if isinstance(param, MemoryItem):
@@ -687,28 +688,9 @@ class ClassicPDDL(Compilation):
                         )
                     )
 
-                enabler_predicate = getattr(self, new_has_done_predicate_name)(
-                    *parameter_list, self.constant_map["try_level_0"]
+                self.__add_enabler_action_for_operator(
+                    operator, parameter_list, new_has_done_predicate_name
                 )
-                shadow_predicate = getattr(self, new_has_done_predicate_name)(
-                    *parameter_list, self.constant_map["try_level_1"]
-                )
-
-                self.problem.action(
-                    f"{RestrictedOperations.ENABLER.value}__{operator.name}",
-                    parameters=copy.deepcopy(parameter_list),
-                    precondition=land(
-                        *[neg(enabler_predicate), neg(shadow_predicate)], flat=True
-                    ),
-                    effects=[fs.AddEffect(enabler_predicate)],
-                    cost=iofs.AdditiveActionCost(
-                        self.problem.language.constant(
-                            CostOptions.HIGH.value,
-                            self.problem.language.get_sort("Integer"),
-                        )
-                    ),
-                )
-
                 parameter_list.extend([pre_level, post_level])
 
             else:
@@ -724,7 +706,7 @@ class ClassicPDDL(Compilation):
             outputs = operator.outputs[0]
             for o_output in outputs.outcomes:
                 for param in o_output.parameters:
-                    __add_to_condition_list_pre_check(param)
+                    self.__add_to_condition_list_pre_check(param)
 
                     if isinstance(param, MemoryItem):
                         param = param.item_id
@@ -747,6 +729,7 @@ class ClassicPDDL(Compilation):
                     constraint_predicate = self.__compile_constraints(constraint)
                     add_effect_list.append(constraint_predicate)
 
+            self.__add_partial_orders(operator, precondition_list)
             self.problem.action(
                 operator.name,
                 parameters=parameter_list,
@@ -759,6 +742,81 @@ class ClassicPDDL(Compilation):
                     )
                 ),
             )
+
+    def __add_partial_orders(
+        self, operator: OperatorDefinition, precondition_list: List[Any]
+    ) -> None:
+        for partial_order in self.flow_definition.partial_orders:
+            if (
+                partial_order.consequent == operator.name
+                and partial_order.antecedent
+                not in [o.name for o in self.flow_definition.history]
+            ):
+                precondition_list.append(
+                    self.has_done(
+                        self.constant_map[partial_order.antecedent],
+                        self.constant_map[HasDoneState.present.value],
+                    )
+                )
+
+            if partial_order.antecedent == operator.name:
+                precondition_list.append(
+                    neg(
+                        self.has_done(
+                            self.constant_map[partial_order.consequent],
+                            self.constant_map[HasDoneState.past.value],
+                        )
+                    )
+                )
+
+        if (
+            self.flow_definition.starts_with
+            and self.flow_definition.starts_with != operator.name
+        ):
+            precondition_list.append(
+                self.has_done(
+                    self.constant_map[self.flow_definition.starts_with],
+                    self.constant_map[HasDoneState.present.value],
+                )
+            )
+
+        if self.flow_definition.ends_with:
+            precondition_list.append(
+                neg(
+                    self.has_done(
+                        self.constant_map[self.flow_definition.ends_with],
+                        self.constant_map[HasDoneState.present.value],
+                    )
+                )
+            )
+
+    def __add_enabler_action_for_operator(
+        self,
+        operator: OperatorDefinition,
+        parameter_list: List[Any],
+        new_has_done_predicate_name: Any,
+    ) -> None:
+        enabler_predicate = getattr(self, new_has_done_predicate_name)(
+            *parameter_list, self.constant_map["try_level_0"]
+        )
+        shadow_predicate = getattr(self, new_has_done_predicate_name)(
+            *parameter_list, self.constant_map["try_level_1"]
+        )
+
+        self.problem.action(
+            f"{RestrictedOperations.ENABLER.value}__{operator.name}",
+            parameters=copy.deepcopy(parameter_list),
+            precondition=land(
+                *[neg(enabler_predicate), neg(shadow_predicate)], flat=True
+            ),
+            effects=[fs.AddEffect(enabler_predicate)],
+            cost=iofs.AdditiveActionCost(
+                self.problem.language.constant(
+                    CostOptions.HIGH.value,
+                    self.problem.language.get_sort("Integer"),
+                )
+            ),
+        )
 
     def __compile_constraints(
         self,
