@@ -109,5 +109,5 @@ class TestConstraints(BaseTestAgents):
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        assert len(poi.plan) == 2, "There should be a 2 step plan."
+        assert len(poi.plan) == 2, "There should be 2 step plan."
         assert poi.plan[0].name == "TweetGen", "No extra constraint check."

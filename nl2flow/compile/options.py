@@ -95,8 +95,9 @@ class LifeCycleOptions(enum.Enum):
 
 
 class GoalOptions(enum.Enum):
-    AND = "AND-OR"
-    OR = "OR-AND"
+    AND_AND = "DEFAULT"
+    AND_OR = "AND-OR"
+    OR_AND = "OR-AND"
 
 
 class GoalType(enum.Enum):

@@ -21,6 +21,7 @@ class Flow:
         self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
         self._confirm_option: Set[ConfirmOptions] = set()
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
+        self._goal_type = GoalOptions.AND_AND
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
@@ -97,6 +98,15 @@ class Flow:
 
         self._slot_options = options
 
+    @property
+    def goal_type(self) -> GoalOptions:
+        return self._goal_type
+
+    @goal_type.setter
+    def goal_type(self, goal_type: GoalOptions) -> None:
+        assert isinstance(goal_type, GoalOptions), "Tried to set unknown goal option."
+        self._goal_type = goal_type
+
     def validate(self) -> bool:
         validate: bool = FlowValidator.test_all(self.flow_definition)
         return validate
@@ -156,12 +166,11 @@ class Flow:
     def plan_it(
         self,
         planner: Any,
-        goal_type: GoalOptions = GoalOptions.AND,
         lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
 
-        pddl, transforms = self.compile_to_pddl(goal_type, lookahead, compilation_type)
+        pddl, transforms = self.compile_to_pddl(lookahead, compilation_type)
 
         raw_plans = planner.plan(pddl=pddl)
         parsed_plans: PlannerResponse = planner.parse(
@@ -172,15 +181,9 @@ class Flow:
 
     def compile_to_pddl(
         self,
-        goal_type: GoalOptions = GoalOptions.AND,
         lookahead: int = LOOKAHEAD,
-        multi_instance: bool = True,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
-
-        assert isinstance(
-            goal_type, GoalOptions
-        ), "Goals are either AND-ORs or OR-ANDs."
 
         assert isinstance(
             compilation_type, CompileOptions
@@ -198,9 +201,8 @@ class Flow:
             mapping_options=self.mapping_options,
             confirm_options=self.confirm_options,
             variable_life_cycle=self.variable_life_cycle,
-            goal_type=goal_type,
+            goal_type=self.goal_type,
             lookahead=lookahead,
-            multi_instance=multi_instance,
         )
 
         return pddl, transforms

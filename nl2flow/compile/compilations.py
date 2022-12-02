@@ -28,6 +28,7 @@ from nl2flow.compile.options import (
     LOOKAHEAD,
     TypeOptions,
     GoalType,
+    GoalOptions,
     SlotOptions,
     LifeCycleOptions,
     MappingOptions,
@@ -482,18 +483,23 @@ class ClassicPDDL(Compilation):
                     ),
                 )
 
-    def __compile_goals(self, list_of_goal_items: List[GoalItems]) -> None:
-        goal_predicates = set()
+    def __compile_goals(
+        self, list_of_goal_items: List[GoalItems], goal_type: GoalOptions
+    ) -> None:
 
-        for goal_items in list_of_goal_items:
-            goals = goal_items.goals
+        if goal_type == GoalOptions.AND_AND:
+            goal_predicates = set()
 
-            if not isinstance(goals, List):
-                goals = [goals]
+            for goal_items in list_of_goal_items:
+                goals = goal_items.goals
 
-            for goal in goals:
+                if not isinstance(goals, List):
+                    goals = [goals]
 
-                if isinstance(goal, GoalItem):
+                for goal in goals:
+
+                    if not isinstance(goal, GoalItem):
+                        raise TypeError("Unrecognized goal item.")
 
                     if goal.goal_type == GoalType.OPERATOR:
                         goal_predicates.add(
@@ -526,20 +532,17 @@ class ClassicPDDL(Compilation):
 
                         elif goal.goal_type == GoalType.OBJECT_KNOWN:
                             goal_predicates.update(
-                                self.known(self.constant_map[item])
+                                self.known(
+                                    self.constant_map[item],
+                                    self.constant_map[MemoryState.KNOWN.value],
+                                )
                                 for item in list_of_constants
                             )
 
                         else:
                             raise TypeError("Unrecognized goal type.")
 
-                elif isinstance(goal, Constraint):
-                    pass
-
-                else:
-                    raise TypeError("Unrecognized goal type.")
-
-        self.problem.goal = land(*goal_predicates, flat=True)
+            self.problem.goal = land(*goal_predicates, flat=True)
 
     def __compile_actions(
         self,
@@ -599,7 +602,10 @@ class ClassicPDDL(Compilation):
                     self.init.add(self.been_used(self.constant_map[param]))
 
                     add_effect_list.extend(
-                        [self.been_used(x), self.been_used(self.constant_map[param])]
+                        [
+                            self.been_used(x),
+                            self.been_used(self.constant_map[param]),
+                        ]
                     )
                     precondition_list.extend(
                         [
@@ -697,7 +703,7 @@ class ClassicPDDL(Compilation):
                     effects=[fs.AddEffect(enabler_predicate)],
                     cost=iofs.AdditiveActionCost(
                         self.problem.language.constant(
-                            CostOptions.VERY_HIGH.value,
+                            CostOptions.HIGH.value,
                             self.problem.language.get_sort("Integer"),
                         )
                     ),
@@ -1162,7 +1168,9 @@ class ClassicPDDL(Compilation):
         )
 
         self.__compile_history(self.flow_definition, multi_instance_option)
-        self.__compile_goals(self.flow_definition.goal_items)
+
+        goal_type: GoalOptions = kwargs["goal_type"]
+        self.__compile_goals(self.flow_definition.goal_items, goal_type)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
