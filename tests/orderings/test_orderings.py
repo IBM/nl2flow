@@ -1,6 +1,6 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.schemas import HistoricalStep
+from nl2flow.plan.schemas import Step
 from nl2flow.compile.options import (
     MemoryState,
     BasicOperations,
@@ -116,7 +116,7 @@ class TestOrderings(BaseTestAgents):
             [
                 PartialOrder(antecedent="Final Agent", consequent="Another Agent"),
                 PartialOrder(antecedent="Agent Y", consequent="Agent X"),
-                HistoricalStep(name="Agent X"),
+                Step(name="Agent X"),
             ]
         )
 
@@ -144,7 +144,7 @@ class TestOrderings(BaseTestAgents):
             [
                 PartialOrder(antecedent="Final Agent", consequent="Another Agent"),
                 PartialOrder(antecedent="Agent Y", consequent="Agent X"),
-                HistoricalStep(name="Agent Y"),
+                Step(name="Agent Y"),
                 MemoryItem(item_id="y", item_state=MemoryState.KNOWN),
             ]
         )

@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import HistoricalStep, Parameter
+from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -88,7 +88,7 @@ class TestHistoryReplan(BaseTestAgents):
                 MappingItem(
                     source_name="item14311", target_name="from", probability=0.0
                 ),
-                HistoricalStep(
+                Step(
                     name="Email Agent",
                     parameters=forbidden_parameters,
                 ),
@@ -118,7 +118,7 @@ class TestHistoryReplan(BaseTestAgents):
                 MappingItem(
                     source_name="item14311", target_name="from", probability=0.0
                 ),
-                HistoricalStep(
+                Step(
                     name="Email Agent",
                     parameters=forbidden_parameters,
                 ),

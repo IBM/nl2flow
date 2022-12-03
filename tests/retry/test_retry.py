@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import HistoricalStep, Parameter
+from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType, MemoryState, BasicOperations
 from nl2flow.compile.schemas import (
@@ -21,7 +21,7 @@ class TestRetryBasic(BaseTestAgents):
         self.flow.add(
             [
                 basic_agent,
-                HistoricalStep(name="Basic Agent"),
+                Step(name="Basic Agent"),
                 GoalItems(goals=GoalItem(goal_name="Basic Agent")),
             ]
         )
@@ -36,8 +36,8 @@ class TestRetryBasic(BaseTestAgents):
         self.flow.add(
             [
                 basic_agent,
-                HistoricalStep(name="Basic Agent"),
-                HistoricalStep(name="Basic Agent"),
+                Step(name="Basic Agent"),
+                Step(name="Basic Agent"),
                 GoalItems(goals=GoalItem(goal_name="Basic Agent")),
             ]
         )
@@ -50,7 +50,7 @@ class TestRetryBasic(BaseTestAgents):
             len(poi.plan) == 1 and poi.plan[0].name == "Basic Agent"
         ), "One step with the target agent."
 
-        self.flow.add(HistoricalStep(name="Basic Agent"))
+        self.flow.add(Step(name="Basic Agent"))
 
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no plans."
@@ -83,7 +83,7 @@ class TestRetryBasic(BaseTestAgents):
             sum([int(poi.cost == p.cost) for p in plans.list_of_plans]) == 2
         ), "Two plans possible."
 
-        self.flow.add(HistoricalStep(name="New Agent"))
+        self.flow.add(Step(name="New Agent"))
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
@@ -105,7 +105,7 @@ class TestRetryBasic(BaseTestAgents):
 
         self.flow.add(agent)
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent")))
-        self.flow.add(HistoricalStep(name="Agent", parameters=[Parameter(item_id="x")]))
+        self.flow.add(Step(name="Agent", parameters=[Parameter(item_id="x")]))
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
@@ -125,7 +125,7 @@ class TestRetryBasic(BaseTestAgents):
 
         self.flow.add(agent)
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent")))
-        self.flow.add(HistoricalStep(name="Agent", parameters=[Parameter(item_id="x")]))
+        self.flow.add(Step(name="Agent", parameters=[Parameter(item_id="x")]))
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."

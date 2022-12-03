@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Set, List, Optional, Union
 from pydantic import BaseModel, validator
 
-from nl2flow.plan.schemas import HistoricalStep, Parameter
+from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.utils import string_transform, Transform
 from nl2flow.compile.options import (
     TypeOptions,
@@ -226,7 +226,7 @@ class FlowDefinition(BaseModel):
     type_hierarchy: List[TypeItem] = []
     operators: List[OperatorDefinition] = []
     goal_items: List[GoalItems] = []
-    history: List[HistoricalStep] = []
+    history: List[Step] = []
     constraints: List[Constraint] = []
     memory_items: List[MemoryItem] = []
     slot_properties: List[SlotProperty] = []
