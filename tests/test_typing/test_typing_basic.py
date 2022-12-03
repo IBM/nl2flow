@@ -89,5 +89,5 @@ class TestTypingBasic(BaseTestAgents):
 
         poi = plans.list_of_plans[0]
         assert "Username" in [
-            step.inputs[0].name for step in poi.plan[1:3]
+            step.inputs[0].item_id for step in poi.plan[1:3]
         ], "Make sure Username is used."

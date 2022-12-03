@@ -1,7 +1,7 @@
 from tests.testing import BaseTestAgents
+from nl2flow.compile.operators import ClassicalOperator as Operator
+from nl2flow.compile.schemas import TypeItem
 
-# NOTE: This is part of dev dependencies
-# noinspection PyPackageRequirements
 import pytest
 
 
@@ -9,18 +9,21 @@ class TestDuplicates(BaseTestAgents):
     def setup_method(self) -> None:
         BaseTestAgents.setup_method(self)
 
-    @pytest.mark.skip(reason="Coming soon.")
     def test_duplicate_operators(self) -> None:
-        raise NotImplementedError
+        agent_1 = Operator("CASE CONFLICT")
+        agent_2 = Operator("case conflict")
+        self.flow.add([agent_1, agent_2])
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_duplicate_memory_items(self) -> None:
-        raise NotImplementedError
+        with pytest.raises(Exception):
+            self.flow.validate()
 
-    @pytest.mark.skip(reason="Coming soon.")
     def test_duplicate_types(self) -> None:
-        raise NotImplementedError
+        self.flow.add(
+            [
+                TypeItem(name="Contact"),
+                TypeItem(name="Contact"),
+            ]
+        )
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_duplicate_signature_names(self) -> None:
-        raise NotImplementedError
+        with pytest.raises(Exception):
+            self.flow.validate()
