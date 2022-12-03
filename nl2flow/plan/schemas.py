@@ -33,14 +33,13 @@ class Step(BaseModel):
 
 
 class HistoricalStep(Step):
-    attempt_id: int = 0
+    pass
 
     @classmethod
     def transform(
         cls, step: HistoricalStep, transforms: List[Transform]
     ) -> HistoricalStep:
         return HistoricalStep(
-            attempt_id=step.attempt_id,
             name=string_transform(step.name, transforms),
             parameters=[p.transform(p, transforms) for p in step.parameters],
         )

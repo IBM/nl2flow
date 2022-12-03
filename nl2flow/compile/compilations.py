@@ -667,6 +667,11 @@ class ClassicPDDL(Compilation):
                         getattr(self, new_has_done_predicate_name)(
                             *parameter_list, pre_level
                         ),
+                        neg(
+                            getattr(self, new_has_done_predicate_name)(
+                                *parameter_list, post_level
+                            )
+                        ),
                         self.connected(
                             self.constant_map[operator.name], pre_level, post_level
                         ),

@@ -217,6 +217,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         # Testing multi-instance producer pattern with an agent instaed
         filename_producer_agent = Operator("Filename Producer Agent")
+        filename_producer_agent.max_try = 3
         filename_producer_agent.add_output(
             SignatureItem(
                 parameters=[
@@ -249,6 +250,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(goal)
 
         filename_producer_agent = Operator("Filename Producer Agent")
+        filename_producer_agent.max_try = 3
         filename_producer_agent.add_input(
             SignatureItem(
                 parameters=[
