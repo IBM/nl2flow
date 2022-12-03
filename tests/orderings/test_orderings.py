@@ -61,11 +61,9 @@ class TestOrderings(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Agent Y", "Starts with Agent Y."
-        assert len(
-            [p for p in plans.list_of_plans if len(p.plan) == len(poi.plan)]
-        ), "Two POIs."
 
     def test_ends_with(self) -> None:
+        self.flow.set_start("Agent X")
         self.flow.set_end("Another Agent")
         self.flow.add(
             GoalItems(
@@ -76,15 +74,14 @@ class TestOrderings(BaseTestAgents):
             )
         )
 
+        pddl, _ = self.flow.compile_to_pddl()
+
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[3].name == "Another Agent", "Ends with Another Agent."
-        assert len(
-            [p for p in plans.list_of_plans if len(p.plan) == len(poi.plan)]
-        ), "Two POIs."
 
     def test_partial_order(self) -> None:
         self.flow.add(
@@ -110,8 +107,8 @@ class TestOrderings(BaseTestAgents):
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Agent Y", "Starts with Agent Y."
         assert poi.plan[3].name == "Another Agent", "Ends with Another Agent."
-        assert len(
-            [p for p in plans.list_of_plans if len(p.plan) == len(poi.plan)]
+        assert (
+            len([p for p in plans.list_of_plans if p.cost == poi.cost]) == 1
         ), "Only one POI."
 
     def test_partial_order_with_history_not_allowed(self) -> None:
