@@ -47,9 +47,9 @@ class TestGoalsAdvanced(BaseTestAgents):
         email_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="from", item_type="Email ID"),
-                    MemoryItem(item_id="to", item_type="Email ID"),
-                    MemoryItem(item_id="body", item_type="Text"),
+                    Parameter(item_id="from", item_type="Email ID"),
+                    Parameter(item_id="to", item_type="Email ID"),
+                    Parameter(item_id="body", item_type="Text"),
                     "attachments",
                 ]
             )
@@ -94,10 +94,7 @@ class TestGoalsAdvanced(BaseTestAgents):
                     goals=GoalItem(
                         goal_name=Step(
                             name="Email Agent",
-                            parameters=[
-                                Parameter(item_id=item)
-                                for item in desired_goal_parameters
-                            ],
+                            parameters=desired_goal_parameters,
                         ),
                         goal_type=GoalType.OPERATOR,
                     )
@@ -111,9 +108,7 @@ class TestGoalsAdvanced(BaseTestAgents):
         self.flow.add(
             Step(
                 name="Email Agent",
-                parameters=[
-                    Parameter(item_id=item) for item in desired_goal_parameters
-                ],
+                parameters=desired_goal_parameters,
             )
         )
 
@@ -123,9 +118,7 @@ class TestGoalsAdvanced(BaseTestAgents):
         self.flow.add(
             Step(
                 name="Email Agent",
-                parameters=[
-                    Parameter(item_id=item) for item in desired_goal_parameters
-                ],
+                parameters=desired_goal_parameters,
             )
         )
 

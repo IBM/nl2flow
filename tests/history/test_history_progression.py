@@ -3,7 +3,7 @@ from tests.test_slots.test_slots_basic import (
     fallback_and_last_resort_tests_should_look_the_same,
 )
 
-from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse, Parameter
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -41,16 +41,14 @@ class TestHistoryProgression(BaseTestAgents):
         account_agent = Operator("Account Agent")
         account_agent.add_output(
             SignatureItem(
-                parameters=[
-                    MemoryItem(item_id="account name", item_type="Email Object")
-                ]
+                parameters=[Parameter(item_id="account name", item_type="Email Object")]
             )
         )
 
         w3_agent = Operator("W3 Agent")
         w3_agent.add_input(
             SignatureItem(
-                parameters=[MemoryItem(item_id="W3 ID", item_type="Email Object")]
+                parameters=[Parameter(item_id="W3 ID", item_type="Email Object")]
             )
         )
 

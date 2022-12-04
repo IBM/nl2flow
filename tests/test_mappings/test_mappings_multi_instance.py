@@ -8,6 +8,7 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     GoalType,
 )
+from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
     SignatureItem,
     MemoryItem,
@@ -30,8 +31,8 @@ class TestMappingsMultiInstance(BaseTestAgents):
         email_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="from", item_type="Email ID"),
-                    MemoryItem(item_id="to", item_type="Email ID"),
+                    Parameter(item_id="from", item_type="Email ID"),
+                    Parameter(item_id="to", item_type="Email ID"),
                     "body",
                     "attachments",
                 ]
@@ -62,9 +63,9 @@ class TestMappingsMultiInstance(BaseTestAgents):
         copy_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="source", item_type="filename"),
-                    MemoryItem(item_id="target", item_type="filename"),
-                    MemoryItem(item_id="destination", item_type="directory"),
+                    Parameter(item_id="source", item_type="filename"),
+                    Parameter(item_id="target", item_type="filename"),
+                    Parameter(item_id="destination", item_type="directory"),
                 ]
             )
         )
@@ -221,7 +222,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         filename_producer_agent.add_output(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="file", item_type="filename"),
+                    Parameter(item_id="file", item_type="filename"),
                 ]
             )
         )
@@ -254,14 +255,14 @@ class TestMappingsMultiInstance(BaseTestAgents):
         filename_producer_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="something random", item_type="random"),
+                    Parameter(item_id="something random", item_type="random"),
                 ]
             )
         )
         filename_producer_agent.add_output(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="file", item_type="filename"),
+                    Parameter(item_id="file", item_type="filename"),
                 ]
             )
         )

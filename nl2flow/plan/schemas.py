@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pydantic import BaseModel
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Union
 
 from nl2flow.compile.utils import string_transform, Transform
 from nl2flow.compile.options import TypeOptions
@@ -22,13 +22,17 @@ class Parameter(BaseModel):
 
 class Step(BaseModel):
     name: str
-    parameters: List[Parameter] = []
+    parameters: List[Union[Parameter, str]] = []
 
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
+        parameters = [
+            p if isinstance(p, Parameter) else Parameter(item_id=p)
+            for p in step.parameters
+        ]
         return Step(
             name=string_transform(step.name, transforms),
-            parameters=[p.transform(p, transforms) for p in step.parameters],
+            parameters=[p.transform(p, transforms) for p in parameters],
         )
 
 

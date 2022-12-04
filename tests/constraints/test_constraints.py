@@ -5,6 +5,7 @@ from nl2flow.compile.options import (
     ConstraintState,
     BasicOperations,
 )
+from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
     Constraint,
     MemoryItem,
@@ -21,7 +22,7 @@ class TestConstraints(BaseTestAgents):
         twitter_agent = Operator("Twitter")
         twitter_agent.add_input(
             SignatureItem(
-                parameters=[MemoryItem(item_id="tweet", item_type="Text")],
+                parameters=[Parameter(item_id="tweet", item_type="Text")],
                 constraints=[
                     Constraint(
                         constraint_id="Char limit for a tweet",
@@ -91,7 +92,7 @@ class TestConstraints(BaseTestAgents):
         tweet_generator_agent = Operator("TweetGen")
         tweet_generator_agent.add_output(
             SignatureItem(
-                parameters=[MemoryItem(item_id="tweet", item_type="Text")],
+                parameters=[Parameter(item_id="tweet", item_type="Text")],
                 constraints=[
                     Constraint(
                         constraint_id="Char limit for a tweet",

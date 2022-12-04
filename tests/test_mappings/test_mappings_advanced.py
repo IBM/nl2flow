@@ -1,6 +1,6 @@
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations, LifeCycleOptions
-from nl2flow.plan.schemas import Action
+from nl2flow.plan.schemas import Action, Parameter
 from nl2flow.compile.schemas import (
     GoalItem,
     GoalItems,
@@ -23,7 +23,7 @@ class TestMappingsAdvanced(BaseTestAgents):
         test_agent = Operator("Test Agent")
         test_agent.add_input(
             SignatureItem(
-                parameters=[MemoryItem(item_id="random", item_type="something_random")]
+                parameters=[Parameter(item_id="random", item_type="something_random")]
             )
         )
 

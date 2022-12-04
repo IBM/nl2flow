@@ -2,10 +2,10 @@ from tests.testing import BaseTestAgents
 
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations
+from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
     GoalItem,
     GoalItems,
-    MemoryItem,
     TypeItem,
     SignatureItem,
     SlotProperty,
@@ -22,7 +22,7 @@ class TestTypingAdvanced(BaseTestAgents):
         helper_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="Email ID", item_type="Contact"),
+                    Parameter(item_id="Email ID", item_type="Contact"),
                 ]
             )
         )
@@ -32,8 +32,8 @@ class TestTypingAdvanced(BaseTestAgents):
         new_credit_score_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="New Email", item_type="Contact"),
-                    MemoryItem(item_id="New AccountID"),
+                    Parameter(item_id="New Email", item_type="Contact"),
+                    Parameter(item_id="New AccountID"),
                 ]
             )
         )
@@ -65,7 +65,7 @@ class TestTypingAdvanced(BaseTestAgents):
         fake_helper_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="Fake Email ID", item_type="Contact"),
+                    Parameter(item_id="Fake Email ID", item_type="Contact"),
                 ]
             )
         )

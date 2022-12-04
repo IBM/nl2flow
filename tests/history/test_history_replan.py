@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step, Parameter
+from nl2flow.plan.schemas import Step
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -7,6 +7,7 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     BasicOperations,
 )
+from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
     MemoryItem,
     SignatureItem,
@@ -26,8 +27,8 @@ class TestHistoryReplan(BaseTestAgents):
         email_agent.add_input(
             SignatureItem(
                 parameters=[
-                    MemoryItem(item_id="from", item_type="Email ID"),
-                    MemoryItem(item_id="to", item_type="Email ID"),
+                    Parameter(item_id="from", item_type="Email ID"),
+                    Parameter(item_id="to", item_type="Email ID"),
                     "body",
                     "attachments",
                 ]
@@ -79,8 +80,8 @@ class TestHistoryReplan(BaseTestAgents):
         forbidden_parameters = [
             self.emails_in_memory[0],
             self.emails_in_memory[1],
-            Parameter(item_id="body"),
-            Parameter(item_id="attachments"),
+            "body",
+            "attachments",
         ]
 
         self.flow.add(
@@ -109,8 +110,8 @@ class TestHistoryReplan(BaseTestAgents):
         forbidden_parameters = [
             self.emails_in_memory[0],
             self.emails_in_memory[1],
-            Parameter(item_id="body"),
-            Parameter(item_id="attachments"),
+            "body",
+            "attachments",
         ]
 
         self.flow.add(
