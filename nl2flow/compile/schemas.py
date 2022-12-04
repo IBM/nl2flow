@@ -51,7 +51,7 @@ class MemoryItem(Parameter):
 
 class Constraint(BaseModel):
     constraint_id: str
-    constraint: str
+    constraint: Optional[str]
     parameters: List[str]
     truth_value: Optional[bool]
 

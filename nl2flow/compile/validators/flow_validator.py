@@ -3,51 +3,84 @@ import collections
 from typing import Set, List, Dict, Optional
 from nl2flow.compile.utils import string_transform
 from nl2flow.compile.validators.validator import Validator, ValidationMessage
+from nl2flow.compile.options import GoalType
+from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.schemas import (
     FlowDefinition,
     MemoryItem,
     SignatureItem,
     Constraint,
     Transform,
+    GoalItem,
 )
 
 
-def get_list_of_object_names(flow: FlowDefinition) -> Dict[str, Set[str]]:
-    def update_object_map(object_name: str, object_type: Optional[str]) -> None:
-        if object_name not in list_of_objects:
-            if object_type:
-                list_of_objects[object_name] = {object_type}
-            else:
-                list_of_objects[object_name] = set()
+def update_object_map(
+    list_of_objects: Dict[str, Set[str]], object_name: str, object_type: Optional[str]
+) -> None:
+    if object_name not in list_of_objects:
+        if object_type:
+            list_of_objects[object_name] = {object_type}
         else:
-            if object_type:
-                list_of_objects[object_name].add(object_type)
+            list_of_objects[object_name] = set()
+    else:
+        if object_type:
+            list_of_objects[object_name].add(object_type)
 
-    def signature_parser(signature_item: SignatureItem) -> None:
-        for parameter in signature_item.parameters:
-            parameter_name = (
-                parameter.item_id if isinstance(parameter, MemoryItem) else parameter
-            )
-            parameter_type = (
-                parameter.item_type if isinstance(parameter, MemoryItem) else None
-            )
 
-            update_object_map(parameter_name, parameter_type)
+def signature_parser(
+    list_of_objects: Dict[str, Set[str]], signature_item: SignatureItem
+) -> None:
+    for parameter in signature_item.parameters:
+        parameter_name = (
+            parameter.item_id if isinstance(parameter, MemoryItem) else parameter
+        )
+        parameter_type = (
+            parameter.item_type if isinstance(parameter, MemoryItem) else None
+        )
 
-        for constraint in signature_item.constraints:
-            constraint_parser(constraint)
+        update_object_map(list_of_objects, parameter_name, parameter_type)
 
-    def constraint_parser(constraint: Constraint) -> None:
-        for p in constraint.parameters:
-            update_object_map(p, None)
+    for constraint in signature_item.constraints:
+        constraint_parser(list_of_objects, constraint)
 
+
+def constraint_parser(
+    list_of_objects: Dict[str, Set[str]], constraint: Constraint
+) -> None:
+    update_object_map(list_of_objects, constraint.constraint_id, None)
+    for p in constraint.parameters:
+        update_object_map(list_of_objects, p, None)
+
+
+def get_list_of_object_names(flow: FlowDefinition) -> Dict[str, Set[str]]:
     list_of_objects: Dict[str, Set[str]] = dict()
     for item in flow.memory_items:
-        update_object_map(item.item_id, item.item_type)
+        update_object_map(list_of_objects, item.item_id, item.item_type)
+
+    for item in flow.goal_items:
+        goals: List[GoalItem] = (
+            item.goals if isinstance(item.goals, List) else [item.goals]
+        )
+        for goal in goals:
+            if goal.goal_type != GoalType.OPERATOR and goal.goal_name not in [
+                t.name for t in flow.type_hierarchy
+            ]:
+                update_object_map(list_of_objects, goal.goal_name, None)
+
+            elif goal.goal_type == GoalType.OPERATOR and isinstance(
+                goal.goal_name, Step
+            ):
+                for param in goal.goal_name.parameters:
+                    update_object_map(
+                        list_of_objects,
+                        param.item_id if isinstance(param, Parameter) else param,
+                        None,
+                    )
 
     for operator in flow.operators:
         for item in operator.inputs:
-            signature_parser(item)
+            signature_parser(list_of_objects, item)
 
         outputs = operator.outputs
         if not isinstance(outputs, List):
@@ -55,10 +88,10 @@ def get_list_of_object_names(flow: FlowDefinition) -> Dict[str, Set[str]]:
 
         for output in outputs:
             for item in output.constraints:
-                constraint_parser(item)
+                constraint_parser(list_of_objects, item)
 
             for item in output.outcomes:
-                signature_parser(item)
+                signature_parser(list_of_objects, item)
 
     return list_of_objects
 
@@ -112,18 +145,58 @@ class FlowValidator(Validator):
             return ValidationMessage(truth_value=True)
 
     @staticmethod
+    def hash_conflicts(flow: FlowDefinition) -> ValidationMessage:
+
+        transforms: List[Transform] = list()
+
+        reference_list_of_objects = get_list_of_object_names(flow)
+        reference_keys = list(reference_list_of_objects.keys())
+
+        check_list_key = {
+            "operators": "name",
+            "type_hierarchy": "name",
+            "constraints": "constraint_id",
+            "history": "name",
+        }
+
+        for key in check_list_key:
+            list_of_items = list(
+                map(
+                    lambda x: str(getattr(x, check_list_key[key])),
+                    getattr(flow, key),
+                )
+            )
+
+            for item in list_of_items:
+                if item not in reference_keys:
+                    reference_keys.append(item)
+
+        transformed_keys = [
+            string_transform(item, transforms) for item in reference_keys
+        ]
+
+        for item in reference_keys:
+            item = string_transform(item, transforms)
+            members = [o for o in transformed_keys if item == o]
+            if len(members) > 1:
+                return ValidationMessage(
+                    truth_value=False,
+                    error_message=f"Conflicting names for {item}.",
+                )
+
+        return ValidationMessage(truth_value=True)
+
+    @staticmethod
     def no_duplicate_items(flow: FlowDefinition) -> ValidationMessage:
         def get_duplicates(list_item: List[str]) -> List[str]:
             return [i for i, c in collections.Counter(list_item).items() if c > 1]
 
-        transforms: List[Transform] = list()
         check_list_key = ["operators", "type_hierarchy"]
-
-        for item in check_list_key:
+        for key in check_list_key:
             list_of_items = list(
                 map(
-                    lambda x: str(string_transform(getattr(x, "name"), transforms)),
-                    getattr(flow, item),
+                    lambda x: str(getattr(x, "name")),
+                    getattr(flow, key),
                 )
             )
 
@@ -132,7 +205,7 @@ class FlowValidator(Validator):
             if is_duplicate:
                 return ValidationMessage(
                     truth_value=not is_duplicate,
-                    error_message=f"Duplicate names for {item=} {', '.join(duplicate_list)}.",
+                    error_message=f"Duplicate names for {key=} {', '.join(duplicate_list)}.",
                 )
 
         return ValidationMessage(truth_value=True)
