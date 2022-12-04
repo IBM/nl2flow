@@ -72,13 +72,16 @@ class Constraint(BaseModel):
 
 
 class GoalItem(BaseModel):
-    goal_name: str
+    goal_name: Union[str, Step]
     goal_type: GoalType = GoalType.OPERATOR
 
     @classmethod
     def transform(cls, goal_item: GoalItem, transforms: List[Transform]) -> GoalItem:
+        goal = goal_item.goal_name
         return GoalItem(
-            goal_name=string_transform(goal_item.goal_name, transforms),
+            goal_name=string_transform(goal, transforms)
+            if isinstance(goal, str)
+            else goal.transform(goal, transforms),
             goal_type=goal_item.goal_type,
         )
 

@@ -74,8 +74,6 @@ class TestOrderings(BaseTestAgents):
             )
         )
 
-        pddl, _ = self.flow.compile_to_pddl()
-
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 

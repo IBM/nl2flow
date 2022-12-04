@@ -22,6 +22,7 @@ from nl2flow.compile.schemas import (
     SlotProperty,
 )
 
+from nl2flow.plan.schemas import Step
 from nl2flow.compile.options import (
     MAX_RETRY,
     SLOT_GOODNESS,
@@ -502,12 +503,36 @@ class ClassicPDDL(Compilation):
                         raise TypeError("Unrecognized goal item.")
 
                     if goal.goal_type == GoalType.OPERATOR:
-                        goal_predicates.add(
-                            self.has_done(
-                                self.constant_map[goal.goal_name],
-                                self.constant_map[HasDoneState.present.value],
+                        goal = goal.goal_name
+
+                        if isinstance(goal, Step):
+                            new_goal_predicate = f"has_done_{goal.name}"
+                            new_goal_parameters = [
+                                self.constant_map[p.item_id] for p in goal.parameters
+                            ]
+
+                            try_level = 1
+                            for historical_step in self.flow_definition.history:
+                                try_level += int(goal == historical_step)
+
+                            try_level_parameter = self.constant_map[
+                                f"try_level_{try_level}"
+                            ]
+                            new_goal_parameters.append(try_level_parameter)
+                            goal_predicates.add(
+                                getattr(self, new_goal_predicate)(*new_goal_parameters)
                             )
-                        )
+
+                        elif isinstance(goal, str):
+                            goal_predicates.add(
+                                self.has_done(
+                                    self.constant_map[goal],
+                                    self.constant_map[HasDoneState.present.value],
+                                )
+                            )
+
+                        else:
+                            TypeError("Unrecognized goal type.")
 
                     else:
 
