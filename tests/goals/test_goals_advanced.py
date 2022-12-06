@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step, Parameter
+from nl2flow.plan.schemas import Step, Parameter, PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -7,6 +7,7 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     BasicOperations,
     GoalType,
+    GoalOptions,
 )
 from nl2flow.compile.schemas import (
     MemoryItem,
@@ -15,8 +16,6 @@ from nl2flow.compile.schemas import (
     GoalItems,
     GoalItem,
 )
-
-import pytest
 
 
 class TestGoalsAdvanced(BaseTestAgents):
@@ -125,18 +124,38 @@ class TestGoalsAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no plans."
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_and_or_basic(self) -> None:
-        raise NotImplementedError
+    @staticmethod
+    def simple_or_plan(plans: PlannerResponse) -> None:
+        assert plans.list_of_plans, "There should be plans."
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_or_and_basic(self) -> None:
-        raise NotImplementedError
+        for poi in plans.list_of_plans[:2]:
+            operator_names = {operator.name for operator in poi.plan}
+            assert (
+                len(operator_names.intersection({"Agent X", "Agent Y"})) == 1
+            ), "One of X or Y."
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_and_or_with_type(self) -> None:
-        raise NotImplementedError
+    def test_or_basic_together(self) -> None:
+        goals = list()
+        for item in ["X", "Y"]:
+            agent = Operator(f"Agent {item}")
+            goals.append(GoalItem(goal_name=agent.name))
 
-    @pytest.mark.skip(reason="Coming soon.")
-    def test_or_and_with_type(self) -> None:
-        raise NotImplementedError
+            self.flow.add(agent)
+
+        self.flow.add(GoalItems(goals=goals))
+        self.flow.goal_type = GoalOptions.AND_OR
+
+        plans = self.get_plan()
+        self.simple_or_plan(plans)
+
+    def test_or_basic_seperated(self) -> None:
+        for item in ["X", "Y"]:
+            agent = Operator(f"Agent {item}")
+            goal = GoalItem(goal_name=agent.name)
+
+            self.flow.add([agent, GoalItems(goals=[goal])])
+
+        self.flow.goal_type = GoalOptions.OR_AND
+
+        plans = self.get_plan()
+        self.simple_or_plan(plans)

@@ -22,7 +22,7 @@ from nl2flow.compile.schemas import (
     SlotProperty,
 )
 
-from nl2flow.plan.schemas import Step
+from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
     MAX_RETRY,
     SLOT_GOODNESS,
@@ -90,6 +90,8 @@ class ClassicPDDL(Compilation):
         self.map_affinity: Any = None
         self.slot_goodness: Any = None
         self.connected: Any = None
+        self.done_goal_pre: Any = None
+        self.done_goal_post: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
@@ -484,90 +486,155 @@ class ClassicPDDL(Compilation):
                     ),
                 )
 
+    def __compile_goal_item(
+        self, goal_item: GoalItem, goal_predicates: Set[Any]
+    ) -> None:
+
+        if goal_item.goal_type == GoalType.OPERATOR:
+            goal = goal_item.goal_name
+
+            if isinstance(goal, Step):
+                new_goal_predicate = f"has_done_{goal.name}"
+                new_goal_parameters = [
+                    self.constant_map[p.item_id]
+                    if isinstance(p, Parameter)
+                    else self.constant_map[p]
+                    for p in goal.parameters
+                ]
+
+                try_level = 1
+                for historical_step in self.flow_definition.history:
+                    try_level += int(goal == historical_step)
+
+                try_level_parameter = self.constant_map[f"try_level_{try_level}"]
+                new_goal_parameters.append(try_level_parameter)
+                goal_predicates.add(
+                    getattr(self, new_goal_predicate)(*new_goal_parameters)
+                )
+
+            elif isinstance(goal, str):
+                goal_predicates.add(
+                    self.has_done(
+                        self.constant_map[goal],
+                        self.constant_map[HasDoneState.present.value],
+                    )
+                )
+
+            else:
+                TypeError("Unrecognized goal type.")
+
+        else:
+
+            list_of_constants = list()
+            if goal_item.goal_name in self.type_map:
+                for item in self.constant_map:
+                    type_of_item = self.__get_type_of_constant(item)
+
+                    if type_of_item == goal_item.goal_name and "new_object" not in item:
+                        list_of_constants.append(item)
+            else:
+                list_of_constants = [goal_item.goal_name]
+
+            if goal_item.goal_type == GoalType.OBJECT_USED:
+                goal_predicates.update(
+                    self.been_used(self.constant_map[item])
+                    for item in list_of_constants
+                )
+
+            elif goal_item.goal_type == GoalType.OBJECT_KNOWN:
+                goal_predicates.update(
+                    self.known(
+                        self.constant_map[item],
+                        self.constant_map[MemoryState.KNOWN.value],
+                    )
+                    for item in list_of_constants
+                )
+
+            else:
+                raise TypeError("Unrecognized goal type.")
+
     def __compile_goals(
         self, list_of_goal_items: List[GoalItems], goal_type: GoalOptions
     ) -> None:
+
+        goal_predicates: Set[Any]
 
         if goal_type == GoalOptions.AND_AND:
             goal_predicates = set()
 
             for goal_items in list_of_goal_items:
-                goals = goal_items.goals
-
-                if not isinstance(goals, List):
-                    goals = [goals]
-
-                for goal in goals:
-
-                    if not isinstance(goal, GoalItem):
-                        raise TypeError("Unrecognized goal item.")
-
-                    if goal.goal_type == GoalType.OPERATOR:
-                        goal = goal.goal_name
-
-                        if isinstance(goal, Step):
-                            new_goal_predicate = f"has_done_{goal.name}"
-                            new_goal_parameters = [
-                                self.constant_map[p.item_id] for p in goal.parameters
-                            ]
-
-                            try_level = 1
-                            for historical_step in self.flow_definition.history:
-                                try_level += int(goal == historical_step)
-
-                            try_level_parameter = self.constant_map[
-                                f"try_level_{try_level}"
-                            ]
-                            new_goal_parameters.append(try_level_parameter)
-                            goal_predicates.add(
-                                getattr(self, new_goal_predicate)(*new_goal_parameters)
-                            )
-
-                        elif isinstance(goal, str):
-                            goal_predicates.add(
-                                self.has_done(
-                                    self.constant_map[goal],
-                                    self.constant_map[HasDoneState.present.value],
-                                )
-                            )
-
-                        else:
-                            TypeError("Unrecognized goal type.")
-
-                    else:
-
-                        list_of_constants = list()
-                        if goal.goal_name in self.type_map:
-                            for item in self.constant_map:
-                                type_of_item = self.__get_type_of_constant(item)
-
-                                if (
-                                    type_of_item == goal.goal_name
-                                    and "new_object" not in item
-                                ):
-                                    list_of_constants.append(item)
-                        else:
-                            list_of_constants = [goal.goal_name]
-
-                        if goal.goal_type == GoalType.OBJECT_USED:
-                            goal_predicates.update(
-                                self.been_used(self.constant_map[item])
-                                for item in list_of_constants
-                            )
-
-                        elif goal.goal_type == GoalType.OBJECT_KNOWN:
-                            goal_predicates.update(
-                                self.known(
-                                    self.constant_map[item],
-                                    self.constant_map[MemoryState.KNOWN.value],
-                                )
-                                for item in list_of_constants
-                            )
-
-                        else:
-                            raise TypeError("Unrecognized goal type.")
+                for goal_item in goal_items.goals:
+                    self.__compile_goal_item(goal_item, goal_predicates)
 
             self.problem.goal = land(*goal_predicates, flat=True)
+
+        elif goal_type == GoalOptions.OR_AND:
+
+            for goal_index, goal_items in enumerate(list_of_goal_items):
+                goal_predicates = set()
+                for goal_item in goal_items.goals:
+                    self.__compile_goal_item(goal_item, goal_predicates)
+
+                self.problem.action(
+                    f"{RestrictedOperations.GOAL.value}-{goal_index}",
+                    parameters=[],
+                    precondition=land(*goal_predicates, flat=True),
+                    effects=[fs.AddEffect(self.done_goal_pre())],
+                    cost=iofs.AdditiveActionCost(
+                        self.problem.language.constant(
+                            CostOptions.VERY_HIGH.value,
+                            self.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
+
+            self.problem.goal = self.done_goal_post()
+            self.problem.action(
+                f"{RestrictedOperations.GOAL.value}",
+                parameters=[],
+                precondition=self.done_goal_pre(),
+                effects=[fs.AddEffect(self.done_goal_post())],
+                cost=iofs.AdditiveActionCost(
+                    self.problem.language.constant(
+                        CostOptions.VERY_HIGH.value,
+                        self.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
+
+        elif goal_type == GoalOptions.AND_OR:
+            goal_predicates = set()
+
+            for goal_index, goal_items in enumerate(list_of_goal_items):
+                new_goal_predicate_name = f"has_done_pre_{goal_index}"
+                new_goal_predicate = self.lang.predicate(new_goal_predicate_name)
+
+                setattr(self, new_goal_predicate_name, new_goal_predicate)
+
+                new_goal = getattr(self, new_goal_predicate_name)()
+                goal_predicates.add(new_goal)
+
+                for goal_item_index, goal_item in enumerate(goal_items.goals):
+                    precondition_set: Set[Any] = set()
+
+                    self.__compile_goal_item(goal_item, precondition_set)
+                    self.problem.action(
+                        f"{RestrictedOperations.GOAL.value}-{goal_index}-{goal_item_index}",
+                        parameters=[],
+                        precondition=land(*precondition_set, flat=True),
+                        effects=[fs.AddEffect(new_goal)],
+                        cost=iofs.AdditiveActionCost(
+                            self.problem.language.constant(
+                                CostOptions.VERY_HIGH.value,
+                                self.problem.language.get_sort("Integer"),
+                            )
+                        ),
+                    )
+
+            self.problem.goal = land(*goal_predicates, flat=True)
+
+        else:
+            raise TypeError("Unrecognized goal option.")
 
     def __add_to_condition_list_pre_check(
         self, parameter: Union[str, MemoryItem]
@@ -1214,6 +1281,9 @@ class ClassicPDDL(Compilation):
             "free",
             self.type_map[TypeOptions.ROOT.value],
         )
+
+        self.done_goal_pre = self.lang.predicate("done_goal_pre")
+        self.done_goal_post = self.lang.predicate("done_goal_post")
 
         for type_item in self.flow_definition.type_hierarchy:
             self.__add_type_item_to_type_map(type_item)

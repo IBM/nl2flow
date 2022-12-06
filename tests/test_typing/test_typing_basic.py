@@ -10,8 +10,6 @@ from nl2flow.compile.schemas import (
     SignatureItem,
 )
 
-# NOTE: This is part of dev dependencies
-# noinspection PyPackageRequirements
 import pytest
 
 
