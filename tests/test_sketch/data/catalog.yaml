@@ -1,0 +1,47 @@
+---
+agents:
+  - id: Workday
+    inputs:
+      - name: W3 ID
+        type: Email Object
+    outputs:
+      - name: Name
+      - name: Address
+        type: location
+      - name: Employer Letter
+      - name: Passport Details
+  - id: W3 Agent
+    inputs:
+      - name: W3 ID
+        type: Email Object
+    outputs:
+      - name: Name
+      - name: Address
+        type: location
+      - name: Employee ID
+  - id: Trip Approval
+    inputs:
+      - name: username
+        type: Email Object
+    outputs:
+      - name: expense
+  - id: Visa Application
+  - id: Kayak
+  - id: Uber
+    inputs:
+      - name: date
+        type: datetime
+      - name: address
+        type: location
+      - name: destination
+        type: location
+  - id: Lyft
+    inputs:
+      - name: date
+        type: datetime
+      - name: address
+        type: location
+      - name: destination
+        type: location
+    outputs:
+      - name: booking

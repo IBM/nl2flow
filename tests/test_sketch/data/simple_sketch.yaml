@@ -1,0 +1,24 @@
+---
+sketch_name: Business Trip
+utterances:
+  - I want to book a business trip
+components:
+  - type: goal
+    value: visa
+  - type: goal
+    value: Trip Approval
+  - type: ordering
+    value: Expense Approval > Visa Application
+  - type: constraint
+    value: approval.expense_estimate < 1000
+slots:
+  - name: Employee ID
+    preference: 0.2
+  - name: Employer Letter
+    preference: 0.0
+  - name: W3 ID
+    preference: 1.0
+mappings:
+  - source:
+    target:
+    preference: 1.0
