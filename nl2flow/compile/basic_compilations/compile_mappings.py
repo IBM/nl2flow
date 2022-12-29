@@ -15,7 +15,7 @@ from nl2flow.compile.options import (
 )
 
 
-def compile_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+def compile_declared_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
 
     flow_definition: FlowDefinition = compilation.flow_definition
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
@@ -69,46 +69,35 @@ def compile_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
         compilation.been_used(y),
     ]
 
+    effect_list = [
+        fs.AddEffect(
+            compilation.known(
+                y,
+                compilation.constant_map[MemoryState.UNCERTAIN.value]
+                if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
+                else compilation.constant_map[MemoryState.KNOWN.value],
+            )
+        ),
+        fs.AddEffect(compilation.mapped_to(x, y)),
+        fs.AddEffect(compilation.mapped(x)),
+        fs.DelEffect(compilation.been_used(y)),
+        fs.DelEffect(compilation.not_usable(y)),
+    ]
+
     compilation.problem.action(
         BasicOperations.MAPPER.value,
         parameters=[x, y],
         precondition=land(*precondition_list, flat=True),
-        effects=[
-            fs.AddEffect(
-                compilation.known(
-                    y,
-                    compilation.constant_map[MemoryState.UNCERTAIN.value]
-                    if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
-                    else compilation.constant_map[MemoryState.KNOWN.value],
-                )
-            ),
-            fs.AddEffect(compilation.mapped_to(x, y)),
-            fs.AddEffect(compilation.mapped(x)),
-            fs.DelEffect(compilation.been_used(y)),
-            fs.DelEffect(compilation.not_usable(y)),
-        ],
+        effects=effect_list,
         cost=iofs.AdditiveActionCost(compilation.map_affinity(x, y)),
     )
 
+    effect_list.append(fs.AddEffect(compilation.free(y)))
     compilation.problem.action(
         f"{BasicOperations.MAPPER.value}--free-alt",
         parameters=[x, y],
         precondition=land(*precondition_list, compilation.free(x), flat=True),
-        effects=[
-            fs.AddEffect(
-                compilation.known(
-                    y,
-                    compilation.constant_map[MemoryState.UNCERTAIN.value]
-                    if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
-                    else compilation.constant_map[MemoryState.KNOWN.value],
-                )
-            ),
-            fs.AddEffect(compilation.mapped_to(x, y)),
-            fs.AddEffect(compilation.mapped(x)),
-            fs.AddEffect(compilation.free(y)),
-            fs.DelEffect(compilation.been_used(y)),
-            fs.DelEffect(compilation.not_usable(y)),
-        ],
+        effects=effect_list,
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
                 CostOptions.INTERMEDIATE.value,
@@ -116,6 +105,10 @@ def compile_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
             )
         ),
     )
+
+
+def compile_typed_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
 
     for typing in compilation.type_map:
         if typing not in [t.value for t in TypeOptions]:
@@ -131,25 +124,26 @@ def compile_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
                 compilation.been_used(y),
             ]
 
+            effect_list = [
+                fs.AddEffect(
+                    compilation.known(
+                        y,
+                        compilation.constant_map[MemoryState.UNCERTAIN.value]
+                        if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
+                        else compilation.constant_map[MemoryState.KNOWN.value],
+                    )
+                ),
+                fs.AddEffect(compilation.mapped_to(x, y)),
+                fs.AddEffect(compilation.mapped(x)),
+                fs.DelEffect(compilation.been_used(y)),
+                fs.DelEffect(compilation.not_usable(y)),
+            ]
+
             compilation.problem.action(
                 f"{BasicOperations.MAPPER.value}----{typing}",
                 parameters=[x, y],
                 precondition=land(*precondition_list, flat=True),
-                effects=[
-                    fs.AddEffect(
-                        compilation.known(
-                            y,
-                            compilation.constant_map[MemoryState.UNCERTAIN.value]
-                            if LifeCycleOptions.confirm_on_mapping
-                            in variable_life_cycle
-                            else compilation.constant_map[MemoryState.KNOWN.value],
-                        )
-                    ),
-                    fs.AddEffect(compilation.mapped_to(x, y)),
-                    fs.AddEffect(compilation.mapped(x)),
-                    fs.DelEffect(compilation.been_used(y)),
-                    fs.DelEffect(compilation.not_usable(y)),
-                ],
+                effects=effect_list,
                 cost=iofs.AdditiveActionCost(
                     compilation.problem.language.constant(
                         CostOptions.LOW.value,
@@ -158,26 +152,12 @@ def compile_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
                 ),
             )
 
+            effect_list.append(fs.AddEffect(compilation.free(y)))
             compilation.problem.action(
                 f"{BasicOperations.MAPPER.value}----{typing}--free-alt",
                 parameters=[x, y],
                 precondition=land(*precondition_list, compilation.free(x), flat=True),
-                effects=[
-                    fs.AddEffect(
-                        compilation.known(
-                            y,
-                            compilation.constant_map[MemoryState.UNCERTAIN.value]
-                            if LifeCycleOptions.confirm_on_mapping
-                            in variable_life_cycle
-                            else compilation.constant_map[MemoryState.KNOWN.value],
-                        )
-                    ),
-                    fs.AddEffect(compilation.mapped_to(x, y)),
-                    fs.AddEffect(compilation.mapped(x)),
-                    fs.AddEffect(compilation.free(y)),
-                    fs.DelEffect(compilation.been_used(y)),
-                    fs.DelEffect(compilation.not_usable(y)),
-                ],
+                effects=effect_list,
                 cost=iofs.AdditiveActionCost(
                     compilation.problem.language.constant(
                         CostOptions.INTERMEDIATE.value,

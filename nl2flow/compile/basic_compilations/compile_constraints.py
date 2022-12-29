@@ -23,6 +23,7 @@ def compile_constraints(
     compilation: Any,
     constraint: Constraint,
 ) -> Any:
+
     new_constraint_variable = f"status_{constraint.constraint_id}"
     set_variables = [compilation.constant_map[item] for item in constraint.parameters]
     closed_variables = [

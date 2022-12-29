@@ -4,7 +4,7 @@ from tarski.theories import Theory
 from tarski.io import FstripsWriter
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Tuple
+from typing import List, Set, Dict, Any, Tuple
 
 from nl2flow.compile.schemas import (
     FlowDefinition,
@@ -16,8 +16,14 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
-from nl2flow.compile.basic_compilations.compile_slots import compile_slots
-from nl2flow.compile.basic_compilations.compile_mappings import compile_mappings
+from nl2flow.compile.basic_compilations.compile_slots import (
+    compile_higher_cost_slots,
+    compile_last_resort_slots,
+)
+from nl2flow.compile.basic_compilations.compile_mappings import (
+    compile_typed_mappings,
+    compile_declared_mappings,
+)
 from nl2flow.compile.basic_compilations.compile_goals import compile_goals
 from nl2flow.compile.basic_compilations.compile_history import compile_history
 
@@ -29,6 +35,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.options import (
+    SlotOptions,
     TypeOptions,
     MemoryState,
     ConstraintState,
@@ -221,8 +228,17 @@ class ClassicPDDL(Compilation):
         compile_operators(self, **kwargs)
         compile_confirmation(self, **kwargs)
         add_extra_objects(self, **kwargs)
-        compile_slots(self, **kwargs)
-        compile_mappings(self, **kwargs)
+
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
+        if SlotOptions.higher_cost in slot_options:
+            compile_higher_cost_slots(self, **kwargs)
+
+        if SlotOptions.last_resort in slot_options:
+            compile_last_resort_slots(self, **kwargs)
+
+        compile_declared_mappings(self, **kwargs)
+        compile_typed_mappings(self, **kwargs)
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
 
