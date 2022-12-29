@@ -155,7 +155,7 @@ class PartialOrder(BaseModel):
 
 class TypeItem(BaseModel):
     name: str
-    parent: str = TypeOptions.ROOT.value
+    parent: Optional[str] = TypeOptions.ROOT.value
     children: Union[str, Set[str]] = set()
 
     @classmethod
