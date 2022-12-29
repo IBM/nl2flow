@@ -92,12 +92,11 @@ def compile_declared_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> Non
         cost=iofs.AdditiveActionCost(compilation.map_affinity(x, y)),
     )
 
-    effect_list.append(fs.AddEffect(compilation.free(y)))
     compilation.problem.action(
         f"{BasicOperations.MAPPER.value}--free-alt",
         parameters=[x, y],
         precondition=land(*precondition_list, compilation.free(x), flat=True),
-        effects=effect_list,
+        effects=effect_list + [fs.AddEffect(compilation.free(y))],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
                 CostOptions.INTERMEDIATE.value,
@@ -152,12 +151,11 @@ def compile_typed_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
                 ),
             )
 
-            effect_list.append(fs.AddEffect(compilation.free(y)))
             compilation.problem.action(
                 f"{BasicOperations.MAPPER.value}----{typing}--free-alt",
                 parameters=[x, y],
                 precondition=land(*precondition_list, compilation.free(x), flat=True),
-                effects=effect_list,
+                effects=effect_list + [fs.AddEffect(compilation.free(y))],
                 cost=iofs.AdditiveActionCost(
                     compilation.problem.language.constant(
                         CostOptions.INTERMEDIATE.value,
