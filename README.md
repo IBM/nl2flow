@@ -8,9 +8,9 @@
 ![image](https://img.shields.io/badge/typing-mypy-orange)
 ![image](https://img.shields.io/badge/tests-passing-brightgreen)
 
-This package allows developers to easily integrate automated planning applications into their systems. Migrating research efforts to product creates knowledge gaps and blindspots, along with requirements for long term support which often cannot be followed through. Particularly, the adoption of automated planners into products requires developers to get familiar with declarative modeling and understand requirements of the [PDDL](https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language) syntax. 
+This package allows developers to easily integrate automated planning applications into their systems. Migrating research efforts to product creates knowledge gaps and blindspots, along with requirements for long-term support which often cannot be followed through. Particularly, the adoption of automated planners into products requires developers to get familiar with declarative modeling and understand the requirements of the [PDDL](https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language) syntax. 
 
-This package mitigates this need by creating an abstraction around the underlying formal representation so that any one can use automated planners to create workflows through code with their desired specifications. Currently, this code is in being integrated into two IBM Products: [Watson Orchestrate](https://www.ibm.com/products/watson-orchestrate) and [Appconnect](https://www.ibm.com/cloud/app-connect). 
+This package mitigates this need by creating an abstraction around the underlying formal representation so that anyone can use automated planners to create workflows through code with their desired specifications. Currently, this code is being integrated into two IBM Products: [Watson Orchestrate](https://www.ibm.com/products/watson-orchestrate) and [Appconnect](https://www.ibm.com/cloud/app-connect). 
 
 &#129299; Read more about our work on natural language to workflow construction [here](https://link.springer.com/chapter/10.1007/978-3-031-16168-1_8).
 
