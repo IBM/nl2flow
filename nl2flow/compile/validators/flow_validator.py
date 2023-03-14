@@ -142,7 +142,7 @@ class FlowValidator(Validator):
                     error_message=f"Object {item} has more than one type: {', '.join(type_set)}.",
                 )
 
-            return ValidationMessage(truth_value=True)
+        return ValidationMessage(truth_value=True)
 
     @staticmethod
     def hash_conflicts(flow: FlowDefinition) -> ValidationMessage:

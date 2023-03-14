@@ -96,6 +96,9 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Dict[str, Any]) -> Non
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
+    if SlotOptions.ordered in slot_options:
+        compile_ordered_slots(compilation, **kwargs)
+
     if SlotOptions.last_resort not in slot_options:
         _ = get_goodness_map(compilation)
 
@@ -133,6 +136,10 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Dict[str, Any]) -> Non
 
     if SlotOptions.last_resort not in slot_options:
         compile_new_object_maps(compilation, **kwargs)
+
+
+def compile_ordered_slots(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+    pass
 
 
 def compile_last_resort_slots(compilation: Any, **kwargs: Dict[str, Any]) -> None:

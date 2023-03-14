@@ -1,47 +1,118 @@
 ---
+catalog_name: Trip Approval
 agents:
-  - id: Workday
-    inputs:
-      - name: W3 ID
-        type: Email Object
-    outputs:
-      - name: Name
-      - name: Address
-        type: location
-      - name: Employer Letter
-      - name: Passport Details
-  - id: W3 Agent
-    inputs:
-      - name: W3 ID
-        type: Email Object
-    outputs:
-      - name: Name
-      - name: Address
-        type: location
-      - name: Employee ID
+#  - id: Workday
+#    inputs:
+#      - name: w3
+#        type: Email
+#    outputs:
+#      - name: name
+#      - name: address
+#        type: Location
+#      - name: Employer Letter
+#        type: File
+#  - id: W3 Agent
+#    inputs:
+#      - name: w3
+#        type: Email
+#    outputs:
+#      - name: name
+#      - name: address
+#        type: Location
+#      - name: Employee ID
+#      - name: Passport
   - id: Trip Approval
     inputs:
+      - name: airfare to
+      - name: airfare from
+      - name: hotel
       - name: username
-        type: Email Object
+        type: Email
     outputs:
-      - name: expense
+      - name: approval
   - id: Visa Application
-  - id: Kayak
-  - id: Uber
     inputs:
-      - name: date
-        type: datetime
+      - name: name
       - name: address
-        type: location
-      - name: destination
-        type: location
-  - id: Lyft
-    inputs:
-      - name: date
-        type: datetime
-      - name: address
-        type: location
-      - name: destination
-        type: location
+        type: Location
+      - name: Passport
+      - name: Employer Letter
+        type: File
     outputs:
-      - name: booking
+      - name: visa
+#  - id: Kayak
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: flight_ticket
+#      - name: hotel_booking
+#  - id: Concur
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - constraint: hotel policy
+#        evaluate: hotel_booking.total_expense > 100
+#      - constraint: flight policy
+#        evaluate: flight_ticket.total_expense > 100
+#      - name: flight_ticket
+#      - name: hotel_booking
+#  - id: Hotel.com
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: hotel_booking
+#  - id: Uber
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
+#  - id: Lyft
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
+#  - id: Taxi
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
+#  - id: Email Agent
+#    inputs:
+#      - name: from
+#        type: Email
+#      - name: to
+#        type: Email
+#      - name: title
+#      - name: body
+#      - name: attachment
+#        type: File
