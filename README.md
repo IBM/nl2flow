@@ -20,6 +20,21 @@ This package mitigates this need by creating an abstraction around the underlyin
 $ pip install -r requirements.txt
 ```
 
+### Development
+
+If you are looking to contribute code, you need to install the developer requirements as well. 
+We also strongly recommend using a virtual environment, such 
+as [anaconda](https://www.anaconda.com/), for development.
+
+```bash
+$ conda create --name nl2flow
+(nl2flow) $ pip install -r requirements_dev.txt
+```
+
+Before starting development, please refer to the contribution 
+guidelines [here](CONTRIBUTING.md).
+
+
 ### Usage
 
 Get started with constructing a simple flow where you have two operators, one target operator and another one which provides required items for the target operator.
