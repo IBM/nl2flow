@@ -8,14 +8,7 @@
     (:domain verdi-catalog)
 
     (:objects
-        a b data-mapper error_handler fallback slot-filler slot_filler_for_planner slot_filler_form_agent - agent
-        data_objects - type__of__data_objects
-        job_id - type__of__job_id
-        list_of_signature_item_spec - type__of__list_of_signature_item_spec
-        occupation_id - type__of__occupation_id
-        original_error - type__of__original_error
-        sf_context - type__of__sf_context
-        slot_fill_form_title - type__of__slot_fill_form_title
+
     )
 
     (:init

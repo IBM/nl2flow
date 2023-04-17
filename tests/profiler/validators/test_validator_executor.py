@@ -21,5 +21,5 @@ class TestValidatorExecutor(unittest.TestCase):
             pddl_plan = f.read()
         return_code, err, out = execute_Val(pddl_domain, pddl_problem, pddl_plan)
         self.assertIsNotNone(out)
-        self.assertIsNotNone(err)
+        self.assertEqual(0, len(err))
         self.assertIsNotNone(return_code)
