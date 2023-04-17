@@ -31,6 +31,7 @@ $ conda create --name nl2flow
 Python interpreter version should be `3.9.16`. Code formatter is `black`.
 To install dependencies, execute `pip install -e .` at the project root.
 
+To use a plan validator, install `VAL` (https://github.com/KCL-Planning/VAL).
 
 
 #### Build a package locally
