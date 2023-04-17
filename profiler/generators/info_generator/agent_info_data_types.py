@@ -22,3 +22,23 @@ class AgentInfo(TypedDict, total=False):
     agent_name: Optional[str]
     evaluator_signature: Optional[AgentInfoSignature]
     actuator_signature: Optional[AgentInfoSignature]
+
+
+class PlanAction(TypedDict):
+    action_name: str
+    parameters: List[str]
+
+
+class Plan(TypedDict):
+    plan: List[PlanAction]
+    metric: float
+
+
+class PlannerErrorInfo(TypedDict):
+    exception: Optional[Exception]
+    message: str
+
+
+class PlanInfo(TypedDict):
+    plans: List[Plan]
+    error_info: Optional[PlannerErrorInfo]
