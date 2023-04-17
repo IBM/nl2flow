@@ -33,7 +33,7 @@ To install dependencies, execute `pip install -e .` at the project root.
 
 
 
-# Build a package locally
+#### Build a package locally
 
 At the project root, execute the commands shown below.
 
