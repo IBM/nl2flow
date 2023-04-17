@@ -14,13 +14,11 @@ This package mitigates this need by creating an abstraction around the underlyin
 
 &#129299; Read more about our work on natural language to workflow construction [here](https://link.springer.com/chapter/10.1007/978-3-031-16168-1_8).
 
-### Installation
-
-```bash
-$ pip install -r requirements.txt
-```
 
 ### Development
+
+Before starting development, please refer to the contribution 
+guidelines [here](CONTRIBUTING.md).
 
 If you are looking to contribute code, you need to install the developer requirements as well. 
 We also strongly recommend using a virtual environment, such 
@@ -28,14 +26,31 @@ as [anaconda](https://www.anaconda.com/), for development.
 
 ```bash
 $ conda create --name nl2flow
-(nl2flow) $ pip install -r requirements_dev.txt
 ```
 
-Before starting development, please refer to the contribution 
-guidelines [here](CONTRIBUTING.md).
+Python interpreter version should be `3.9.16`. Code formatter is `black`.
+To install dependencies, execute `pip install -e .` at the project root.
 
+
+
+# Build a package locally
+
+At the project root, execute the commands shown below.
+
+```bash
+python3 -m pip install --upgrade build
+python3 -m build
+```
+
+to install the built package locally
+
+```bash
+pip install dist/nl2flow-<PACKAGE_VERSION_HERE>-py3-none-any.whl
+```
 
 ### Usage
+
+#### Flow generation
 
 Get started with constructing a simple flow where you have two operators, one target operator and another one which provides required items for the target operator.
 
@@ -96,6 +111,44 @@ Learn more about the NL2Flow API and use cases by clicking on the links below.
 [`AppConnect`](https://github.ibm.com/aicl/nl2flow/wiki/AppConnect) 
 
 
+#### Randomly generate sources for compiling PDDL
+
+All input parameters to generate sources for PDDL compilation should be defined at `AgentInfoGeneratorInput`. Some combinations of input parameters are not valid for generating sources. For example, the combination of num_var=1 and num_input_parameters=2 is an invalid input because the minimum number of variables is (2 * the number of input parameters) (This source generator assumes that the number of input parameters (precondition) per action is equal to the number of output parameters (effect) per action). `generate_agent_infos` returns a tuple of `samples` as a list of `AgentInfoGeneratorOutputItem` and `is_all_samples_collected`, which indicates whether all samples are collected successfully. `describe()` method returns a natural language (in english) description of a source for PDDL compilation. The following code block shows how to get sources (samples).
+
+```python
+from pddl_planner_profiler.generators.info_generator.agent_info_generator import generate_agent_infos
+from pddl_planner_profiler.generators.info_generator.agent_info_generator.generator_data_type import AgentInfoGeneratorInput
+
+agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
+    num_agents=21,
+    num_var=7,
+    num_input_parameters=2,
+    num_samples=2,
+    num_goal_agents=5,
+    proportion_coupled_agents=0.5,
+    proportion_slot_fillable_variables=0.2,
+    proportion_mappable_variables=0.5
+)
+
+samples, is_all_samples_collected = generate_agent_infos(
+    agent_info_generator_input)
+
+
+for sample in samples:
+    print(sample.describe())
+```
+
+`AgentInfoGeneratorOutputItem` contains information to compile a set of a PDDL problem file and a PDDL domain file. 
+
+```python
+class AgentInfoGeneratorOutputItem(BaseModel):
+    available_agents: List[AgentInfo]
+    goal_agent_ids: Set[str]
+    mappings: List[Tuple[str, str, float]]
+    available_data: List[str]
+    agent_info_generator_input: AgentInfoGeneratorInput
+```
+
 ## Citation
 
 If you end up using this code, you can cite us using the following BibTex entry. Our general focus on natural language processing pipelines for workflow construction applications is documented in that paper. For pointers to individual paper and implementations, please head over to our [Wiki](https://github.ibm.com/aicl/nl2flow/wiki). 
@@ -115,6 +168,3 @@ This package depends **heavily** on `Tarski`, our favorite PDDL parser. Give the
 
 GitHub &#128073; https://github.com/aig-upf/tarski  
 Docs &#128073; https://tarski.readthedocs.io
-
-
-
