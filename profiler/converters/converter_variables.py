@@ -8,3 +8,4 @@ OUT_SIGNATURE = "out_sig_full"
 SIGNATURE_TYPES: List[str] = [IN_SIGNATURE, OUT_SIGNATURE]
 SEQUENCE_ALIAS = "sequence_alias"
 SLOT_FILLABLE = "slot_fillable"
+NAME = "name"

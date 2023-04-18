@@ -1,7 +1,7 @@
 from typing import List, Set, Tuple
 from nl2flow.compile.flow import Flow
 from profiler.generators.info_generator.agent_info_data_types import AgentInfo, Plan
-from nl2flow.compile.operators import Operator
+from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType
 from nl2flow.compile.schemas import (
     MemoryItem,
@@ -20,6 +20,7 @@ from profiler.converters.converter_variables import (
     IN_SIGNATURE,
     SEQUENCE_ALIAS,
     SLOT_FILLABLE,
+    NAME,
 )
 from uuid import uuid4
 
@@ -28,8 +29,15 @@ def get_uuid() -> str:
     return str(uuid4())
 
 
+def get_name(signature_item: SignatureItem) -> str:
+    return (
+        signature_item[SEQUENCE_ALIAS][:]
+        if SEQUENCE_ALIAS in signature_item
+        else signature_item[NAME]
+    )
+
+
 def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
-    # TODO: TEST THIS
     operators: List[Operator] = list()
     for agent_info in available_agents:
         operator = Operator(agent_info[AGENT_ID])
@@ -43,7 +51,7 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
                     for signature_item in agent_info[ACTUATOR_SIGNATURE][
                         signature_type
                     ]:
-                        signature_names.append(signature_item[SEQUENCE_ALIAS][:])
+                        signature_names.append(get_name(signature_item))
 
                     if signature_type == IN_SIGNATURE:
                         operator.add_input(SignatureItem(parameters=signature_names))
@@ -54,16 +62,11 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
 
 
 def get_goals_for_flow(goals: Set[str]) -> GoalItems:
-    # TODO: TEST THIS
-    goals: List[GoalItem] = list()
-    for goal_name in goals:
-        goals.append(GoalItem(goal_name=goal_name, goal_type=GoalType.OPERATOR))
-
-    return GoalItems(goals=goals)
+    return GoalItems(goals=list(map(lambda name: GoalItem(goal_name=name), goals)))
 
 
 def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotProperty]:
-    # TODO: TEST THIS
+    slot_names: Set[str] = set()
     slot_properties: List[SlotProperty] = list()
     for agent_info in available_agents:
         if ACTUATOR_SIGNATURE in agent_info:
@@ -79,9 +82,10 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
                             SLOT_FILLABLE in signature_item
                             and signature_item[SLOT_FILLABLE]
                         ):
-                            slot_properties.append(
-                                SlotProperty(slot_name=signature_item[SEQUENCE_ALIAS])
-                            )
+                            name = get_name(signature_item)
+                            if name not in slot_names:
+                                slot_names.add(name)
+                                slot_properties.append(SlotProperty(slot_name=name))
 
     return slot_properties
 
@@ -89,7 +93,6 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
 def get_data_mappers_for_flow(
     mappings: List[Tuple[str, str, float]]
 ) -> List[MappingItem]:
-    # TODO: TEST THIS
     return list(
         map(
             lambda mapping: MappingItem(
@@ -101,7 +104,6 @@ def get_data_mappers_for_flow(
 
 
 def get_available_data_for_flow(available_data: List[str]) -> List[MemoryItem]:
-    # TODO: TEST THIS
     return list(
         map(
             lambda signature_item_name: MemoryItem(
@@ -118,14 +120,13 @@ def get_flow_from_agent_infos(
     goals: Set[str],
     available_data: List[str],
 ) -> Flow:
-    # TODO: TEST THIS
     flow = Flow(get_uuid())
     flow.add(
         get_operators_for_flow(available_agents)
         + get_slot_fillers_for_flow(available_agents)
         + get_data_mappers_for_flow(mappings)
         + get_available_data_for_flow(available_data)
-        + get_goals_for_flow(goals)
+        + [get_goals_for_flow(goals)]
     )
     return flow
 
