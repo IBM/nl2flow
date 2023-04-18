@@ -1,10 +1,21 @@
-from nl2flow.compile.schemas import GoalItem, GoalItems, SlotProperty, MappingItem
+from nl2flow.compile.operators import ClassicalOperator as Operator
+from nl2flow.compile.schemas import (
+    GoalItem,
+    GoalItems,
+    SlotProperty,
+    MappingItem,
+    SignatureItem,
+    Step,
+)
+
 from nl2flow.compile.options import (
     BasicOperations,
     LifeCycleOptions,
     MappingOptions,
     SlotOptions,
+    GoalType,
 )
+
 from tests.testing import BaseTestAgents
 
 
@@ -64,3 +75,53 @@ class TestBasicButNotBasic(BaseTestAgents):
         assert (
             poi.plan[2].name == BasicOperations.CONFIRM.value
         ), "The third step should be a confirmation."
+
+    def test_operator_cost(self) -> None:
+        basic_agent = Operator("Basic Agent")
+        basic_agent.add_output(SignatureItem(parameters=["target item"]))
+
+        alternative_agent = Operator("Alternative Agent")
+        alternative_agent.add_output(SignatureItem(parameters=["target item"]))
+        alternative_agent.cost = 5
+
+        goal = GoalItems(
+            goals=GoalItem(goal_name="target item", goal_type=GoalType.OBJECT_KNOWN)
+        )
+        self.flow.add([basic_agent, alternative_agent, goal])
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        optimal_cost = plans.list_of_plans[0].cost
+
+        for poi in plans.list_of_plans:
+            if poi.cost == optimal_cost:
+                assert len(poi.plan) == 1, "The plan should have 1 step."
+                assert (
+                    poi.plan[0].name == "Basic Agent"
+                ), "The plan should only have the Basic Agent."
+                assert (
+                    poi.plan[0].name != "Alternative Agent"
+                ), "The plan should not have Alternative Agent."
+
+        self.flow.add(
+            Step(
+                name="Basic Agent",
+                parameters=[],
+            )
+        )
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        optimal_cost = plans.list_of_plans[0].cost
+
+        for poi in plans.list_of_plans:
+            if poi.cost == optimal_cost:
+                assert len(poi.plan) == 1, "The plan should have 1 step."
+                assert (
+                    poi.plan[0].name == "Alternative Agent"
+                ), "The plan should only have the Alternative Agent."
+                assert (
+                    poi.plan[0].name != "Basic Agent"
+                ), "The plan should not have Alternative Agent."

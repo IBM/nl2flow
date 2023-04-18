@@ -42,8 +42,8 @@ class Operator(ABC):
             raise TypeError("Max retries must be integers")
 
     @property
-    def cost(self) -> float:
-        return float(self.operator_definition.cost)
+    def cost(self) -> int:
+        return int(self.operator_definition.cost)
 
     @cost.setter
     def cost(self, cost: Union[int, CostOptions]) -> None:

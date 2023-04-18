@@ -60,7 +60,7 @@ class TestDuplicates(BaseTestAgents):
         self.flow.add(
             [
                 MemoryItem(item_id="Object Name"),
-                MemoryItem(item_id="object_name"),
+                MemoryItem(item_id="object name"),
             ]
         )
 
