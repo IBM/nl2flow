@@ -18,9 +18,11 @@ from profiler.converters.converter_variables import (
     ACTUATOR_SIGNATURE,
     SIGNATURE_TYPES,
     IN_SIGNATURE,
+    OUT_SIGNATURE,
     SEQUENCE_ALIAS,
     SLOT_FILLABLE,
     NAME,
+    REQUIRED,
 )
 from uuid import uuid4
 
@@ -51,9 +53,13 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
                     for signature_item in agent_info[ACTUATOR_SIGNATURE][
                         signature_type
                     ]:
-                        signature_names.append(get_name(signature_item))
+                        if signature_type == OUT_SIGNATURE:
+                            signature_names.append(get_name(signature_item))
+                        else:
+                            if REQUIRED in signature_item and signature_item[REQUIRED]:
+                                signature_names.append(get_name(signature_item))
 
-                    if signature_type == IN_SIGNATURE:
+                    if signature_type == IN_SIGNATURE and REQUIRED:
                         operator.add_input(SignatureItem(parameters=signature_names))
                     else:
                         operator.add_output(SignatureItem(parameters=signature_names))
