@@ -67,6 +67,7 @@ def get_goals_for_flow(goals: Set[str]) -> GoalItems:
 
 def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotProperty]:
     slot_names: Set[str] = set()
+    none_slot_fillable_names: set[str] = set()
     slot_properties: List[SlotProperty] = list()
     for agent_info in available_agents:
         if ACTUATOR_SIGNATURE in agent_info:
@@ -78,14 +79,20 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
                     for signature_item in agent_info[ACTUATOR_SIGNATURE][
                         signature_type
                     ]:
+                        name = get_name(signature_item)
                         if (
                             SLOT_FILLABLE in signature_item
                             and signature_item[SLOT_FILLABLE]
                         ):
-                            name = get_name(signature_item)
                             if name not in slot_names:
                                 slot_names.add(name)
                                 slot_properties.append(SlotProperty(slot_name=name))
+                        else:
+                            if name not in none_slot_fillable_names:
+                                none_slot_fillable_names.add(name)
+                                slot_properties.append(
+                                    SlotProperty(slot_name=name, slot_desirability=0.0)
+                                )
 
     return slot_properties
 

@@ -40,18 +40,22 @@ class TestInfo2FlowConverter(unittest.TestCase):
         self.assertEqual(2, len(goal_items.goals))
 
     def test_get_slot_fillers_for_flow(self):
-        item: AgentInfoSignatureItem = {
+        item_0: AgentInfoSignatureItem = {
             "name": "k",
             "sequence_alias": "j",
             "slot_fillable": True,
         }
+        item_1: AgentInfoSignatureItem = {"name": "j", "sequence_alias": "j"}
         agent_info: AgentInfo = {
             "agent_id": "a",
-            "actuator_signature": {"in_sig_full": [item], "out_sig_full": [item]},
+            "actuator_signature": {
+                "in_sig_full": [item_0, item_1],
+                "out_sig_full": [item_0],
+            },
         }
         agent_infos = [agent_info]
         slot_properties = get_slot_fillers_for_flow(agent_infos)
-        self.assertEqual(1, len(slot_properties))
+        self.assertEqual(2, len(slot_properties))
 
     def test_get_data_mappers_for_flow(self):
         mappings = [("a", "b", 1.0)]

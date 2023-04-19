@@ -8,6 +8,7 @@ from profiler.validators.validator_executer import (
 
 
 class TestValidatorExecutor(unittest.TestCase):
+    @unittest.skip("this test generates files")
     def test_execute_Val(self):
         pddl_domain = ""
         pddl_problem = ""
