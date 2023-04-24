@@ -15,13 +15,13 @@
         (= (affinity job_id occupation_id) 5.0)
         (= (total-cost) 0.0)
         (is_mappable job_id occupation_id)
+        (is_slotfillable job_id)
+        (is_slotfillable list_of_signature_item_spec)
         (is_slotfillable sf_context)
         (is_slotfillable data_objects)
         (is_slotfillable slot_fill_form_title)
-        (is_slotfillable job_id)
-        (is_slotfillable list_of_signature_item_spec)
-        (is_slotfillable original_error)
         (is_slotfillable occupation_id)
+        (is_slotfillable original_error)
     )
 
     (:goal
