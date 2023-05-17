@@ -1,5 +1,5 @@
 import unittest
-from profiler.generators.info_generator.generator_data_type import (
+from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
 )
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos

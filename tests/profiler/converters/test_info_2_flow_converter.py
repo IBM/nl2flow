@@ -10,8 +10,8 @@ from profiler.converters.info_2_flow_converter import (
     get_available_data_for_flow,
     get_flow_from_agent_infos,
 )
-from profiler.generators.info_generator.agent_info_data_types import Plan
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import Plan
+from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )

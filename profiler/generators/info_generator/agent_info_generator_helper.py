@@ -3,7 +3,7 @@ from copy import deepcopy
 from math import ceil
 import random
 from typing import Deque, Dict, List, Optional, Set, Tuple
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )
@@ -12,7 +12,7 @@ from profiler.generators.info_generator.generator_variables import (
     AGENT_INFO_SIGNATURE_ITEM_TEMPLATE,
     SIGNATURE_TYPES,
 )
-from profiler.generators.info_generator.generator_data_type import (
+from profiler.data_types.generator_data_type import (
     VariableInfo,
     NameGenerator,
 )
@@ -21,6 +21,8 @@ from profiler.data.api_spec_data import agent_names, parameter_names
 from profiler.generators.info_generator.agent_info_generator_coupling_helper import (
     get_out_item_position_to_couple_agents,
 )
+import hashlib
+import json
 
 
 def get_names_dataset(num: int, name_type: str) -> List[str]:
@@ -167,9 +169,9 @@ def get_mappings(variable_infos: List[VariableInfo]) -> List[Tuple[str, str, flo
     random.shuffle(mappable_variable_names)
     previous_variable_name = mappable_variable_names[0]
     mappings: List[Tuple[str, str, float]] = list()
-    mapping_score = 0.0
+    mapping_score = 1.0
     for i in range(1, len(mappable_variable_names)):
-        mapping_score = random.uniform(0, 1)
+        # mapping_score = random.uniform(0, 1)
         mappings.append(
             (previous_variable_name, mappable_variable_names[i], mapping_score)
         )

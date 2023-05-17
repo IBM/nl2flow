@@ -1,4 +1,4 @@
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfoSignature,
     AgentInfoSignatureItem,
 )

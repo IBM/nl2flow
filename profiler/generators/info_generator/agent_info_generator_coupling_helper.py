@@ -1,7 +1,7 @@
 from typing import List, Optional, Set, Tuple
 import random
-from profiler.generators.info_generator.generator_data_type import VariableInfo
-from profiler.generators.info_generator.agent_info_data_types import AgentInfo
+from profiler.data_types.generator_data_type import VariableInfo
+from profiler.data_types.agent_info_data_types import AgentInfo
 
 
 def exist_variable_name_in_signature(

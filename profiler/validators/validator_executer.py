@@ -1,7 +1,8 @@
 import subprocess
 from typing import List, Tuple
-from profiler.generators.info_generator.agent_info_data_types import Plan
-
+from profiler.data_types.agent_info_data_types import Plan
+from profiler.data_types.validator_data_types import PddlPlanValidatorOutput
+import re
 
 domain_file_name = "domain.pddl"
 problem_file_name = "problem.pddl"
@@ -41,4 +42,31 @@ def execute_Val(
         text=True,
     )
 
+    application_command = ["rm"]
+    files = [domain_file_name, problem_file_name, plan_file_name]
+    _ = subprocess.run(application_command + files, capture_output=False)
+
     return result.returncode, result.stderr, result.stdout
+
+
+def validate_pddl(
+    pddl_domain: str, pddl_problem: str, pddl_plan: str
+) -> PddlPlanValidatorOutput:
+    """
+    returns if PDDL domain, problem, and plans are executable and valid
+    """
+    return_code, err, out = execute_Val(pddl_domain, pddl_problem, pddl_plan)
+    is_executable = False
+    is_vaild = False
+    total_cost = -1
+    if return_code == 0:
+        if "Plan executed successfully" in out:
+            is_executable = True
+            if "Plan valid" in out:
+                is_vaild = True
+                obj = re.search(r"Value: (.*?)(\r\n?|\n)+", out)
+                if obj is not None:
+                    total_cost = int(obj.group(1), 10)
+    return PddlPlanValidatorOutput(
+        is_executable_plan=is_executable, is_valid_plan=is_vaild, total_cost=total_cost
+    )

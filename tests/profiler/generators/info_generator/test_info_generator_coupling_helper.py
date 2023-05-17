@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch
-from profiler.generators.info_generator.generator_data_type import VariableInfo
+from profiler.data_types.generator_data_type import VariableInfo
 from profiler.generators.info_generator.agent_info_generator_coupling_helper import (
     get_out_item_position_to_couple_agents,
     exist_variable_name_in_signature,
 )
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfoSignatureItem,
     AgentInfo,
 )

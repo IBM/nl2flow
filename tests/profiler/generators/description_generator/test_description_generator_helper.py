@@ -11,7 +11,7 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_mappings_description,
     get_goal_description,
 )
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )

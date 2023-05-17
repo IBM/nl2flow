@@ -98,7 +98,6 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
-
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
@@ -246,7 +245,9 @@ class ClassicPDDL(Compilation):
         self.problem.init = self.init
 
         writer = FstripsWriter(self.problem)
-        domain = writer.print_domain().replace(" :numeric-fluents", "")
-        problem = writer.print_instance()
+        domain = writer.print_domain(
+            constant_objects=self.constant_map.values()
+        ).replace(" :numeric-fluents", "")
+        problem = writer.print_instance(constant_objects=self.constant_map.values())
 
         return PDDL(domain=domain, problem=problem), self.cached_transforms

@@ -1,8 +1,7 @@
 from typing import List, Set, Tuple
 from nl2flow.compile.flow import Flow
-from profiler.generators.info_generator.agent_info_data_types import AgentInfo, Plan
+from profiler.data_types.agent_info_data_types import AgentInfo, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.options import GoalType
 from nl2flow.compile.schemas import (
     MemoryItem,
     MemoryState,
@@ -132,8 +131,9 @@ def get_flow_from_agent_infos(
     mappings: List[Tuple[str, str, float]],
     goals: Set[str],
     available_data: List[str],
+    flow_name: str = "default_name",
 ) -> Flow:
-    flow = Flow(get_uuid())
+    flow = Flow(flow_name)
     flow.add(
         get_operators_for_flow(available_agents)
         + get_slot_fillers_for_flow(available_agents)

@@ -1,10 +1,10 @@
 from typing import List, Tuple
-from profiler.generators.info_generator.agent_info_data_types import AgentInfo
-from profiler.generators.info_generator.generator_data_type import (
+from profiler.data_types.agent_info_data_types import AgentInfo
+from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
     VariableInfo,
 )
-from profiler.generators.info_generator.generator_output_data_type import (
+from profiler.data_types.generator_output_data_type import (
     AgentInfoGeneratorOutputItem,
 )
 from profiler.generators.info_generator.agent_info_generator_helper import (
@@ -21,13 +21,12 @@ def generate_agent_infos(
     input: AgentInfoGeneratorInput,
 ) -> Tuple[List[AgentInfoGeneratorOutputItem], bool]:
     """
-    This function returns all samples and the status of collecting all samples
+    This function returns all samples, their hashes, and the status of collecting all samples
     """
     samples: List[AgentInfoGeneratorOutputItem] = list()
-    num_samples = 0
     max_try = 20
     count_try = 0
-    while num_samples < input.num_samples and count_try < max_try:
+    while len(samples) < input.num_samples and count_try < max_try:
         # generate names here
         agent_names, variable_names = get_agent_variable_names(
             input.name_generator, input.num_agents, input.num_var
@@ -60,9 +59,9 @@ def generate_agent_infos(
                 )
             )
         except Exception as e:
+            print(e)
             count_try += 1
             continue
-        num_samples += 1
         count_try = 0
     # if there is no sample, input parameters result in slot-fillable variables remaining
     return samples, len(samples) == input.num_samples

@@ -1,3 +1,10 @@
+# ETC
+**/.DS_Store
+
+# PDDL
+**/*.pddl
+**/plan.txt
+
 # IDE
 .vscode/
 

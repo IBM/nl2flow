@@ -21,11 +21,11 @@ from profiler.generators.info_generator.generator_variables import (
     AGENT_INFO_SIGNATURE_TEMPLATE,
     AGENT_INFO_SIGNATURE_ITEM_TEMPLATE,
 )
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )
-from profiler.generators.info_generator.generator_data_type import VariableInfo
+from profiler.data_types.generator_data_type import VariableInfo
 from profiler.validators.agent_info_generator_test_utils import get_stats_coupled_agents
 
 

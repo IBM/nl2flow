@@ -18,6 +18,7 @@ dependencies = [
   "pyhaikunator==0.0.4",
   "pydantic==1.10.2",
   "requests==2.28.1",
+  "datasets~=2.11.0",
 ]
 
 [project.optional-dependencies]

@@ -1,7 +1,7 @@
 from math import ceil
 from typing import Dict, List, Set, Tuple
-from profiler.generators.info_generator.agent_info_data_types import AgentInfo
-from profiler.generators.info_generator.generator_data_type import (
+from profiler.data_types.agent_info_data_types import AgentInfo
+from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
 )
 from profiler.generators.info_generator.generator_variables import SIGNATURE_TYPES

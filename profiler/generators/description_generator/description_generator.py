@@ -1,5 +1,5 @@
 from typing import List, Set, Tuple
-from profiler.generators.info_generator.agent_info_data_types import AgentInfo
+from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.generators.description_generator.description_generator_helper import (
     get_variables_description,
     get_goal_description,

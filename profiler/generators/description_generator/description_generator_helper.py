@@ -1,5 +1,5 @@
 from typing import List, Set, Tuple
-from profiler.generators.info_generator.agent_info_data_types import (
+from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )
@@ -116,7 +116,8 @@ def get_agent_info_signature_item_description(
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
-    return f"Values for Variable {mapping[0]} can be used for Variable {mapping[1]} with the confidance score of {round(mapping[2], 2)}."
+    # return f"Values for Variable {mapping[0]} can be used for Variable {mapping[1]} with the confidance score of {round(mapping[2], 2)}."
+    return f"Values for Variable {mapping[0]} can be used for Variable {mapping[1]}."
 
 
 def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:
