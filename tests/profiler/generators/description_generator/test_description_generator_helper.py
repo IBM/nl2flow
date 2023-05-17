@@ -96,7 +96,7 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         mapping = ("a", "b", 1.0)
         res = get_mapping_description(mapping)
         self.assertEqual(
-            "Values for Variable a can be used for Variable b with the confidance score of 1.0.",
+            "Values for Variable a can be used for Variable b.",
             res,
         )
 
@@ -105,7 +105,7 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         mapping_1 = ("c", "d", 1.0)
         res = get_mappings_description([mapping_0, mapping_1])
         self.assertEqual(
-            "Values for Variable a can be used for Variable b with the confidance score of 1.0. Values for Variable c can be used for Variable d with the confidance score of 1.0.",
+            "Values for Variable a can be used for Variable b. Values for Variable c can be used for Variable d.",
             res,
         )
 

@@ -14,8 +14,8 @@ def get_names(names: List[str]) -> str:
     return ", ".join(names[:-1]) + ", and " + names[-1]
 
 
-def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
-    names_str = get_names(
+def get_available_action_names(available_agents: List[AgentInfo]) -> str:
+    return get_names(
         sorted(
             list(
                 map(
@@ -26,6 +26,10 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
         )
     )
 
+
+def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
+    names_str = get_available_action_names(available_agents)
+
     return "The system has " + names_str + "."
 
 
@@ -33,18 +37,19 @@ def get_variables_description(
     available_agents: List[AgentInfo], available_data_names: List[str]
 ) -> str:
     variable_list = set(map(lambda name: "Variable " + name, available_data_names))
-
     for agent_info in available_agents:
         sig = agent_info.get("actuator_signature")
         # in sig
         in_sig = sig.get("in_sig_full")
         for in_sig_item in in_sig:
-            variable_list.add("Variable " + in_sig_item.get("name"))
+            variable_name = "Variable " + in_sig_item.get("name")
+            variable_list.add(variable_name)
 
         # out sig
         out_sig = sig.get("out_sig_full")
         for out_sig_item in out_sig:
-            variable_list.add("Variable " + out_sig_item.get("name"))
+            variable_name = "Variable " + out_sig_item.get("name")
+            variable_list.add(variable_name)
 
     names_str = get_names(sorted(list(variable_list)))
     return "The system has " + names_str + "."
@@ -100,9 +105,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
     # return agent_info_pre_cond_str, " ".join(in_sig_items_description), agent_info_effect_str, " ".join(out_sig_items_description)
 
 
-def get_agent_info_signature_item_description(
-    sig_item: AgentInfoSignatureItem, is_output: bool = False
-) -> str:
+def get_agent_info_signature_item_description(sig_item: AgentInfoSignatureItem) -> str:
     sig_name = sig_item.get("name")
     required_str = "required" if sig_item.get("required") else "not required"
     slot_fillable_str = "can" if sig_item.get("slot_fillable") else "cannot"

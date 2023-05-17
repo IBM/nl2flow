@@ -33,13 +33,12 @@ class TestDatasetGenerator(unittest.TestCase):
             agent_info_generator_input, PLANNER
         )
 
-        pretty = PLANNER.pretty_print(pddl_generator_outputs[0].planner_response)
         self.assertEqual(num_samples, len(pddl_generator_outputs))
         for output in pddl_generator_outputs:
             self.assertGreater(len(output.description), 10)
             self.assertGreater(len(output.pddl_domain), 10)
             self.assertGreater(len(output.pddl_problem), 10)
-            self.assertIsNotNone(output.planner_response)
+            self.assertIsNotNone(output.list_of_plans)
             self.assertIsNotNone(output.sample_hash)
             # with open("description.txt", "w") as f:
             #     f.write(output.description)

@@ -7,9 +7,14 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_available_agents_description,
     get_description_available_data,
     get_agent_info_description,
+    get_available_action_names,
 )
 from profiler.generators.description_generator.descripter_generator_data import (
-    slot_filler_description,
+    ask_description,
+    ask_last_resort_description,
+    ask_actions,
+    ask_preference,
+    map_description,
 )
 
 
@@ -21,9 +26,10 @@ def get_sample_description(
 ) -> str:
     descriptions: list[str] = list()
     descriptions.append(get_available_agents_description(available_agents))
-    descriptions.append(slot_filler_description[:])
-    descriptions.append("\n")
     descriptions.append(get_variables_description(available_agents, available_data))
+    descriptions.append(ask_description[:])
+    descriptions.append(ask_last_resort_description[:])
+    descriptions.append(ask_preference)
     descriptions.append("\n")
 
     for agent_info in available_agents:
@@ -37,9 +43,20 @@ def get_sample_description(
         descriptions.append(get_description_available_data(available_data))
         descriptions.append("\n")
 
+    descriptions.append(map_description[:])
+
     if len(mappings) > 0:
         descriptions.append(get_mappings_description(mappings))
         descriptions.append("\n")
+
+    descriptions.append(
+        "The system obtains values from "
+        + get_available_action_names(available_agents)
+        + " rather than from "
+        + ask_actions
+    )
+
+    descriptions.append("\n")
 
     descriptions.append(get_goal_description(goal_agent_ids))
 
