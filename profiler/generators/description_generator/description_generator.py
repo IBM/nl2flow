@@ -27,8 +27,8 @@ def get_sample_description(
     descriptions: list[str] = list()
     descriptions.append(get_available_agents_description(available_agents))
     descriptions.append(get_variables_description(available_agents, available_data))
-    descriptions.append(ask_description[:])
     descriptions.append(ask_last_resort_description[:])
+    descriptions.append(ask_description[:])
     descriptions.append(ask_preference)
     descriptions.append("\n")
 
@@ -44,17 +44,25 @@ def get_sample_description(
         descriptions.append("\n")
 
     descriptions.append(map_description[:])
-
     if len(mappings) > 0:
         descriptions.append(get_mappings_description(mappings))
         descriptions.append("\n")
 
     descriptions.append(
-        "The system obtains values from "
+        "The system prefers to obtain values from "
         + get_available_action_names(available_agents)
         + " rather than from "
         + ask_actions
+        + "."
     )
+
+    if len(mappings) > 0:
+        descriptions.append(
+            "The system prefers to obtain values from Action map"
+            + " rather than from "
+            + ask_actions
+            + "."
+        )
 
     descriptions.append("\n")
 

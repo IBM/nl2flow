@@ -40,9 +40,9 @@ class TestDescriptionGenerator(unittest.TestCase):
         )
 
         self.assertIsNotNone(samples[0].describe())
-        # description = samples[0].describe()
-        # with open("description.txt", "w") as f:
-        #     f.write(description)
+        description = samples[0].describe()
+        with open("description.txt", "w") as f:
+            f.write(description)
 
     @unittest.skip("Only to generate a text file")
     def test_get_sample_description_file(self):

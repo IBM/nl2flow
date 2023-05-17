@@ -10,7 +10,5 @@ ask_last_resort_description = (
 map_description = (
     "Action map is used when a value for one variable can be used for another variable."
 )
-ask_actions = "Action ask or Action ask-last-resort"
-ask_preference = (
-    "The system obtains values from Action ask-last-resort rather than from Action ask."
-)
+ask_actions = "Action ask-last-resort or Action ask"
+ask_preference = "The system prefers to obtain values from Action ask-last-resort rather than from Action ask."
