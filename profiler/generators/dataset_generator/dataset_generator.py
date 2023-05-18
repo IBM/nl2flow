@@ -8,6 +8,7 @@ from profiler.test_helpers.profiler_test_helper_variables import (
     pddl_start_key,
 )
 from nl2flow.plan.planners import Planner
+from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 
 
 def generate_dataset_with_info_generator(
@@ -26,7 +27,10 @@ def generate_dataset_with_info_generator(
             slot_filler_option=agent_info_generator_input.slot_filler_option,
         )
         pddl, _ = flow.compile_to_pddl()
+
+        planner_time_start = get_current_time_in_millisecond()
         planner_response = flow.plan_it(planner)
+        compiler_planner_lag = get_current_time_in_millisecond() - planner_time_start
         pddl_generator_outputs.append(
             PddlGeneratorOutput(
                 description=sample.describe(),
@@ -34,6 +38,8 @@ def generate_dataset_with_info_generator(
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
                 sample_hash=sample.get_hash(),
+                agent_info_generator_input=agent_info_generator_input.copy(deep=True),
+                compiler_planner_lag_millisecond=compiler_planner_lag,
             )
         )
 
