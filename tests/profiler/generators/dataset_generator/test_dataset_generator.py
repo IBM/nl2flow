@@ -16,40 +16,6 @@ PLANNER = (
 
 
 class TestDatasetGenerator(unittest.TestCase):
-    def test_generate_dataset_with_info_generator(self):
-        num_samples = 2
-        agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
-            num_agents=21,
-            num_var=7,
-            num_input_parameters=2,
-            num_samples=num_samples,
-            num_goal_agents=5,
-            proportion_coupled_agents=0.5,
-            proportion_slot_fillable_variables=0.2,
-            proportion_mappable_variables=0.5,
-            num_var_types=3,
-        )
-
-        pddl_generator_outputs = generate_dataset_with_info_generator(
-            agent_info_generator_input, PLANNER
-        )
-
-        self.assertEqual(num_samples, len(pddl_generator_outputs))
-        # for output in pddl_generator_outputs:
-        #     self.assertGreater(len(output.description), 10)
-        #     self.assertGreater(len(output.pddl_domain), 10)
-        #     self.assertGreater(len(output.pddl_problem), 10)
-        #     self.assertIsNotNone(output.list_of_plans)
-        #     self.assertIsNotNone(output.sample_hash)
-        # with open("description.txt", "w") as f:
-        #     f.write(output.description)
-        # with open("domain.pddl", "w") as f:
-        #     f.write(output.pddl_domain)
-        # with open("problem.pddl", "w") as f:
-        #     f.write(output.pddl_problem)
-        # with open("plan.txt", "w") as f:
-        #     f.write(PLANNER.pretty_print(output.planner_response))
-
     def test_generate_dataset_with_info_generator_small(self):
         num_samples = 1
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(

@@ -9,6 +9,7 @@ ask_last_resort_description = (
     + " Action ask-last-resort lets the system ask the user about the value of any variable unless that variable is explicitly marked as cannot be acquired from the user."
 )
 map_description = (
-    "Action map is used when a value for one variable can be used for another variable."
+    "Action map is used when a value for one variable can be used for another variable." 
+    + "Action map maps variables with the same type."
 )
 ask_preference = "The system prefers to obtain values from Action ask-last-resort rather than from Action ask."
