@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
@@ -33,22 +33,39 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
     return "The system has " + names_str + "."
 
 
+def get_variable_type_str(type_str: Optional[str]) -> str:
+    return "" if type_str is None else f" (type: {type_str})"
+
+
 def get_variables_description(
-    available_agents: List[AgentInfo], available_data_names: List[str]
+    available_agents: List[AgentInfo],
+    available_data: List[Tuple[str, Optional[str]]],
 ) -> str:
-    variable_list = set(map(lambda name: "Variable " + name, available_data_names))
+    variable_list = set()
+    for known_data in available_data:
+        variable_list.add(
+            "Variable " + known_data[0] + get_variable_type_str(known_data[1])
+        )
     for agent_info in available_agents:
         sig = agent_info.get("actuator_signature")
         # in sig
         in_sig = sig.get("in_sig_full")
         for in_sig_item in in_sig:
-            variable_name = "Variable " + in_sig_item.get("name")
+            variable_name = (
+                "Variable "
+                + in_sig_item.get("name")
+                + get_variable_type_str(in_sig_item.get("data_type"))
+            )
             variable_list.add(variable_name)
 
         # out sig
         out_sig = sig.get("out_sig_full")
         for out_sig_item in out_sig:
-            variable_name = "Variable " + out_sig_item.get("name")
+            variable_name = (
+                "Variable "
+                + out_sig_item.get("name")
+                + get_variable_type_str(out_sig_item.get("data_type"))
+            )
             variable_list.add(variable_name)
 
     names_str = get_names(sorted(list(variable_list)))
@@ -135,7 +152,11 @@ def get_goal_description(goals: Set[str]) -> str:
     return f"The goal of the system is to execute {get_names(goals_list)}."
 
 
-def get_description_available_data(available_item_names: List[str]) -> str:
-    item_list = list(map(lambda name: "Variable " + name, available_item_names))
+def get_description_available_data(
+    available_items: List[Tuple[str, Optional[str]]]
+) -> str:
+    item_list = list(
+        map(lambda available_item: "Variable " + available_item[0], available_items)
+    )
 
     return f"Values are available already for {get_names(item_list)}."

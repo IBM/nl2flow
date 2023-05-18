@@ -127,14 +127,27 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {
-                "in_sig_full": [{"name": "b", "required": True, "slot_fillable": True}],
+                "in_sig_full": [
+                    {
+                        "name": "b",
+                        "required": True,
+                        "slot_fillable": True,
+                        "data_type": None,
+                    }
+                ],
                 "out_sig_full": [
-                    {"name": "c", "required": False, "slot_fillable": False}
+                    {
+                        "name": "c",
+                        "required": False,
+                        "slot_fillable": False,
+                        "data_type": "sample_type",
+                    }
                 ],
             },
         }
 
-        res = get_variables_description([agent_info], ["r", "s"])
+        res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         self.assertEqual(
-            "The system has Variable b, Variable c, Variable r, and Variable s.", res
+            "The system has Variable b, Variable c (type: sample_type), Variable r (type: type_a), and Variable s.",
+            res,
         )

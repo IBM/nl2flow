@@ -41,8 +41,8 @@ class TestDescriptionGenerator(unittest.TestCase):
 
         self.assertIsNotNone(samples[0].describe())
         description = samples[0].describe()
-        with open("description.txt", "w") as f:
-            f.write(description)
+        # with open("description.txt", "w") as f:
+        #     f.write(description)
 
     @unittest.skip("Only to generate a text file")
     def test_get_sample_description_file(self):
@@ -60,5 +60,5 @@ class TestDescriptionGenerator(unittest.TestCase):
         samples, is_all_samples_collected = generate_agent_infos(
             agent_info_generator_input
         )
-        with open("./description.txt", "w") as f:
-            f.write(samples[0].describe())
+        # with open("./description.txt", "w") as f:
+        #     f.write(samples[0].describe())

@@ -1,6 +1,8 @@
 from enum import Enum
 from math import ceil
+from typing import Optional
 from pydantic import BaseModel, root_validator, validator
+from nl2flow.compile.options import SlotOptions
 
 
 class NameGenerator(Enum):
@@ -13,6 +15,7 @@ class VariableInfo(BaseModel):
     variable_name: str
     mappable: bool
     slot_fillable: bool
+    variable_type: Optional[str]
 
 
 class AgentInfoGeneratorInput(BaseModel):
@@ -33,6 +36,10 @@ class AgentInfoGeneratorInput(BaseModel):
     proportion_slot_fillable_variables: float
     # The proportion of mappable variables
     proportion_mappable_variables: float
+    # the number of types for variables
+    num_var_types: int = 0
+    # slot-filler type
+    slot_filler_option: Optional[SlotOptions] = None
     # Name generator
     name_generator: NameGenerator = NameGenerator.NUMBER
 
@@ -40,6 +47,16 @@ class AgentInfoGeneratorInput(BaseModel):
     def check_num_agents_greater_than_zero(cls, v):
         if v <= 0:
             raise ValueError("num_agents should be greater than 0")
+        return v
+
+    @root_validator()
+    def check_num_variable_types_less_than_equal_to_num_var(cls, v):
+        if v["num_var_types"] < 0:
+            raise ValueError("num_var_types should be greater than or equal to 0")
+        if v["num_var_types"] > v["num_var"]:
+            raise ValueError("num_var_types should be less than or equal to num_var")
+        if v["num_var_types"] > 15:
+            raise ValueError("num_var_types should be less than or equal to 15")
         return v
 
     @root_validator()
@@ -90,9 +107,9 @@ class AgentInfoGeneratorInput(BaseModel):
             raise ValueError(
                 "proportion_coupled_agents should be between 0 (inclusive) and 1 (inclusive)"
             )
-        if ceil(v["num_agents"] * v["proportion_coupled_agents"]) < 2:
+        if ceil(v["num_agents"] * v["proportion_coupled_agents"]) == 1:
             raise ValueError(
-                "proportion_coupled_agents should make the number of coupled agents greater than 1"
+                "proportion_coupled_agents should make the number of coupled agents not 1"
             )
         return v
 
@@ -133,8 +150,8 @@ class AgentInfoGeneratorInput(BaseModel):
             raise ValueError(
                 "proportion_mappable_variables should be between 0 (inclusive) and 1 (inclusive)"
             )
-        if ceil(v["num_var"] * v["proportion_mappable_variables"]) <= 1:
+        if ceil(v["num_var"] * v["proportion_mappable_variables"]) == 1:
             raise ValueError(
-                "the number of mappable variables should be greater than 1"
+                "proportion_mappable_variables should make the number of mappable variables not 1"
             )
         return v

@@ -21,8 +21,7 @@ from profiler.data.api_spec_data import agent_names, parameter_names
 from profiler.generators.info_generator.agent_info_generator_coupling_helper import (
     get_out_item_position_to_couple_agents,
 )
-import hashlib
-import json
+from profiler.generators.info_generator.generator_variables import variable_data_types
 
 
 def get_names_dataset(num: int, name_type: str) -> List[str]:
@@ -116,10 +115,34 @@ def get_agents(agent_names: List[str], num_input_parameters: int) -> List[AgentI
     return agent_infos
 
 
+def get_variable_types(num_variables: int, num_var_types: int) -> List[Optional[str]]:
+    """
+    returns types for variables
+    A None element indicates that no type should be assigned for a variable
+    """
+    sample_types: List[Optional[str]] = [None] * num_variables
+    if num_var_types == 0:
+        return sample_types
+    types = random.sample(variable_data_types, num_var_types)
+    types.append(None)
+    for i in range(num_variables):
+        if i < len(types) - 1:
+            sample_types[i] = types[i][:]
+        else:
+            idx = random.randint(0, len(types) - 1)
+            if idx == len(types) - 1:
+                continue  # None is selected
+            else:
+                sample_types[i] = types[idx][:]
+    random.shuffle(sample_types)
+    return sample_types
+
+
 def get_variables(
     variable_names: List[str],
     proportion_slot_fillable_variables: float,
     proportion_mappable_variables: float,
+    num_var_types: int,
 ) -> List[VariableInfo]:
     num_variables = len(variable_names)
 
@@ -135,19 +158,22 @@ def get_variables(
     num_mappable_variables = ceil(num_variables * proportion_mappable_variables)
     mappable_variable_names = set(random.sample(variable_names, num_mappable_variables))
 
+    variable_types = get_variable_types(num_variables, num_var_types)
     variable_slot_fillable_state: List[VariableInfo] = list()
-    for variable_name in variable_names:
+    for i, variable_name in enumerate(variable_names):
         slot_fillable = False
         mappable = False
         if variable_name in mappable_variable_names:
             mappable = True
         if variable_name in slot_fillable_variable_names:
             slot_fillable = True
+
         variable_slot_fillable_state.append(
             VariableInfo(
                 variable_name=variable_name,
                 slot_fillable=slot_fillable,
                 mappable=mappable,
+                variable_type=variable_types[i],
             )
         )
     return variable_slot_fillable_state
@@ -167,6 +193,10 @@ def get_mappings(variable_infos: List[VariableInfo]) -> List[Tuple[str, str, flo
         )
     )
     random.shuffle(mappable_variable_names)
+
+    if len(mappable_variable_names) == 0:
+        return []
+
     previous_variable_name = mappable_variable_names[0]
     mappings: List[Tuple[str, str, float]] = list()
     mapping_score = 1.0
@@ -189,6 +219,7 @@ def get_new_signature_from_variable_info(
     signature_item["name"] = variable_info.variable_name[:]
     signature_item["sequence_alias"] = variable_info.variable_name[:]
     signature_item["slot_fillable"] = variable_info.slot_fillable
+    signature_item["data_type"] = variable_info.variable_type
 
     return signature_item
 
@@ -272,6 +303,7 @@ def get_agent_infos_with_coupled_agents(
                     variable_name=chosen_item["name"][:],
                     mappable=chosen_item["mappable"],
                     slot_fillable=chosen_item["slot_fillable"],
+                    variable_type=chosen_item["data_type"],
                 )
             elif len(variables_remaining_deque) > 0:
                 variables_remaining_deque.popleft()
@@ -360,11 +392,11 @@ def get_agents_with_variables(
     agent_infos_input: List[AgentInfo],
     variable_infos_input: List[VariableInfo],
     proportion_coupled_agents: float,
-) -> Tuple[List[AgentInfo], List[str]]:
+) -> Tuple[List[AgentInfo], List[Tuple[str, Optional[str]]]]:
     # returns agent_infos and available_data
     agent_infos = deepcopy(agent_infos_input)
     variable_infos = deepcopy(variable_infos_input)
-    available_data: List[str] = list()
+    available_data: List[Tuple[str, Optional[str]]] = list()
     num_input_parameters = len(agent_infos[0]["actuator_signature"]["in_sig_full"])
 
     slot_fillable_variable_infos = list(
@@ -402,7 +434,12 @@ def get_agents_with_variables(
         return [], available_data
 
     # use remaining variables for available_data
-    available_data = list(map(lambda var: var.variable_name, variables_remaining_deque))
+    available_data = list(
+        map(
+            lambda var: (var.variable_name, var.variable_type),
+            variables_remaining_deque,
+        )
+    )
 
     # shuffle data
     agent_infos = get_shuffled_agent_infos(agent_infos)

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from pydantic import BaseModel, root_validator
 from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.data_types.generator_data_type import (
@@ -16,14 +16,14 @@ class AgentInfoGeneratorOutputItemCore(BaseModel):
     available_agents: List[AgentInfo]
     goal_agent_ids: Set[str]
     mappings: List[Tuple[str, str, float]]
-    available_data: List[str]
+    available_data: List[Tuple[str, Optional[str]]]
 
 
 class AgentInfoGeneratorOutputItem(BaseModel):
     available_agents: List[AgentInfo]
     goal_agent_ids: Set[str]
     mappings: List[Tuple[str, str, float]]
-    available_data: List[str]
+    available_data: List[Tuple[str, Optional[str]]]  # variable name, variable type
     agent_info_generator_input: AgentInfoGeneratorInput
 
     @root_validator()

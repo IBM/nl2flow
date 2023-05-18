@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from nl2flow.compile.flow import Flow
 from profiler.data_types.agent_info_data_types import AgentInfo, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
@@ -11,6 +11,7 @@ from nl2flow.compile.schemas import (
     GoalItem,
     SlotProperty,
     MappingItem,
+    Parameter,
 )
 from profiler.converters.converter_variables import (
     AGENT_ID,
@@ -23,6 +24,7 @@ from profiler.converters.converter_variables import (
     NAME,
     REQUIRED,
 )
+from nl2flow.compile.options import SlotOptions
 from uuid import uuid4
 
 
@@ -48,15 +50,25 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
                     signature_type in agent_info[ACTUATOR_SIGNATURE]
                     and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
                 ):
-                    signature_names: List[str] = list()
+                    signature_names: List[Parameter] = list()
                     for signature_item in agent_info[ACTUATOR_SIGNATURE][
                         signature_type
                     ]:
                         if signature_type == OUT_SIGNATURE:
-                            signature_names.append(get_name(signature_item))
+                            signature_names.append(
+                                Parameter(
+                                    item_id=get_name(signature_item),
+                                    item_type=signature_item["data_type"],
+                                )
+                            )
                         else:
                             if REQUIRED in signature_item and signature_item[REQUIRED]:
-                                signature_names.append(get_name(signature_item))
+                                signature_names.append(
+                                    Parameter(
+                                        item_id=get_name(signature_item),
+                                        item_type=signature_item["data_type"],
+                                    )
+                                )
 
                     if signature_type == IN_SIGNATURE and REQUIRED:
                         operator.add_input(SignatureItem(parameters=signature_names))
@@ -115,11 +127,15 @@ def get_data_mappers_for_flow(
     )
 
 
-def get_available_data_for_flow(available_data: List[str]) -> List[MemoryItem]:
+def get_available_data_for_flow(
+    available_data: List[Tuple[str, Optional[str]]]
+) -> List[MemoryItem]:
     return list(
         map(
-            lambda signature_item_name: MemoryItem(
-                item_id=signature_item_name, item_state=MemoryState.KNOWN
+            lambda signature_item: MemoryItem(
+                item_id=signature_item[0],
+                item_type=signature_item[1],
+                item_state=MemoryState.KNOWN,
             ),
             available_data,
         )
@@ -130,8 +146,9 @@ def get_flow_from_agent_infos(
     available_agents: List[AgentInfo],
     mappings: List[Tuple[str, str, float]],
     goals: Set[str],
-    available_data: List[str],
+    available_data: List[Tuple[str, Optional[str]]],
     flow_name: str = "default_name",
+    slot_filler_option: Optional[SlotOptions] = None,
 ) -> Flow:
     flow = Flow(flow_name)
     flow.add(
@@ -141,6 +158,8 @@ def get_flow_from_agent_infos(
         + get_available_data_for_flow(available_data)
         + [get_goals_for_flow(goals)]
     )
+    if slot_filler_option is not None and slot_filler_option == SlotOptions.last_resort:
+        flow.slot_options.add(SlotOptions.last_resort)
     return flow
 
 

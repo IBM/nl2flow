@@ -39,6 +39,7 @@ def generate_agent_infos(
             variable_names,
             input.proportion_slot_fillable_variables,
             input.proportion_mappable_variables,
+            input.num_var_types,
         )
         mappings: List[Tuple[str, str, float]] = get_mappings(variables)
         agent_infos_with_variables, available_data = get_agents_with_variables(

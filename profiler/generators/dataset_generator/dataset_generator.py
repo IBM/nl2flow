@@ -23,6 +23,7 @@ def generate_dataset_with_info_generator(
             mappings=sample.mappings,
             goals=sample.goal_agent_ids,
             available_data=sample.available_data,
+            slot_filler_option=agent_info_generator_input.slot_filler_option,
         )
         pddl, _ = flow.compile_to_pddl()
         planner_response = flow.plan_it(planner)
