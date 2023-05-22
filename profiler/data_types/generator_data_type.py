@@ -42,6 +42,8 @@ class AgentInfoGeneratorInput(BaseModel):
     slot_filler_option: Optional[SlotOptions] = None
     # Name generator
     name_generator: NameGenerator = NameGenerator.NUMBER
+    # error_message
+    error_message: Optional[str] = None
 
     @validator("num_agents")
     def check_num_agents_greater_than_zero(cls, v):
