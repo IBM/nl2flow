@@ -24,7 +24,6 @@ class Operator(ABC):
     @max_try.setter
     def max_try(self, max_try: int) -> None:
         if isinstance(max_try, int):
-
             if max_try > MAX_RETRY:
                 raise ValueError(
                     f"Max retries too high! Tried to set {max_try}, maximum allowed {MAX_RETRY}."
@@ -59,8 +58,7 @@ class Operator(ABC):
             )
 
     def add_input(self, new_input: Union[SignatureItem, List[SignatureItem]]) -> None:
-
-        if type(new_input) != List:
+        if isinstance(new_input, SignatureItem):
             new_input = [new_input]
 
         for item in new_input:
@@ -89,10 +87,13 @@ class ClassicalOperator(Operator):
         Operator.__init__(self, name)
         self.operator_definition.outputs = Outcome()
 
-    def add_outcome(self, outcome: Outcome) -> None:
+    def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
         assert isinstance(
             outcome, Outcome
         ), "Tried to add something else to the outcome list."
+        assert not isinstance(
+            outcome, List
+        ), "Can only add one outcome to a classical operator."
         assert (
             outcome.probability is None
         ), "Cannot assign probability to a classical outcome."
@@ -103,8 +104,7 @@ class ClassicalOperator(Operator):
         self.operator_definition.outputs = outcome
 
     def add_output(self, new_output: Union[SignatureItem, List[SignatureItem]]) -> None:
-
-        if not isinstance(new_output, List):
+        if isinstance(new_output, SignatureItem):
             new_output = [new_output]
 
         for item in new_output:
@@ -112,7 +112,11 @@ class ClassicalOperator(Operator):
                 item, SignatureItem
             ), "Tried to add a non-signature item to an operator."
 
-            self.operator_definition.outputs.outcomes.append(item)
+            if isinstance(self.operator_definition.outputs, Outcome):
+                self.operator_definition.outputs.outcomes.append(item)
+
+            else:
+                raise TypeError("Classical Operator only has one outcone.")
 
 
 class ContingentOperator(Operator):
@@ -127,8 +131,7 @@ class ContingentOperator(Operator):
         Operator.__init__(self, name)
 
     def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
-
-        if type(outcome) != List:
+        if isinstance(outcome, Outcome):
             outcome = [outcome]
 
         for item in outcome:
@@ -142,8 +145,7 @@ class ContingentOperator(Operator):
             self.operator_definition.outputs.append(item)
 
     def add_output(self, output: Union[SignatureItem, List[SignatureItem]]) -> None:
-
-        if type(output) != List:
+        if isinstance(output, SignatureItem):
             output = [output]
 
         new_outcome = Outcome(outcomes=output)
@@ -162,8 +164,7 @@ class NonDeterministicOperator(Operator):
         Operator.__init__(self, name)
 
     def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
-
-        if type(outcome) != List:
+        if isinstance(outcome, Outcome):
             outcome = [outcome]
 
         for item in outcome:
@@ -179,8 +180,7 @@ class NonDeterministicOperator(Operator):
         output: Union[SignatureItem, List[SignatureItem]],
         probability: Optional[float] = None,
     ) -> None:
-
-        if type(output) != List:
+        if isinstance(output, SignatureItem):
             output = [output]
 
         new_outcome = Outcome(outcomes=output, probability=probability)
@@ -189,7 +189,6 @@ class NonDeterministicOperator(Operator):
         assert self.__validate_probabilities__(), "JAARL. Probabilities"
 
     def __validate_probabilities__(self) -> bool:
-
         probabilities = [op.probability for op in self.operator_definition.outputs]
         assert all([isinstance(p, float) for p in probabilities]) or all(
             [p is None for p in probabilities]
@@ -197,7 +196,7 @@ class NonDeterministicOperator(Operator):
 
         probabilities = [p if p else 0.0 for p in probabilities]
         assert all(
-            [0.0 <= p <= 1.0 for p in probabilities]
+            [0.0 <= p <= 1.0 if p is not None else False for p in probabilities]
         ), "Outcome probabilities must be between 0 and 1."
 
         return True

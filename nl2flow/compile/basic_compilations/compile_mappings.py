@@ -1,7 +1,7 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
-from typing import Set, Dict, Any
+from typing import Set, Any
 
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
 from nl2flow.compile.schemas import FlowDefinition
@@ -15,8 +15,7 @@ from nl2flow.compile.options import (
 )
 
 
-def compile_declared_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
-
+def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
@@ -106,7 +105,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> Non
     )
 
 
-def compile_typed_mappings(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
 
     for typing in compilation.type_map:

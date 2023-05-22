@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Set, List, Optional, Union
+from typing import Set, List, Optional, Union, Any
 from pydantic import BaseModel, validator
 
 from nl2flow.plan.schemas import Step, Parameter
@@ -121,6 +121,7 @@ class SignatureItem(BaseModel):
 
 
 class Outcome(BaseModel):
+    conditions: List[Any] = []
     constraints: List[Constraint] = []
     outcomes: List[SignatureItem] = []
     probability: Optional[float]
@@ -128,6 +129,7 @@ class Outcome(BaseModel):
     @classmethod
     def transform(cls, outcome: Outcome, transforms: List[Transform]) -> Outcome:
         return Outcome(
+            conditions=outcome.conditions,
             constraints=[
                 constraint.transform(constraint, transforms)
                 for constraint in outcome.constraints
@@ -242,7 +244,6 @@ class FlowDefinition(BaseModel):
     def transform(
         cls, flow: FlowDefinition, transforms: List[Transform]
     ) -> FlowDefinition:
-
         new_flow = FlowDefinition(
             name=string_transform(flow.name, transforms),
             starts_with=string_transform(flow.starts_with, transforms),

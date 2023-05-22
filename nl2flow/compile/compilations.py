@@ -48,7 +48,7 @@ class Compilation(ABC):
         self.flow_definition = flow_definition
 
     @abstractmethod
-    def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
+    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
         pass
 
 
@@ -97,8 +97,7 @@ class ClassicPDDL(Compilation):
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
-    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
-
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,

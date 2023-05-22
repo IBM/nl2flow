@@ -9,7 +9,7 @@ class Transform(BaseModel):
     target: str
 
 
-def string_transform(item: str, reference: List[Transform]) -> str:
+def string_transform(item: Optional[str], reference: List[Transform]) -> Optional[str]:
     transform = re.sub(r"\s+", "_", item.lower()) if item is not None else item
 
     if (
@@ -34,7 +34,6 @@ def revert_string_transform(item: str, reference: List[Transform]) -> Optional[s
         return item
 
     else:
-
         assert (
             len(og_items) == 1
         ), "There cannot be more than one mapping, something terrible has happened."

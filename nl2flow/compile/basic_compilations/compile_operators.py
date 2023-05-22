@@ -2,7 +2,7 @@ import copy
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
-from typing import List, Set, Dict, Any
+from typing import List, Set, Any
 
 from nl2flow.compile.basic_compilations.utils import (
     add_to_condition_list_pre_check,
@@ -23,12 +23,11 @@ from nl2flow.compile.options import (
 )
 
 
-def compile_operators(compilation: Any, **kwargs: Dict[str, Any]) -> None:
-
+def compile_operators(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     list_of_actions: List[OperatorDefinition] = flow_definition.operators
 
-    multi_instance: bool = kwargs.get("multi_instance", True)  # type: ignore
+    multi_instance: bool = kwargs.get("multi_instance", True)
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
 

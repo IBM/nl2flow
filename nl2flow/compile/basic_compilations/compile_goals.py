@@ -1,7 +1,7 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land
-from typing import List, Set, Any, Dict
+from typing import List, Set, Any
 
 from nl2flow.compile.basic_compilations.utils import get_type_of_constant
 from nl2flow.compile.schemas import GoalItem, GoalItems
@@ -20,7 +20,6 @@ from nl2flow.compile.options import (
 def compile_goal_item(
     compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]
 ) -> None:
-
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
@@ -55,7 +54,6 @@ def compile_goal_item(
             TypeError("Unrecognized goal type.")
 
     else:
-
         list_of_constants = list()
         if goal_item.goal_name in compilation.type_map:
             for item in compilation.constant_map:
@@ -85,8 +83,7 @@ def compile_goal_item(
             raise TypeError("Unrecognized goal type.")
 
 
-def compile_goals(compilation: Any, **kwargs: Dict[str, Any]) -> None:
-
+def compile_goals(compilation: Any, **kwargs: Any) -> None:
     goal_type: GoalOptions = kwargs["goal_type"]
     list_of_goal_items: List[GoalItems] = compilation.flow_definition.goal_items
 
@@ -102,7 +99,6 @@ def compile_goals(compilation: Any, **kwargs: Dict[str, Any]) -> None:
         compilation.problem.goal = land(*goal_predicates, flat=True)
 
     elif goal_type == GoalOptions.OR_AND:
-
         for goal_index, goal_items in enumerate(list_of_goal_items):
             goal_predicates = set()
             for goal_item in goal_items.goals:

@@ -15,6 +15,7 @@ from nl2flow.compile.schemas import (
     OperatorDefinition,
     MemoryItem,
     SignatureItem,
+    Outcome,
 )
 
 from abc import ABC, abstractmethod
@@ -27,14 +28,13 @@ import re
 def parse_action(
     action_name: str,
     parameters: List[str],
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> Optional[Action]:
     def __add_parameters(signatures: List[SignatureItem]) -> List[SignatureItem]:
         list_of_parameters: List[SignatureItem] = list()
 
         for signature_item in signatures:
             for parameter in signature_item.parameters:
-
                 if isinstance(parameter, MemoryItem):
                     list_of_parameters.append(
                         Parameter(
@@ -44,7 +44,6 @@ def parse_action(
                     )
 
                 elif isinstance(parameter, str):
-
                     find_in_memory = list(
                         filter(
                             lambda x: x.item_id == parameter,
@@ -74,11 +73,9 @@ def parse_action(
     flow: Flow = kwargs["flow"]
 
     if any([action_name.startswith(item.value) for item in BasicOperations]):
-
         if action_name.startswith(
             BasicOperations.SLOT_FILLER.value
         ) or action_name.startswith(BasicOperations.MAPPER.value):
-
             temp = action_name.split("----")
             new_action.name = temp[0]
 
@@ -102,7 +99,12 @@ def parse_action(
         )[0]
 
         new_action.inputs = __add_parameters(operator.inputs)
-        new_action.outputs = __add_parameters(operator.outputs.outcomes)
+
+        if isinstance(operator.outputs, Outcome):
+            new_action.outputs = __add_parameters(operator.outputs.outcomes)
+
+        else:
+            raise TypeError("Parsing classical action, must have only one outcone.")
 
     return new_action
 
@@ -122,7 +124,6 @@ class Planner(ABC):
         flow: Flow,
         option: Union[SlotOptions, MappingOptions, ConfirmOptions],
     ) -> ClassicalPlan:
-
         _ = flow
 
         if option == SlotOptions.group_slots:
@@ -146,7 +147,6 @@ class Planner(ABC):
 
         new_start_of_plan = 0
         for index, action in enumerate(plan.plan):
-
             if action.name == action_name:
                 new_action.inputs.extend(action.inputs)
 
@@ -206,9 +206,8 @@ class Michael(Planner, RemotePlanner):
         return self.call_remote_planner(payload=payload)
 
     def parse(
-        self, response: requests.models.Response, **kwargs: Dict[str, Any]
+        self, response: requests.models.Response, **kwargs: Any
     ) -> PlannerResponse:
-
         if response.status_code == 200:
             response = response.json()
             planner_response = PlannerResponse(metadata=response["raw_output"])
@@ -219,7 +218,6 @@ class Michael(Planner, RemotePlanner):
             confirm_options: Set[ConfirmOptions] = flow.confirm_options
 
             for plan in response.get("plans", []):
-
                 actions = plan.get("actions", [])
                 length = len(actions)
 
@@ -231,9 +229,13 @@ class Michael(Planner, RemotePlanner):
                         action[0], kwargs["transforms"]
                     )
 
-                    new_action = parse_action(
-                        action_name=action_name, parameters=action[1:], **kwargs
-                    )
+                    if action_name is not None:
+                        new_action = parse_action(
+                            action_name=action_name, parameters=action[1:], **kwargs
+                        )
+
+                    else:
+                        raise ValueError("Could not parse action name.")
 
                     if new_action:
                         new_plan.plan.append(new_action)
@@ -266,9 +268,8 @@ class Christian(Planner, RemotePlanner):
         return self.call_remote_planner(payload=payload)
 
     def parse(
-        self, response: requests.models.Response, **kwargs: Dict[str, Any]
+        self, response: requests.models.Response, **kwargs: Any
     ) -> PlannerResponse:
-
         if response.status_code == 200:
             response = response.json()
             response = response["result"]
@@ -293,9 +294,13 @@ class Christian(Planner, RemotePlanner):
                 action = action.split()
                 action_name = revert_string_transform(action[0], kwargs["transforms"])
 
-                new_action = parse_action(
-                    action_name=action_name, parameters=action[1:], **kwargs
-                )
+                if action_name is not None:
+                    new_action = parse_action(
+                        action_name=action_name, parameters=action[1:], **kwargs
+                    )
+
+                else:
+                    raise ValueError("Could not parse action name.")
 
                 if new_action:
                     new_plan.plan.append(new_action)
