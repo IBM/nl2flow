@@ -6,6 +6,8 @@ from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.generators.dataset_generator.dataset_generator import (
     generate_dataset_with_info_generator,
 )
+import random
+
 
 PLANNER_URL = os.getenv("PLANNER_URL")
 PLANNER = (
@@ -31,7 +33,7 @@ class TestDatasetGenerator(unittest.TestCase):
         )
 
         pddl_generator_outputs = generate_dataset_with_info_generator(
-            agent_info_generator_input, PLANNER
+            agent_info_generator_input, PLANNER, random
         )
 
         self.assertEqual(num_samples, len(pddl_generator_outputs))

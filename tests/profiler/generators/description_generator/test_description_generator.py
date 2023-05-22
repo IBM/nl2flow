@@ -3,6 +3,7 @@ from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
 )
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos
+import random
 
 
 class TestDescriptionGenerator(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestDescriptionGenerator(unittest.TestCase):
         )
 
         samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input
+            agent_info_generator_input, random
         )
         self.assertIsNotNone(samples[0].describe())
 
@@ -36,7 +37,7 @@ class TestDescriptionGenerator(unittest.TestCase):
         )
 
         samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input
+            agent_info_generator_input, random
         )
 
         self.assertIsNotNone(samples[0].describe())

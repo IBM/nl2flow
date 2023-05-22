@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import Any, List, Optional, Set, Tuple
 from nl2flow.compile.flow import Flow
 from profiler.data_types.agent_info_data_types import AgentInfo, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator

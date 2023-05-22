@@ -1,8 +1,7 @@
 from collections import deque
 from copy import deepcopy
 from math import ceil
-import random
-from typing import Deque, Dict, List, Optional, Set, Tuple
+from typing import Any, Deque, Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
@@ -24,7 +23,7 @@ from profiler.generators.info_generator.agent_info_generator_coupling_helper imp
 from profiler.generators.info_generator.generator_variables import variable_data_types
 
 
-def get_names_dataset(num: int, name_type: str) -> List[str]:
+def get_names_dataset(num: int, name_type: str, random: Any) -> List[str]:
     num_names_dataset = (
         len(agent_names) if name_type == "agent" else len(parameter_names)
     )
@@ -60,10 +59,10 @@ def get_names_from_haikunator(num_names: int) -> List[str]:
 
 
 def get_agent_variable_names_with_dataset(
-    num_agents: int, num_var: int
+    num_agents: int, num_var: int, random: Any
 ) -> Tuple[List[str], List[str]]:
-    return get_names_dataset(num_agents, "agent"), get_names_dataset(
-        num_var, "parameter"
+    return get_names_dataset(num_agents, "agent", random), get_names_dataset(
+        num_var, "parameter", random
     )
 
 
@@ -83,12 +82,12 @@ def get_agent_variable_names_with_number(
 
 
 def get_agent_variable_names(
-    name_generator: NameGenerator, num_agents: int, num_var: int
+    name_generator: NameGenerator, num_agents: int, num_var: int, random: Any
 ) -> Tuple[List[str], List[str]]:
     if name_generator == NameGenerator.HAIKUNATOR:
         return get_agent_variable_names_with_haikunator(num_agents, num_var)
     if name_generator == NameGenerator.DATASET:
-        return get_agent_variable_names_with_dataset(num_agents, num_var)
+        return get_agent_variable_names_with_dataset(num_agents, num_var, random)
     return get_agent_variable_names_with_number(num_agents, num_var)
 
 
@@ -115,7 +114,9 @@ def get_agents(agent_names: List[str], num_input_parameters: int) -> List[AgentI
     return agent_infos
 
 
-def get_variable_types(num_variables: int, num_var_types: int) -> List[Optional[str]]:
+def get_variable_types(
+    num_variables: int, num_var_types: int, random: Any
+) -> List[Optional[str]]:
     """
     returns types for variables
     A None element indicates that no type should be assigned for a variable
@@ -143,6 +144,7 @@ def get_variables(
     proportion_slot_fillable_variables: float,
     proportion_mappable_variables: float,
     num_var_types: int,
+    random: Any,
 ) -> List[VariableInfo]:
     num_variables = len(variable_names)
 
@@ -158,7 +160,7 @@ def get_variables(
     num_mappable_variables = ceil(num_variables * proportion_mappable_variables)
     mappable_variable_names = set(random.sample(variable_names, num_mappable_variables))
 
-    variable_types = get_variable_types(num_variables, num_var_types)
+    variable_types = get_variable_types(num_variables, num_var_types, random)
     variable_slot_fillable_state: List[VariableInfo] = list()
     for i, variable_name in enumerate(variable_names):
         slot_fillable = False
@@ -179,13 +181,15 @@ def get_variables(
     return variable_slot_fillable_state
 
 
-def get_goals(num_goals: int, agent_infos: List[AgentInfo]) -> Set[str]:
+def get_goals(num_goals: int, agent_infos: List[AgentInfo], random: Any) -> Set[str]:
     return random.sample(
         list(map(lambda info: info["agent_id"][:], agent_infos)), num_goals
     )
 
 
-def get_mappings(variable_infos: List[VariableInfo]) -> List[Tuple[str, str, float]]:
+def get_mappings(
+    variable_infos: List[VariableInfo], random: Any
+) -> List[Tuple[str, str, float]]:
     mappable_variable_names = list(
         map(
             lambda filtered_info: filtered_info.variable_name,
@@ -378,7 +382,9 @@ def get_agent_info_with_remaining_variables(
     return agent_infos, variables_remaining_deque
 
 
-def get_shuffled_agent_infos(agent_infos_input: List[AgentInfo]) -> List[AgentInfo]:
+def get_shuffled_agent_infos(
+    agent_infos_input: List[AgentInfo], random: Any
+) -> List[AgentInfo]:
     agent_infos = deepcopy(agent_infos_input)
     random.shuffle(agent_infos)
     for agent_info in agent_infos:
@@ -392,6 +398,7 @@ def get_agents_with_variables(
     agent_infos_input: List[AgentInfo],
     variable_infos_input: List[VariableInfo],
     proportion_coupled_agents: float,
+    random: Any,
 ) -> Tuple[List[AgentInfo], List[Tuple[str, Optional[str]]]]:
     # returns agent_infos and available_data
     agent_infos = deepcopy(agent_infos_input)
@@ -442,6 +449,6 @@ def get_agents_with_variables(
     )
 
     # shuffle data
-    agent_infos = get_shuffled_agent_infos(agent_infos)
+    agent_infos = get_shuffled_agent_infos(agent_infos, random)
 
     return agent_infos, available_data

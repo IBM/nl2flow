@@ -24,6 +24,7 @@ from profiler.data_types.agent_info_data_types import (
 )
 from profiler.data_types.generator_data_type import VariableInfo
 from profiler.validators.agent_info_generator_test_utils import get_stats_coupled_agents
+import random
 
 
 class TestAgentInfoGeneratorHelper(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
     def test_get_variable_types_many_types(self):
         num_variables = 100
         num_var_types = 14
-        sample_types = get_variable_types(num_variables, num_var_types)
+        sample_types = get_variable_types(num_variables, num_var_types, random)
         self.assertEqual(num_variables, len(sample_types))
         types = set(filter(lambda t: t is not None, sample_types))
         self.assertEqual(num_var_types, len(types))
@@ -55,7 +56,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
     def test_get_variable_types_no_type(self):
         num_variables = 100
         num_var_types = 0
-        sample_types = get_variable_types(num_variables, num_var_types)
+        sample_types = get_variable_types(num_variables, num_var_types, random)
         self.assertEqual(num_variables, len(sample_types))
         types = set(filter(lambda t: t is not None, sample_types))
         self.assertEqual(num_var_types, len(types))
@@ -70,6 +71,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             proportion_slot_fillable_variable,
             proportion_mappable_variable,
             num_variable_types,
+            random,
         )
         self.assertEqual(len(variable_names), len(variables))
         cnt_mappable = 0
@@ -95,7 +97,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             agent_info["agent_id"] = str(i)
             agent_infos.append(agent_info)
         agent_ids = set(map(lambda info: info["agent_id"][:], agent_infos))
-        goals = get_goals(num_goals, agent_infos)
+        goals = get_goals(num_goals, agent_infos, random)
         self.assertEqual(num_goals, len(goals))
         for goal in goals:
             assert goal in agent_ids
@@ -106,7 +108,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             variable_name="b", slot_fillable=False, mappable=False
         )
         variable_2 = VariableInfo(variable_name="c", slot_fillable=False, mappable=True)
-        mappings = get_mappings([variable_0, variable_1, variable_2])
+        mappings = get_mappings([variable_0, variable_1, variable_2], random)
         self.assertEqual(2, len(mappings))
 
     def test_get_new_signature_from_variable_info(self):
@@ -374,7 +376,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         ]
         proportion_coupled_agents = 1.0
         res = get_agents_with_variables(
-            agent_infos, variable_infos_input, proportion_coupled_agents
+            agent_infos, variable_infos_input, proportion_coupled_agents, random
         )
         self.assertEqual(2, len(res[0]))
         self.assertEqual(0, len(res[1]))
@@ -478,7 +480,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         ]
         proportion_coupled_agents = 1.0
         res = get_agents_with_variables(
-            agent_infos, variable_infos_input, proportion_coupled_agents
+            agent_infos, variable_infos_input, proportion_coupled_agents, random
         )
         self.assertEqual(2, len(res[0]))
         self.assertEqual(2, len(res[1]))
@@ -514,11 +516,11 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
     def test_get_names_dataset_agent(self):
         num = 100
         type = "agent"
-        names = get_names_dataset(num, type)
+        names = get_names_dataset(num, type, random)
         self.assertEqual(num, len(names))
 
     def test_get_names_dataset_aprameter(self):
         num = 100
         type = "parameter"
-        names = get_names_dataset(num, type)
+        names = get_names_dataset(num, type, random)
         self.assertEqual(num, len(names))
