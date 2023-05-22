@@ -124,6 +124,7 @@ from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.generators.dataset_generator.dataset_generator import (
     generate_dataset_with_info_generator,
 )
+import random
 
 PLANNER_URL = os.getenv("PLANNER_URL")
 PLANNER = (
@@ -132,6 +133,7 @@ PLANNER = (
     else Christian(url=DEFAULT_PLANNER_URL)
 )
 
+random.seed(123456)
  agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,
@@ -144,7 +146,7 @@ PLANNER = (
         )
 
 pddl_generator_outputs = generate_dataset_with_info_generator(
-    agent_info_generator_input, PLANNER
+    agent_info_generator_input, PLANNER, random
 )
 
 for output in pddl_generator_outputs:
