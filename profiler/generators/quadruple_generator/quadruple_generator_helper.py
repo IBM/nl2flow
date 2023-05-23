@@ -16,6 +16,7 @@ def get_idx_list_str(lines: List[str], str_to_match: str) -> int:
     for idx, line in enumerate(lines):
         if str_to_match in line:
             return idx
+
     return len(lines)
 
 
@@ -26,6 +27,7 @@ def get_indent_size(input: str) -> int:
             cnt += 1
         else:
             break
+
     return cnt
 
 
@@ -36,6 +38,7 @@ def remove_default_indent(inputs: List[str], indent_size: int) -> List[str]:
             output.append(input[indent_size:])
         else:
             output.append(input[:])
+
     return output
 
 
@@ -58,6 +61,7 @@ def get_function_code(
     function_body = lines[
         index_start_function : index_start_function + index_end_function
     ]
+
     return "\n".join(function_body)
 
 
@@ -72,12 +76,14 @@ def get_code_string(original_text: str) -> str:
     # remove invalid indents
     if len(code_lines) > 0:
         code_lines = remove_default_indent(code_lines, get_indent_size(code_lines[0]))
+
     return "\n".join(code_lines)
 
 
 def get_doc_string(original_text: str) -> str:
     ptrn_1 = r'("""[\w\s(),;:-]+""")'
     res = re.findall(ptrn_1, original_text[:])
+
     return res[0].replace('"""', "").strip() if len(res) > 0 else ""
 
 
@@ -107,6 +113,7 @@ def get_method_names_in_classes(classes) -> List[str]:
         methods = [n for n in class_.body if isinstance(n, ast.FunctionDef)]
         for method in methods:
             method_names.append(method.name)
+
     return method_names
 
 
@@ -121,7 +128,7 @@ def get_class_method_names(test_file_path: str) -> List[str]:
 
 def get_names_with_prefix(names: List[str], prefix: str) -> List[str]:
     """
-    returns the names with a given prefix
+    returns names with a given prefix
     """
     return list(filter(lambda name: name.startswith(prefix), names))
 
@@ -134,6 +141,7 @@ def get_files_in_folder(folder_path: str) -> Tuple[List[str], List[str]]:
     folder_paths = [
         folder_path + "/" + f for f in files if os.path.isdir(folder_path + "/" + f)
     ]
+
     return file_paths, folder_paths
 
 
@@ -177,4 +185,5 @@ def get_setup_code_doctring_lists(
             setup_code_list.append(code_str)
             if len(docstring_str) > 0:
                 setup_doc_str_list.append(docstring_str)
+
     return setup_code_list, setup_doc_str_list

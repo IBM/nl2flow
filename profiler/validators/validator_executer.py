@@ -7,7 +7,6 @@ import re
 domain_file_name = "domain.pddl"
 problem_file_name = "problem.pddl"
 plan_file_name = "plan.pddl"
-
 VAL = "validate"
 
 
@@ -67,6 +66,7 @@ def validate_pddl(
                 obj = re.search(r"Value: (.*?)(\r\n?|\n)+", out)
                 if obj is not None:
                     total_cost = int(obj.group(1), 10)
+
     return PddlPlanValidatorOutput(
         is_executable_plan=is_executable, is_valid_plan=is_vaild, total_cost=total_cost
     )

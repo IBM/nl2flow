@@ -86,6 +86,7 @@ def check_num_input_parameters(
         for signature in SIGNATURE_TYPES:
             if num_input_parameters != len(agent_info["actuator_signature"][signature]):
                 return False
+
     return True
 
 
