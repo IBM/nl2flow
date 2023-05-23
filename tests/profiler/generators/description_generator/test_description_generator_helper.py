@@ -10,6 +10,12 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_mapping_description,
     get_mappings_description,
     get_goal_description,
+    get_available_action_names,
+    get_variable_type_str,
+    get_names_from_signature_items,
+    get_signature_item_names,
+    get_variable_name_type_from_sig_item,
+    get_agent_info_signature_item_description,
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
@@ -18,6 +24,67 @@ from profiler.data_types.agent_info_data_types import (
 
 
 class TestDescriptionGeneratorHelper(unittest.TestCase):
+    def test_get_agent_info_signature_item_description_positive(self):
+        item = {
+            "name": "abc",
+            "data_type": "integer",
+            "required": True,
+            "slot_fillable": True,
+        }
+        item_str = get_agent_info_signature_item_description(item)
+        self.assertEqual(
+            item_str, "Variable abc is required and can be acquired by asking the user."
+        )
+
+    def test_get_agent_info_signature_item_description_negative(self):
+        item = {
+            "name": "abc",
+            "data_type": "integer",
+            "required": False,
+            "slot_fillable": False,
+        }
+        item_str = get_agent_info_signature_item_description(item)
+        self.assertEqual(
+            item_str,
+            "Variable abc is not required and cannot be acquired by asking the user.",
+        )
+
+    def test_get_variable_name_type_from_sig_item(self):
+        sig_items = [
+            {"name": "abc", "data_type": "integer"},
+            {"name": "def", "data_type": "string"},
+            {"name": "ghi", "data_type": "date"},
+        ]
+        variable_strs = get_variable_name_type_from_sig_item(sig_items)
+        self.assertEqual(
+            variable_strs,
+            [
+                "Variable abc (type: integer)",
+                "Variable def (type: string)",
+                "Variable ghi (type: date)",
+            ],
+        )
+
+    def test_get_signature_item_names(self):
+        sig_items = [{"name": "abc"}, {"name": "def"}, {"name": "ghi"}]
+        names_str = get_signature_item_names(sig_items)
+        self.assertEqual(names_str, "Variable abc, Variable def, and Variable ghi")
+
+    def test_get_names_from_signature_items(self):
+        sig_items = [{"name": "abc"}, {"name": "def"}]
+        strs = get_names_from_signature_items(sig_items)
+        self.assertEqual(strs, ["Variable abc", "Variable def"])
+
+    def test_get_variable_type_str_none(self):
+        type_str = None
+        res = get_variable_type_str(type_str)
+        self.assertEqual(len(res), 0)
+
+    def test_get_variable_type_str_none(self):
+        type_str = "abc"
+        res = get_variable_type_str(type_str)
+        self.assertEqual(res, " (type: abc)")
+
     def test_get_names_single(self):
         names = ["a"]
         names_str = get_names(names)
@@ -32,6 +99,14 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         names = ["a", "b", "c"]
         names_str = get_names(names)
         self.assertEqual("a, b, and c", names_str)
+
+    def test_get_available_action_names(self):
+        available_agents: List[AgentInfo] = list()
+        available_agents.extend(
+            [{"agent_id": "a"}, {"agent_id": "c"}, {"agent_id": "c"}]
+        )
+        name_str = get_available_action_names(available_agents)
+        self.assertEqual(name_str, "Action a, Action c, and Action c")
 
     def test_get_available_agents_description_single(self):
         available_agents: List[AgentInfo] = list()
