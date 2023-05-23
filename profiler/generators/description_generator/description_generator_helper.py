@@ -31,40 +31,64 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
     return "The system has " + get_available_action_names(available_agents) + "."
 
 
-def get_variable_type_str(type_str: Optional[str]) -> str:
-    return "" if type_str is None else f" (type: {type_str})"
+def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
+    # TODO: TEST THIS
+    return (
+        ""
+        if type_str is None
+        else f"The type of Variable {variable_name} is {type_str}."
+    )
 
 
-def get_variable_name_type_from_sig_item(
+def get_variable_name_from_sig_item(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    variable_list = list()
-    for sig_item in sig_items:
-        variable_name = (
-            "Variable "
-            + sig_item.get("name")
-            + get_variable_type_str(sig_item.get("data_type"))
-        )
-        variable_list.append(variable_name)
+    # TODO: TEST THIS
+    return list(map(lambda sig_item: "Variable " + sig_item.get("name"), sig_items))
 
-    return variable_list
+
+def get_variable_type_from_sig_item(
+    sig_items: List[AgentInfoSignatureItem],
+) -> List[str]:
+    # TODO: TEST THIS
+    return list(
+        filter(
+            lambda unfiltered_str: len(unfiltered_str) > 0,
+            map(
+                lambda sig_item: get_variable_type_str(
+                    sig_item.get("name"), sig_item.get("data_type")
+                ),
+                sig_items,
+            ),
+        )
+    )
 
 
 def get_variables_description(
     available_agents: List[AgentInfo],
     available_data: List[Tuple[str, Optional[str]]],
 ) -> str:
+    # TODO: TEST THIS
     variable_list: List[str] = list()
+    variable_type_strs: List[str] = list()
     for known_data in available_data:
-        variable_list.append(
-            "Variable " + known_data[0] + get_variable_type_str(known_data[1])
-        )
+        variable_list.append("Variable " + known_data[0])
+        variable_type_str = get_variable_type_str(known_data[0], known_data[1])
+        if len(variable_type_str) > 0:
+            variable_type_strs.append(variable_type_str)
     for agent_info in available_agents:
         sig = agent_info.get("actuator_signature")
-        variable_list += get_variable_name_type_from_sig_item(sig.get("in_sig_full"))
-        variable_list += get_variable_name_type_from_sig_item(sig.get("out_sig_full"))
+        variable_list += get_variable_name_from_sig_item(sig.get("in_sig_full"))
+        variable_list += get_variable_name_from_sig_item(sig.get("out_sig_full"))
+        variable_type_strs += get_variable_type_from_sig_item(sig.get("in_sig_full"))
+        variable_type_strs += get_variable_type_from_sig_item(sig.get("out_sig_full"))
 
-    return "The system has " + get_names(sorted(list(set(variable_list)))) + "."
+    return (
+        "The system has "
+        + get_names(sorted(list(set(variable_list))))
+        + ".\n"
+        + " ".join(list(set(variable_type_strs)))
+    )
 
 
 def get_names_from_signature_items(
@@ -96,7 +120,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
 
     # out sig
     out_sig = sig.get("out_sig_full")
-    be_out = " is " if len(in_sig) == 1 else " are "
+    be_out = " is " if len(out_sig) == 1 else " are "
     agent_info_effect_str = (
         f"After executing Action {agent_id}, "
         + get_signature_item_names(out_sig)
