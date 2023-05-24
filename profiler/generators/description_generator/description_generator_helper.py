@@ -32,7 +32,6 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
 
 
 def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
-    # TODO: TEST THIS
     return (
         ""
         if type_str is None
@@ -43,14 +42,12 @@ def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
 def get_variable_name_from_sig_item(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    # TODO: TEST THIS
     return list(map(lambda sig_item: "Variable " + sig_item.get("name"), sig_items))
 
 
 def get_variable_type_from_sig_item(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    # TODO: TEST THIS
     return list(
         filter(
             lambda unfiltered_str: len(unfiltered_str) > 0,
@@ -68,7 +65,6 @@ def get_variables_description(
     available_agents: List[AgentInfo],
     available_data: List[Tuple[str, Optional[str]]],
 ) -> str:
-    # TODO: TEST THIS
     variable_list: List[str] = list()
     variable_type_strs: List[str] = list()
     for known_data in available_data:
@@ -87,7 +83,7 @@ def get_variables_description(
         "The system has "
         + get_names(sorted(list(set(variable_list))))
         + ".\n"
-        + " ".join(list(set(variable_type_strs)))
+        + " ".join(sorted(list(set(variable_type_strs))))
     )
 
 

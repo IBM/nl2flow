@@ -14,13 +14,15 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_variable_type_str,
     get_names_from_signature_items,
     get_signature_item_names,
-    get_variable_name_type_from_sig_item,
+    get_variable_name_from_sig_item,
+    get_variable_type_from_sig_item,
     get_agent_info_signature_item_description,
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
 )
+from profiler.common_helpers.hash_helper import get_hash_str
 
 
 class TestDescriptionGeneratorHelper(unittest.TestCase):
@@ -49,19 +51,31 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
             "Variable abc is not required and cannot be acquired by asking the user.",
         )
 
-    def test_get_variable_name_type_from_sig_item(self):
+    def test_get_variable_name_from_sig_item(self):
         sig_items = [
             {"name": "abc", "data_type": "integer"},
             {"name": "def", "data_type": "string"},
             {"name": "ghi", "data_type": "date"},
         ]
-        variable_strs = get_variable_name_type_from_sig_item(sig_items)
+        variable_strs = get_variable_name_from_sig_item(sig_items)
         self.assertEqual(
             variable_strs,
+            ["Variable abc", "Variable def", "Variable ghi"],
+        )
+
+    def test_get_variable_type_from_sig_item(self):
+        sig_items = [
+            {"name": "abc", "data_type": "integer"},
+            {"name": "def", "data_type": "string"},
+            {"name": "ghi", "data_type": "date"},
+        ]
+        variable_type_strs = get_variable_type_from_sig_item(sig_items)
+        self.assertEqual(
+            variable_type_strs,
             [
-                "Variable abc (type: integer)",
-                "Variable def (type: string)",
-                "Variable ghi (type: date)",
+                "The type of Variable abc is integer.",
+                "The type of Variable def is string.",
+                "The type of Variable ghi is date.",
             ],
         )
 
@@ -81,9 +95,10 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         self.assertEqual(len(res), 0)
 
     def test_get_variable_type_str_none(self):
+        variable_name = "kjh"
         type_str = "abc"
-        res = get_variable_type_str(type_str)
-        self.assertEqual(res, " (type: abc)")
+        res = get_variable_type_str(variable_name, type_str)
+        self.assertEqual(res, "The type of Variable kjh is abc.")
 
     def test_get_names_single(self):
         names = ["a"]
@@ -223,6 +238,8 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         self.assertEqual(
-            "The system has Variable b, Variable c (type: sample_type), Variable r (type: type_a), and Variable s.",
-            res,
+            get_hash_str(res),
+            get_hash_str(
+                "The system has Variable b, Variable c, Variable r, and Variable s.\nThe type of Variable c is sample_type. The type of Variable r is type_a."
+            ),
         )
