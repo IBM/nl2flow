@@ -1,3 +1,19 @@
+# ETC
+**/.DS_Store
+
+# PDDL
+**/*.pddl
+**/plan.txt
+
+# IDE
+.vscode/
+
+# Build
+bin/
+
+# Virtual environments
+pyvenv.cfg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
