@@ -1,4 +1,4 @@
-from typing import Set, List, Union, Any, Tuple
+from typing import Set, List, Union, Any, Tuple, Dict, Optional
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
@@ -16,16 +16,30 @@ from nl2flow.compile.options import (
 
 
 class Flow:
-    def __init__(self, name: str):
-        self.flow_definition = FlowDefinition(name=name)
-        self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
-        self._confirm_option: Set[ConfirmOptions] = set()
-        self._variable_life_cycle: Set[LifeCycleOptions] = set()
-        self._goal_type = GoalOptions.AND_AND
-        self._slot_options: Set[SlotOptions] = {
-            SlotOptions.higher_cost,
-            SlotOptions.relaxed,
-        }
+    def __init__(
+        self,
+        name: str,
+        initialize: Optional[Union[FlowDefinition, Dict[str, Any]]] = None,
+    ):
+        if initialize is not None:
+            if isinstance(initialize, Dict):
+                self.flow_definition = FlowDefinition(**initialize)
+
+            elif isinstance(initialize, FlowDefinition):
+                self.flow_definition = initialize
+
+            else:
+                raise TypeError
+        else:
+            self.flow_definition = FlowDefinition(name=name)
+            self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
+            self._confirm_option: Set[ConfirmOptions] = set()
+            self._variable_life_cycle: Set[LifeCycleOptions] = set()
+            self._goal_type = GoalOptions.AND_AND
+            self._slot_options: Set[SlotOptions] = {
+                SlotOptions.higher_cost,
+                SlotOptions.relaxed,
+            }
 
     @property
     def variable_life_cycle(self) -> Set[LifeCycleOptions]:
@@ -41,7 +55,7 @@ class Flow:
 
     @property
     def confirm_options(self) -> Set[ConfirmOptions]:
-        return self._mapping_option
+        return self._confirm_option
 
     @confirm_options.setter
     def confirm_options(self, options: Set[ConfirmOptions]) -> None:
@@ -112,7 +126,6 @@ class Flow:
         return validate
 
     def add(self, new_item: Union[Any, List[Any]]) -> None:
-
         if not isinstance(new_item, List):
             new_item = [new_item]
 
@@ -140,7 +153,6 @@ class Flow:
                     self.add(TypeItem(name=child, parent=item.name, children=[]))
 
             if key_name:
-
                 temp = getattr(self.flow_definition, key_name)
                 temp.append(item)
                 setattr(self.flow_definition, key_name, temp)
@@ -169,7 +181,6 @@ class Flow:
         lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
-
         pddl, transforms = self.compile_to_pddl(lookahead, compilation_type)
 
         raw_plans = planner.plan(pddl=pddl)
@@ -184,7 +195,6 @@ class Flow:
         lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
-
         assert isinstance(
             compilation_type, CompileOptions
         ), "Encountered unknown compilation option."

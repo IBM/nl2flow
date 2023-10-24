@@ -56,13 +56,11 @@ def get_not_slotfillable_types(compilation: Any) -> List[str]:
 
 
 def get_goodness_map(compilation: Any) -> Dict[str, float]:
-
     not_slotfillable_types = get_not_slotfillable_types(compilation)
     goodness_map = dict()
 
     for constant in compilation.constant_map:
         if is_this_a_datum(compilation, constant):
-
             type_of_datum = get_type_of_constant(compilation, constant)
             if type_of_datum in not_slotfillable_types:
                 compilation.init.add(
@@ -91,10 +89,12 @@ def get_goodness_map(compilation: Any) -> Dict[str, float]:
     return goodness_map
 
 
-def compile_higher_cost_slots(compilation: Any, **kwargs: Dict[str, Any]) -> None:
-
+def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
+    # if SlotOptions.ordered in slot_options:
+    #     compile_ordered_slots(compilation, **kwargs)
 
     if SlotOptions.last_resort not in slot_options:
         _ = get_goodness_map(compilation)
@@ -135,8 +135,11 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Dict[str, Any]) -> Non
         compile_new_object_maps(compilation, **kwargs)
 
 
-def compile_last_resort_slots(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+# def compile_ordered_slots(compilation: Any, **kwargs: Any) -> None:
+#     pass
 
+
+def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     flow_definition: FlowDefinition = compilation.flow_definition
 
@@ -216,10 +219,9 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Dict[str, Any]) -> Non
 
 def compile_new_object_maps(
     compilation: Any,
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> None:
-
-    num_lookahead: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
+    num_lookahead: int = kwargs.get("lookahead", LOOKAHEAD)
 
     not_slotfillable_types = get_not_slotfillable_types(compilation)
     not_slots = get_not_slots(compilation)

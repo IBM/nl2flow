@@ -1,4 +1,5 @@
 from typing import List, Dict, Union, Any
+
 from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty
 from nl2flow.compile.options import TypeOptions, MAX_RETRY, LOOKAHEAD
 

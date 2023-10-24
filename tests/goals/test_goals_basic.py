@@ -1,6 +1,6 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse, Parameter
 from nl2flow.compile.options import (
     MemoryState,
     GoalType,
@@ -50,14 +50,14 @@ class TestGoalsBasic(BaseTestAgents):
 
             new_agent.add_input(
                 SignatureItem(
-                    parameters=[MemoryItem(item_id=item)],
+                    parameters=[Parameter(item_id=item)],
                 )
             )
 
             index = (index + 1) % len(self.agent_names)
             new_agent.add_output(
                 SignatureItem(
-                    parameters=[MemoryItem(item_id=self.agent_names[index].lower())],
+                    parameters=[Parameter(item_id=self.agent_names[index].lower())],
                 )
             )
 
@@ -115,6 +115,7 @@ class TestGoalsBasic(BaseTestAgents):
                 item_id="id123", item_type="Mappable", item_state=MemoryState.KNOWN
             )
         )
+
         self.flow.add(
             GoalItems(
                 goals=GoalItem(goal_name="Mappable", goal_type=GoalType.OBJECT_USED)

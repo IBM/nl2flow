@@ -35,10 +35,10 @@ class TestConstraints(BaseTestAgents):
 
         bitly_agent = Operator("Bitly")
         bitly_agent.add_input(
-            SignatureItem(parameters=[MemoryItem(item_id="url", item_type="Text")])
+            SignatureItem(parameters=[Parameter(item_id="url", item_type="Text")])
         )
         bitly_agent.add_output(
-            SignatureItem(parameters=[MemoryItem(item_id="url", item_type="Text")])
+            SignatureItem(parameters=[Parameter(item_id="url", item_type="Text")])
         )
 
         self.flow.add([twitter_agent, bitly_agent])

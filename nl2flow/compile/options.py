@@ -38,7 +38,7 @@ class TypeOptions(enum.Enum):
 
 class CostOptions(enum.Enum):
     ZERO = 0
-    UNIT = 10
+    UNIT = 1
     LOW = 50
     MEDIUM = 250
     INTERMEDIATE = 1000
@@ -90,7 +90,6 @@ class LifeCycleOptions(enum.Enum):
     uncertain_on_use = "UNCERTAIN-USE"
     confirm_on_mapping = "CONFIRM-MAP"
     confirm_on_determination = "CONFIRM-DET"
-    confirm_on_transform = "CONFIRM-TRANS"
     confirm_on_slot = "CONFIRM-SLOT"
 
 

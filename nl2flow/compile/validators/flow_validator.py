@@ -101,7 +101,6 @@ class FlowValidator(Validator):
     def slots_are_among_known_memory_items(
         flow: FlowDefinition,
     ) -> ValidationMessage:
-
         list_of_object_names = get_list_of_object_names(flow)
 
         for slot in flow.slot_properties:
@@ -117,7 +116,6 @@ class FlowValidator(Validator):
     def mappings_are_among_known_memory_items(
         flow: FlowDefinition,
     ) -> ValidationMessage:
-
         list_of_object_names = get_list_of_object_names(flow)
 
         for mapping in flow.list_of_mappings:
@@ -132,7 +130,6 @@ class FlowValidator(Validator):
 
     @staticmethod
     def object_type_conflict(flow: FlowDefinition) -> ValidationMessage:
-
         list_of_object_names = get_list_of_object_names(flow)
         for item in list_of_object_names:
             type_set = list_of_object_names[item]
@@ -142,11 +139,10 @@ class FlowValidator(Validator):
                     error_message=f"Object {item} has more than one type: {', '.join(type_set)}.",
                 )
 
-            return ValidationMessage(truth_value=True)
+        return ValidationMessage(truth_value=True)
 
     @staticmethod
     def hash_conflicts(flow: FlowDefinition) -> ValidationMessage:
-
         transforms: List[Transform] = list()
 
         reference_list_of_objects = get_list_of_object_names(flow)
@@ -176,13 +172,15 @@ class FlowValidator(Validator):
         ]
 
         for item in reference_keys:
-            item = string_transform(item, transforms)
-            members = [o for o in transformed_keys if item == o]
-            if len(members) > 1:
-                return ValidationMessage(
-                    truth_value=False,
-                    error_message=f"Conflicting names for {item}.",
-                )
+            transformed_item = string_transform(item, transforms)
+
+            if transformed_item is not None:
+                members = [o for o in transformed_keys if transformed_item == o]
+                if len(members) > 1:
+                    return ValidationMessage(
+                        truth_value=False,
+                        error_message=f"Conflicting names for {transformed_item}.",
+                    )
 
         return ValidationMessage(truth_value=True)
 

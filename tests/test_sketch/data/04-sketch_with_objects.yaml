@@ -1,0 +1,23 @@
+---
+sketch_name: Business Trip
+utterances:
+  - I want to book a business trip
+options:
+  - relaxed
+objects:
+  - name: ticket to conference
+  - name: return ticket
+  - name: conference registration
+components:
+  - goal: ticket to conference
+  - goal: return ticket
+  - goal: conference registration
+  - goal: Trip Approval
+  - goal: visa
+slots:
+  - name: Employee ID
+    preference: 0.2
+  - name: Employer Letter
+    preference: 0.0
+  - name: W3 ID
+    preference: 1.0

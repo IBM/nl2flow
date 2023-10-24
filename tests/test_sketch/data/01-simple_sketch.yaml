@@ -1,0 +1,7 @@
+---
+sketch_name: Business Trip
+utterances:
+  - I want to book a business trip
+components:
+  - goal: Trip Approval
+  - goal: Visa Application

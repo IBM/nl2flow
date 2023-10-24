@@ -48,7 +48,7 @@ class Compilation(ABC):
         self.flow_definition = flow_definition
 
     @abstractmethod
-    def compile(self, **kwargs: Dict[str, Any]) -> PDDL:
+    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
         pass
 
 
@@ -57,9 +57,7 @@ class ClassicPDDL(Compilation):
         Compilation.__init__(self, flow_definition)
 
         self.cached_transforms: List[Transform] = list()
-        self.flow_definition = FlowDefinition.transform(
-            self.flow_definition, self.cached_transforms
-        )
+        self.flow_definition = FlowDefinition.transform(self.flow_definition, self.cached_transforms)
 
         name = self.flow_definition.name
         lang = fs.language(name, theories=[Theory.EQUALITY, Theory.ARITHMETIC])
@@ -108,9 +106,7 @@ class ClassicPDDL(Compilation):
         ]
 
         for reserved_type in reserved_types:
-            add_type_item_to_type_map(
-                self, TypeItem(name=reserved_type.value, parent=None)
-            )
+            add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
 
         reserved_type_map = {
             HasDoneState: TypeOptions.HASDONE,
@@ -139,9 +135,7 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.ROOT.value],
         )
 
-        self.new_item = self.lang.predicate(
-            "new_item", self.type_map[TypeOptions.ROOT.value]
-        )
+        self.new_item = self.lang.predicate("new_item", self.type_map[TypeOptions.ROOT.value])
 
         self.known = self.lang.predicate(
             "known",
@@ -149,9 +143,7 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.MEMORY.value],
         )
 
-        self.not_slotfillable = self.lang.predicate(
-            "not_slotfillable", self.type_map[TypeOptions.ROOT.value]
-        )
+        self.not_slotfillable = self.lang.predicate("not_slotfillable", self.type_map[TypeOptions.ROOT.value])
 
         self.slot_goodness = self.lang.function(
             "slot_goodness",
@@ -245,9 +237,7 @@ class ClassicPDDL(Compilation):
         self.problem.init = self.init
 
         writer = FstripsWriter(self.problem)
-        domain = writer.print_domain(
-            constant_objects=self.constant_map.values()
-        ).replace(" :numeric-fluents", "")
+        domain = writer.print_domain(constant_objects=self.constant_map.values()).replace(" :numeric-fluents", "")
         problem = writer.print_instance(constant_objects=self.constant_map.values())
 
         return PDDL(domain=domain, problem=problem), self.cached_transforms

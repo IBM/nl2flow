@@ -1,6 +1,6 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from typing import Set, Dict, Any
+from typing import Set, Any
 
 from nl2flow.compile.options import (
     TypeOptions,
@@ -11,7 +11,7 @@ from nl2flow.compile.options import (
 )
 
 
-def compile_confirmation(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+def compile_confirmation(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
 
     if variable_life_cycle:

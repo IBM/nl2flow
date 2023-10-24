@@ -1,0 +1,61 @@
+---
+sketch_name: Business Trip
+utterances:
+  - I want to book a business trip
+options:
+  - relaxed
+objects:
+  - type: Location
+    name: home address
+  - type: Location
+    name: conference hotel
+  - type: Airport
+    name: home airport
+  - type: Airport
+    name: destination airport
+  - name: ticket to conference
+  - name: return ticket
+  - name: conference registration
+components:
+  - goal: ticket to conference
+  - goal: return ticket
+  - goal: Taxi
+    parameters:
+      - name: address
+        value: home address
+      - name: destination
+        value: home airport
+  - goal: Taxi
+    parameters:
+      - name: address
+        value: destination airport
+      - name: destination
+        value: conference hotel
+  - goal: Taxi
+    parameters:
+      - name: address
+        value: conference hotel
+      - name: destination
+        value: destination airport
+  - goal: Taxi
+    parameters:
+      - name: address
+        value: home airport
+      - name: destination
+        value: home address
+  - goal: Trip Approval
+  - goal: visa
+slots:
+  - name: Employee ID
+    preference: 0.2
+  - name: Employer Letter
+    preference: 0.0
+  - name: W3 ID
+    preference: 1.0
+mappings:
+  - source: ticket to conference
+    target: flight_ticket
+    preference: 1.0
+  - source: return ticket
+    target: flight_ticket
+    preference: 1.0
