@@ -30,7 +30,6 @@ def get_out_item_position_to_couple_agents(
     # return 1) the position of a "out" item to couple agents and 2) and the status of choosing a "out_sig_full" item position already used for coupling
     agent_idx = -1
     item_idx = -1
-
     max_try = 20
     try_cnt = 0
     # randomly choose an agent

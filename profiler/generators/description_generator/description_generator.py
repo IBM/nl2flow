@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.generators.description_generator.description_generator_helper import (
     get_variables_description,
@@ -9,8 +9,12 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_agent_info_description,
 )
 from profiler.generators.description_generator.descripter_generator_data import (
-    slot_filler_description,
+    ask_description,
+    ask_last_resort_description,
+    ask_preference,
+    map_description,
 )
+from nl2flow.compile.options import SlotOptions
 
 
 def get_sample_description(
@@ -18,29 +22,30 @@ def get_sample_description(
     goal_agent_ids: Set[str],
     mappings: List[Tuple[str, str, float]],
     available_data: List[str],
+    slot_option: Optional[SlotOptions] = None,
 ) -> str:
     descriptions: list[str] = list()
+    # system
     descriptions.append(get_available_agents_description(available_agents))
-    descriptions.append(slot_filler_description[:])
-    descriptions.append("\n")
     descriptions.append(get_variables_description(available_agents, available_data))
-    descriptions.append("\n")
-
+    # slot-fillers
+    if slot_option is not None and slot_option == SlotOptions.last_resort:
+        descriptions.append(ask_last_resort_description[:])
+    descriptions.append(ask_description[:])
+    descriptions.append(ask_preference)
+    # actions
     for agent_info in available_agents:
         pre_cond, in_description, effect = get_agent_info_description(agent_info)
         descriptions.append(pre_cond)
         descriptions.append(in_description)
         descriptions.append(effect)
-        descriptions.append("\n")
-
+    # known values
     if len(available_data) > 0:
         descriptions.append(get_description_available_data(available_data))
-        descriptions.append("\n")
-
+    # field mappings
+    descriptions.append(map_description[:])
     if len(mappings) > 0:
         descriptions.append(get_mappings_description(mappings))
-        descriptions.append("\n")
-
     descriptions.append(get_goal_description(goal_agent_ids))
 
     return "\n".join(descriptions)

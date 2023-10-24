@@ -16,10 +16,7 @@ from profiler.generators.info_generator.agent_info_generator_helper import (
     get_goals,
     get_mappings,
     get_new_signature_from_variable_info,
-)
-from profiler.generators.info_generator.generator_variables import (
-    AGENT_INFO_SIGNATURE_TEMPLATE,
-    AGENT_INFO_SIGNATURE_ITEM_TEMPLATE,
+    get_variable_types,
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
@@ -27,6 +24,7 @@ from profiler.data_types.agent_info_data_types import (
 )
 from profiler.data_types.generator_data_type import VariableInfo
 from profiler.validators.agent_info_generator_test_utils import get_stats_coupled_agents
+import random
 
 
 class TestAgentInfoGeneratorHelper(unittest.TestCase):
@@ -47,25 +45,48 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
                 num_input_sig, len(agent_info["actuator_signature"]["out_sig_full"])
             )
 
+    def test_get_variable_types_many_types(self):
+        num_variables = 100
+        num_var_types = 14
+        sample_types = get_variable_types(num_variables, num_var_types, random)
+        self.assertEqual(num_variables, len(sample_types))
+        types = set(filter(lambda t: t is not None, sample_types))
+        self.assertEqual(num_var_types, len(types))
+
+    def test_get_variable_types_no_type(self):
+        num_variables = 100
+        num_var_types = 0
+        sample_types = get_variable_types(num_variables, num_var_types, random)
+        self.assertEqual(num_variables, len(sample_types))
+        types = set(filter(lambda t: t is not None, sample_types))
+        self.assertEqual(num_var_types, len(types))
+
     def test_get_variables(self):
         variable_names = ["a", "b", "c", "d"]
         proportion_mappable_variable = 0.5
         proportion_slot_fillable_variable = 0.5
+        num_variable_types = 2
         variables: List[VariableInfo] = get_variables(
             variable_names,
             proportion_slot_fillable_variable,
             proportion_mappable_variable,
+            num_variable_types,
+            random,
         )
         self.assertEqual(len(variable_names), len(variables))
         cnt_mappable = 0
         cnt_slot_fillable = 0
+        variable_types = set()
         for variable in variables:
             if variable.mappable:
                 cnt_mappable += 1
             if variable.slot_fillable:
                 cnt_slot_fillable += 1
+            if variable.variable_type is not None:
+                variable_types.add(variable.variable_type[:])
         self.assertEqual(len(variable_names) // 2, cnt_mappable)
         self.assertEqual(len(variable_names) // 2, cnt_slot_fillable)
+        self.assertEqual(len(variable_types), num_variable_types)
 
     def test_get_goals(self):
         num_agents = 10
@@ -76,7 +97,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             agent_info["agent_id"] = str(i)
             agent_infos.append(agent_info)
         agent_ids = set(map(lambda info: info["agent_id"][:], agent_infos))
-        goals = get_goals(num_goals, agent_infos)
+        goals = get_goals(num_goals, agent_infos, random)
         self.assertEqual(num_goals, len(goals))
         for goal in goals:
             assert goal in agent_ids
@@ -87,7 +108,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             variable_name="b", slot_fillable=False, mappable=False
         )
         variable_2 = VariableInfo(variable_name="c", slot_fillable=False, mappable=True)
-        mappings = get_mappings([variable_0, variable_1, variable_2])
+        mappings = get_mappings([variable_0, variable_1, variable_2], random)
         self.assertEqual(2, len(mappings))
 
     def test_get_new_signature_from_variable_info(self):
@@ -133,12 +154,32 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "a", "mappable": False, "slot_fillable": False},
-                    {"name": "b", "mappable": False, "slot_fillable": False},
+                    {
+                        "name": "a",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
+                    {
+                        "name": "b",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
                 ],
                 "out_sig_full": [
-                    {"name": "c", "mappable": False, "slot_fillable": False},
-                    {"name": "d", "mappable": False, "slot_fillable": False},
+                    {
+                        "name": "c",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
+                    {
+                        "name": "d",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
                 ],
             }
         }
@@ -148,10 +189,30 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         agent_1["agent_id"] = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos = [
-            VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="b", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="c", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="d", mappable=False, slot_fillable=False),
+            VariableInfo(
+                variable_name="a",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="b",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="c",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="d",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
         ]
         proportion_coupled_agents = 1.0
         num_input_parameters = 2
@@ -315,7 +376,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         ]
         proportion_coupled_agents = 1.0
         res = get_agents_with_variables(
-            agent_infos, variable_infos_input, proportion_coupled_agents
+            agent_infos, variable_infos_input, proportion_coupled_agents, random
         )
         self.assertEqual(2, len(res[0]))
         self.assertEqual(0, len(res[1]))
@@ -327,12 +388,32 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "x", "mappable": False, "slot_fillable": False},
-                    {"name": "x", "mappable": False, "slot_fillable": False},
+                    {
+                        "name": "x",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
+                    {
+                        "name": "x",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
                 ],
                 "out_sig_full": [
-                    {"name": "x", "mappable": False, "slot_fillable": False},
-                    {"name": "x", "mappable": False, "slot_fillable": False},
+                    {
+                        "name": "x",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
+                    {
+                        "name": "x",
+                        "mappable": False,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
                 ],
             }
         }
@@ -342,24 +423,69 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         agent_1["agent_id"] = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos_input = [
-            VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="b", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="c", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="d", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="e", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="f", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="g", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="h", mappable=False, slot_fillable=False),
-            VariableInfo(variable_name="i", mappable=False, slot_fillable=False),
+            VariableInfo(
+                variable_name="a",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="b",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="c",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="d",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="e",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="f",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="g",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="h",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
+            VariableInfo(
+                variable_name="i",
+                mappable=False,
+                slot_fillable=False,
+                variable_type=None,
+            ),
         ]
         proportion_coupled_agents = 1.0
         res = get_agents_with_variables(
-            agent_infos, variable_infos_input, proportion_coupled_agents
+            agent_infos, variable_infos_input, proportion_coupled_agents, random
         )
         self.assertEqual(2, len(res[0]))
         self.assertEqual(2, len(res[1]))
-        assert "h" in res[1]
-        assert "i" in res[1]
+        assert ("h", None) in res[1]
+        assert ("i", None) in res[1]
         # check coupling
         num_coupled_agents, connections = get_stats_coupled_agents(res[0])
         self.assertEqual(2, num_coupled_agents)
@@ -390,11 +516,11 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
     def test_get_names_dataset_agent(self):
         num = 100
         type = "agent"
-        names = get_names_dataset(num, type)
+        names = get_names_dataset(num, type, random)
         self.assertEqual(num, len(names))
 
     def test_get_names_dataset_aprameter(self):
         num = 100
         type = "parameter"
-        names = get_names_dataset(num, type)
+        names = get_names_dataset(num, type, random)
         self.assertEqual(num, len(names))
