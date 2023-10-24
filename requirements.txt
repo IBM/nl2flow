@@ -1,4 +1,0 @@
-tarski==0.8.2
-pydantic==1.10.4
-requests==2.28.2
-pyyaml==6.0
