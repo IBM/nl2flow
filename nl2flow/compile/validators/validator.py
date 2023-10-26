@@ -6,7 +6,7 @@ import logging
 
 class ValidationMessage(BaseModel):
     truth_value: bool
-    error_message: Optional[str]
+    error_message: Optional[str] = None
 
 
 class Validator:
@@ -17,11 +17,7 @@ class Validator:
         for method in dir(cls):
             what_is_method = getattr(cls, method)
 
-            if (
-                callable(what_is_method)
-                and not method.startswith("__")
-                and method != "test_all"
-            ):
+            if callable(what_is_method) and not method.startswith("__") and method != "test_all":
                 logging.info(f"Running {method}.")
 
                 result: ValidationMessage = what_is_method(args)

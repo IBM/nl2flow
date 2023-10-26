@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "A PDDL interface to flow construction"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE"}
+#license = {file = "LICENSE"}
 
 authors = [
   {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
@@ -49,7 +49,7 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = ["pydantic", "pyyaml", "tarski", "requests", "StrEnum"]
+dependencies = ["pydantic>=2.4.2", "pyyaml", "tarski", "requests", "StrEnum"]
 
 [project.optional-dependencies]
 dev = ["check-manifest", "pytest", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject"]
@@ -70,6 +70,7 @@ test = ["coverage"]
 # This is configuration specific to the `setuptools` build backend.
 # If you are using a different build backend, you will need to change this.
 [tool.setuptools]
+py-modules = ['nl2flow', 'profiler']
 
 # If there are data files included in your packages that need to be
 # installed, specify them here.
@@ -80,6 +81,9 @@ test = ["coverage"]
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
 requires = ["setuptools>=43.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "--ignore=profiler"
 
 [tool.black]
 line-length = 120
@@ -136,6 +140,7 @@ py-version=3.7
 max-line-length = 120
 
 [tool.flake8]
+extend-ignore = ["E203"]
 count = true
 max-line-length = 120
 max-complexity = 18

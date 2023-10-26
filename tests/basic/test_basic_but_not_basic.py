@@ -36,8 +36,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 2, "Plan of length 2."
         assert (
-            poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].item_id == "list of errors"
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0].item_id == "list of errors"
         ), "Ask directly for list of errors."
 
         self.flow.add(
@@ -54,12 +53,11 @@ class TestBasicButNotBasic(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "Plan of length 4."
         assert (
-            poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].item_id == "database link"
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0].item_id == "database link"
         ), "Ask directly for database link."
-        assert poi.plan[2].name == BasicOperations.MAPPER.value and set(
-            i.item_id for i in poi.plan[2].inputs
-        ) == {"list of errors"}, "Map list of errors."
+        assert poi.plan[2].name == BasicOperations.MAPPER.value and set(i.item_id for i in poi.plan[2].inputs) == {
+            "list of errors"
+        }, "Map list of errors."
 
     def test_confirm_on_determination(self) -> None:
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Fix Errors")))
@@ -72,9 +70,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "The plan should have 3 steps."
 
-        assert (
-            poi.plan[2].name == BasicOperations.CONFIRM.value
-        ), "The third step should be a confirmation."
+        assert poi.plan[2].name == BasicOperations.CONFIRM.value, "The third step should be a confirmation."
 
     def test_operator_cost(self) -> None:
         basic_agent = Operator("Basic Agent")
@@ -84,9 +80,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         alternative_agent.add_output(SignatureItem(parameters=["target item"]))
         alternative_agent.cost = 5
 
-        goal = GoalItems(
-            goals=GoalItem(goal_name="target item", goal_type=GoalType.OBJECT_KNOWN)
-        )
+        goal = GoalItems(goals=GoalItem(goal_name="target item", goal_type=GoalType.OBJECT_KNOWN))
         self.flow.add([basic_agent, alternative_agent, goal])
 
         plans = self.get_plan()
@@ -97,12 +91,8 @@ class TestBasicButNotBasic(BaseTestAgents):
         for poi in plans.list_of_plans:
             if poi.cost == optimal_cost:
                 assert len(poi.plan) == 1, "The plan should have 1 step."
-                assert (
-                    poi.plan[0].name == "Basic Agent"
-                ), "The plan should only have the Basic Agent."
-                assert (
-                    poi.plan[0].name != "Alternative Agent"
-                ), "The plan should not have Alternative Agent."
+                assert poi.plan[0].name == "Basic Agent", "The plan should only have the Basic Agent."
+                assert poi.plan[0].name != "Alternative Agent", "The plan should not have Alternative Agent."
 
         self.flow.add(
             Step(
@@ -119,9 +109,5 @@ class TestBasicButNotBasic(BaseTestAgents):
         for poi in plans.list_of_plans:
             if poi.cost == optimal_cost:
                 assert len(poi.plan) == 1, "The plan should have 1 step."
-                assert (
-                    poi.plan[0].name == "Alternative Agent"
-                ), "The plan should only have the Alternative Agent."
-                assert (
-                    poi.plan[0].name != "Basic Agent"
-                ), "The plan should not have Alternative Agent."
+                assert poi.plan[0].name == "Alternative Agent", "The plan should only have the Alternative Agent."
+                assert poi.plan[0].name != "Basic Agent", "The plan should not have Alternative Agent."

@@ -21,16 +21,10 @@ class TestMappingsAdvanced(BaseTestAgents):
 
     def test_mapper_no_slot_fill(self) -> None:
         test_agent = Operator("Test Agent")
-        test_agent.add_input(
-            SignatureItem(
-                parameters=[Parameter(item_id="random", item_type="something_random")]
-            )
-        )
+        test_agent.add_input(SignatureItem(parameters=[Parameter(item_id="random", item_type="something_random")]))
 
         goal = GoalItems(goals=GoalItem(goal_name="Test Agent"))
-        self.flow.add(
-            [test_agent, goal, SlotProperty(slot_name="random", slot_desirability=0.0)]
-        )
+        self.flow.add([test_agent, goal, SlotProperty(slot_name="random", slot_desirability=0.0)])
 
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no plans."
@@ -59,11 +53,7 @@ class TestMappingsAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        self.flow.add(
-            SlotProperty(
-                slot_name="random_2", slot_desirability=0.0, propagate_desirability=True
-            )
-        )
+        self.flow.add(SlotProperty(slot_name="random_2", slot_desirability=0.0, propagate_desirability=True))
 
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no plans."
@@ -90,13 +80,9 @@ class TestMappingsAdvanced(BaseTestAgents):
         step_1: Action = poi.plan[0]
         assert step_1.name == "User Info", "Call user info agent to map later."
 
-        assert Counter(
-            2 * [BasicOperations.MAPPER.value, BasicOperations.CONFIRM.value]
-        ) == Counter(
+        assert Counter(2 * [BasicOperations.MAPPER.value, BasicOperations.CONFIRM.value]) == Counter(
             [step.name for step in poi.plan[1 : len(poi.plan) - 1]]
         ), "Followed by two mappings and two confirms."
 
         step_6: Action = poi.plan[5]
-        assert (
-            step_6.name == "Credit Score API"
-        ), "Final action should be the goal action."
+        assert step_6.name == "Credit Score API", "Final action should be the goal action."

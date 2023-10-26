@@ -95,7 +95,7 @@ class ClassicPDDL(Compilation):
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
-    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
@@ -119,7 +119,7 @@ class ClassicPDDL(Compilation):
                 add_memory_item_to_constant_map(
                     self,
                     MemoryItem(
-                        item_id=item_state.value,
+                        item_id=str(item_state.value),
                         item_type=reserved_type_map[item].value,
                     ),
                 )

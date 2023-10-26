@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from tests.test_mappings.test_mappings_basic import TestMappingsBasic
+from tests.mappings.test_mappings_basic import TestMappingsBasic
 
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import (
@@ -18,7 +18,6 @@ class TestTypingBasic(BaseTestAgents):
         BaseTestAgents.setup_method(self)
 
     def test_typing_with_concept_tags(self) -> None:
-
         self.flow.add(
             [
                 MemoryItem(item_id="Username", item_type="contact-info"),
@@ -35,7 +34,6 @@ class TestTypingBasic(BaseTestAgents):
         TestMappingsBasic.check_basic_mapping_plan(plans)
 
     def test_typing_with_hierarchy(self) -> None:
-
         self.flow.add(TypeItem(name="Contact", parent="Person"))
         self.flow.add(
             [
@@ -86,6 +84,4 @@ class TestTypingBasic(BaseTestAgents):
         TestMappingsBasic.check_basic_mapping_plan(plans)
 
         poi = plans.list_of_plans[0]
-        assert "Username" in [
-            step.inputs[0].item_id for step in poi.plan[1:3]
-        ], "Make sure Username is used."
+        assert "Username" in [step.inputs[0].item_id for step in poi.plan[1:3]], "Make sure Username is used."

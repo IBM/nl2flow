@@ -21,7 +21,7 @@ from nl2flow.compile.schemas import (
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, Dict, Optional, Union
 
-import requests
+import requests  # type: ignore
 import re
 
 
@@ -61,11 +61,7 @@ def parse_action(
                         )
 
                     else:
-                        list_of_parameters.append(
-                            Parameter(
-                                item_id=parameter, item_type=TypeOptions.ROOT.value
-                            )
-                        )
+                        list_of_parameters.append(Parameter(item_id=parameter, item_type=TypeOptions.ROOT.value))
 
         return list_of_parameters
 
@@ -73,9 +69,9 @@ def parse_action(
     flow: Flow = kwargs["flow"]
 
     if any([action_name.startswith(item.value) for item in BasicOperations]):
-        if action_name.startswith(
-            BasicOperations.SLOT_FILLER.value
-        ) or action_name.startswith(BasicOperations.MAPPER.value):
+        if action_name.startswith(BasicOperations.SLOT_FILLER.value) or action_name.startswith(
+            BasicOperations.MAPPER.value
+        ):
             temp = action_name.split("----")
             new_action.name = temp[0]
 
@@ -94,9 +90,7 @@ def parse_action(
         return None
 
     else:
-        operator: OperatorDefinition = list(
-            filter(lambda x: x.name == action_name, flow.flow_definition.operators)
-        )[0]
+        operator: OperatorDefinition = list(filter(lambda x: x.name == action_name, flow.flow_definition.operators))[0]
 
         new_action.inputs = __add_parameters(operator.inputs)
 
@@ -154,11 +148,7 @@ class Planner(ABC):
                 new_start_of_plan = index
                 break
 
-        new_plan.plan = (
-            [new_action] + plan.plan[new_start_of_plan:]
-            if new_start_of_plan
-            else plan.plan
-        )
+        new_plan.plan = [new_action] + plan.plan[new_start_of_plan:] if new_start_of_plan else plan.plan
         return new_plan
 
     @staticmethod
@@ -170,12 +160,8 @@ class Planner(ABC):
             pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
 
             for step, action in enumerate(plan.plan):
-                inputs = ", ".join(
-                    [f"{item.item_id} ({item.item_type})" for item in action.inputs]
-                )
-                outputs = ", ".join(
-                    [f"{item.item_id} ({item.item_type})" for item in action.outputs]
-                )
+                inputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.inputs])
+                outputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.outputs])
 
                 pretty += (
                     f"Step {step}: {action.name}, "
@@ -205,9 +191,7 @@ class Michael(Planner, RemotePlanner):
         }
         return self.call_remote_planner(payload=payload)
 
-    def parse(
-        self, response: requests.models.Response, **kwargs: Any
-    ) -> PlannerResponse:
+    def parse(self, response: requests.models.Response, **kwargs: Any) -> PlannerResponse:
         if response.status_code == 200:
             response = response.json()
             planner_response = PlannerResponse(metadata=response["raw_output"])
@@ -225,14 +209,10 @@ class Michael(Planner, RemotePlanner):
 
                 for action in actions:
                     action = action.split()
-                    action_name = revert_string_transform(
-                        action[0], kwargs["transforms"]
-                    )
+                    action_name = revert_string_transform(action[0], kwargs["transforms"])
 
                     if action_name is not None:
-                        new_action = parse_action(
-                            action_name=action_name, parameters=action[1:], **kwargs
-                        )
+                        new_action = parse_action(action_name=action_name, parameters=action[1:], **kwargs)
 
                     else:
                         raise ValueError("Could not parse action name.")
@@ -244,14 +224,10 @@ class Michael(Planner, RemotePlanner):
                     new_plan = self.group_items(new_plan, flow, SlotOptions.group_slots)
 
                 if MappingOptions.group_maps in mapping_options:
-                    new_plan = self.group_items(
-                        new_plan, flow, MappingOptions.group_maps
-                    )
+                    new_plan = self.group_items(new_plan, flow, MappingOptions.group_maps)
 
                 if ConfirmOptions.group_confirms in confirm_options:
-                    new_plan = self.group_items(
-                        new_plan, flow, ConfirmOptions.group_confirms
-                    )
+                    new_plan = self.group_items(new_plan, flow, ConfirmOptions.group_confirms)
 
                 if new_plan.length:
                     planner_response.list_of_plans.append(new_plan)
@@ -267,9 +243,7 @@ class Christian(Planner, RemotePlanner):
         payload = {"domain": pddl.domain, "problem": pddl.problem}
         return self.call_remote_planner(payload=payload)
 
-    def parse(
-        self, response: requests.models.Response, **kwargs: Any
-    ) -> PlannerResponse:
+    def parse(self, response: requests.models.Response, **kwargs: Any) -> PlannerResponse:
         if response.status_code == 200:
             response = response.json()
             response = response["result"]
@@ -295,9 +269,7 @@ class Christian(Planner, RemotePlanner):
                 action_name = revert_string_transform(action[0], kwargs["transforms"])
 
                 if action_name is not None:
-                    new_action = parse_action(
-                        action_name=action_name, parameters=action[1:], **kwargs
-                    )
+                    new_action = parse_action(action_name=action_name, parameters=action[1:], **kwargs)
 
                 else:
                     raise ValueError("Could not parse action name.")
@@ -312,9 +284,7 @@ class Christian(Planner, RemotePlanner):
                 new_plan = self.group_items(new_plan, flow, MappingOptions.group_maps)
 
             if ConfirmOptions.group_confirms in confirm_options:
-                new_plan = self.group_items(
-                    new_plan, flow, ConfirmOptions.group_confirms
-                )
+                new_plan = self.group_items(new_plan, flow, ConfirmOptions.group_confirms)
 
             planner_response.list_of_plans.append(new_plan)
             return planner_response

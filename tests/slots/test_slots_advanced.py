@@ -3,7 +3,7 @@ from nl2flow.compile.options import BasicOperations, SlotOptions, LifeCycleOptio
 from nl2flow.plan.schemas import Action
 
 from tests.testing import BaseTestAgents
-from tests.test_slots.test_slots_basic import (
+from tests.slots.test_slots_basic import (
     fallback_and_last_resort_tests_should_look_the_same,
 )
 
@@ -31,8 +31,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         assert len(poi.plan) == 2, "There should be 2 steps."
 
         assert (
-            poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].item_id == "list of errors"
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0].item_id == "list of errors"
         ), "Directly fill slot instead of mapping as last resort."
 
     def test_slot_filler_grouping(self) -> None:
@@ -53,9 +52,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         ), "Slot fill AccountID and Email together."
 
         step_2: Action = poi.plan[1]
-        assert (
-            step_2.name == "Credit Score API"
-        ), "Third action should be the goal action."
+        assert step_2.name == "Credit Score API", "Third action should be the goal action."
 
     def test_slot_filler_with_confirm(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
@@ -74,13 +71,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
             set([step.inputs[0].item_id for step in poi.plan[: len(poi.plan) - 1]])
         )
 
-        assert [step.name for step in poi.plan].count(
-            BasicOperations.SLOT_FILLER.value
-        ) == 2, "Two slot fills."
-        assert [step.name for step in poi.plan].count(
-            BasicOperations.CONFIRM.value
-        ) == 2, "Two slot confirmations."
+        assert [step.name for step in poi.plan].count(BasicOperations.SLOT_FILLER.value) == 2, "Two slot fills."
+        assert [step.name for step in poi.plan].count(BasicOperations.CONFIRM.value) == 2, "Two slot confirmations."
 
-        assert (
-            poi.plan[len(poi.plan) - 1].name == "Credit Score API"
-        ), "Final action should be the goal action."
+        assert poi.plan[len(poi.plan) - 1].name == "Credit Score API", "Final action should be the goal action."

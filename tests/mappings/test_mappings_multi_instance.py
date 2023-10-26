@@ -85,31 +85,23 @@ class TestMappingsMultiInstance(BaseTestAgents):
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        index_of_map = [action.name for action in poi.plan].index(
-            BasicOperations.MAPPER.value
-        )
+        index_of_map = [action.name for action in poi.plan].index(BasicOperations.MAPPER.value)
 
         assert index_of_map > 0, "There should be a rogue mapping action"
         assert Counter([o.item_id for o in poi.plan[index_of_map].inputs]) == Counter(
             ["to", "from"]
         ), "A rogue to-from mapping."
 
-        self.flow.add(
-            MappingItem(source_name="to", target_name="from", probability=0.0)
-        )
+        self.flow.add(MappingItem(source_name="to", target_name="from", probability=0.0))
         self.flow.mapping_options.add(MappingOptions.transitive)
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
         poi = plans.list_of_plans[0]
-        assert (
-            len(poi.plan) == 5
-        ), "A plan of length 5 full of slot fills and no mapping."
+        assert len(poi.plan) == 5, "A plan of length 5 full of slot fills and no mapping."
 
-        first_four_action_names = [
-            action.name for action in poi.plan[: len(poi.plan) - 1]
-        ]
+        first_four_action_names = [action.name for action in poi.plan[: len(poi.plan) - 1]]
         assert all(
             [o == BasicOperations.SLOT_FILLER.value for o in first_four_action_names]
         ), "A plan of length 5 full of slot fills and no mapping."
@@ -120,9 +112,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
             [
                 MappingItem(source_name="from", target_name="to", probability=0.0),
                 MappingItem(source_name="item12321", target_name="to", probability=1.0),
-                MappingItem(
-                    source_name="item12321", target_name="from", probability=1.0
-                ),
+                MappingItem(source_name="item12321", target_name="from", probability=1.0),
             ]
         )
 
@@ -135,9 +125,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         poi = plans.list_of_plans[0]
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert (
-                    action.inputs[0].item_id == "item12321"
-                ), "Item item12321 mapped twice"
+                assert action.inputs[0].item_id == "item12321", "Item item12321 mapped twice"
 
     def test_multi_instance_from_memory_with_same_skill_no_preference(self) -> None:
         self.flow.add(self.emails_in_memory)
@@ -151,9 +139,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 5, "A plan of length 5."
 
-        first_four_action_names = [
-            action.name for action in poi.plan[: len(poi.plan) - 1]
-        ]
+        first_four_action_names = [action.name for action in poi.plan[: len(poi.plan) - 1]]
         assert (
             first_four_action_names.count(BasicOperations.SLOT_FILLER.value) == 2
             and first_four_action_names.count(BasicOperations.MAPPER.value) == 2
@@ -164,9 +150,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(
             [
                 MappingItem(source_name="item55132", target_name="to", probability=1.0),
-                MappingItem(
-                    source_name="item12321", target_name="from", probability=1.0
-                ),
+                MappingItem(source_name="item12321", target_name="from", probability=1.0),
             ]
         )
 
@@ -202,9 +186,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(goal)
 
         self.flow.mapping_options.add(MappingOptions.transitive)
-        self.flow.add(
-            MappingItem(source_name="source", target_name="target", probability=0.0)
-        )
+        self.flow.add(MappingItem(source_name="source", target_name="target", probability=0.0))
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
@@ -212,8 +194,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "A plan of length 4."
         assert all(
-            action.name == BasicOperations.SLOT_FILLER.value
-            for action in poi.plan[: len(poi.plan) - 1]
+            action.name == BasicOperations.SLOT_FILLER.value for action in poi.plan[: len(poi.plan) - 1]
         ), "Three slot fills."
 
         # Testing multi-instance producer pattern with an agent instaed
@@ -270,12 +251,8 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(filename_producer_agent)
         self.flow.add(
             [
-                SlotProperty(
-                    slot_name="source", slot_desirability=0, propagate_desirability=True
-                ),
-                MappingItem(
-                    source_name="source", target_name="target", probability=0.0
-                ),
+                SlotProperty(slot_name="source", slot_desirability=0, propagate_desirability=True),
+                MappingItem(source_name="source", target_name="target", probability=0.0),
             ]
         )
 
@@ -306,10 +283,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.set_up_multi_instance_email_tests()
 
         goal = GoalItems(
-            goals=[
-                GoalItem(goal_name=item.item_id, goal_type=GoalType.OBJECT_USED)
-                for item in self.emails_in_memory
-            ]
+            goals=[GoalItem(goal_name=item.item_id, goal_type=GoalType.OBJECT_USED) for item in self.emails_in_memory]
         )
         self.flow.add(goal)
 
@@ -318,13 +292,9 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
     def test_multi_instance_from_memory_with_multi_skill_and_confirmation(self) -> None:
         self.set_up_multi_instance_email_tests()
-        self.flow.variable_life_cycle.update(
-            {LifeCycleOptions.uncertain_on_use, LifeCycleOptions.confirm_on_mapping}
-        )
+        self.flow.variable_life_cycle.update({LifeCycleOptions.uncertain_on_use, LifeCycleOptions.confirm_on_mapping})
 
-        goal = GoalItems(
-            goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED)
-        )
+        goal = GoalItems(goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED))
         self.flow.add(goal)
 
         plans = self.get_plan()
@@ -343,16 +313,12 @@ class TestMappingsMultiInstance(BaseTestAgents):
         action_names = [action.name for action in poi.plan]
 
         assert len(action_names) == 16, "Plan of length 16."
-        assert (
-            action_names.count(BasicOperations.SLOT_FILLER.value) == 1
-        ), "Only one slot filler."
+        assert action_names.count(BasicOperations.SLOT_FILLER.value) == 1, "Only one slot filler."
 
     def test_multi_instance_with_iteration(self) -> None:
         self.set_up_multi_instance_email_tests()
 
-        goal = GoalItems(
-            goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED)
-        )
+        goal = GoalItems(goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED))
         self.flow.add(goal)
 
         plans = self.get_plan()
@@ -366,21 +332,15 @@ class TestMappingsMultiInstance(BaseTestAgents):
         action_names = [action.name for action in poi.plan]
 
         assert action_names.count(BasicOperations.MAPPER.value) == 3, "Three maps."
-        assert (
-            action_names.count(BasicOperations.SLOT_FILLER.value) == 3
-        ), "Three slots."
+        assert action_names.count(BasicOperations.SLOT_FILLER.value) == 3, "Three slots."
         assert action_names.count("Email Agent") == 3, "Three emails full."
 
     def set_up_multi_instance_email_tests(self) -> None:
         self.flow.add(self.emails_in_memory)
-        self.flow.add(
-            MappingItem(source_name="to", target_name="from", probability=0.0)
-        )
+        self.flow.add(MappingItem(source_name="to", target_name="from", probability=0.0))
         self.flow.add(
             [
-                MappingItem(
-                    source_name=item.item_id, target_name="from", probability=0.0
-                )
+                MappingItem(source_name=item.item_id, target_name="from", probability=0.0)
                 for item in self.emails_in_memory
             ]
         )

@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 
 class Debugger(ABC):
     def __init__(self, flow: FlowDefinition) -> None:
-        self.flow = Flow(name=flow.name, initialize=flow)
+        self.flow = Flow(name=flow.name)
+        self.flow_definition = flow
 
     @abstractmethod
     def debug(self, storyboard: StoryBoard) -> Report:

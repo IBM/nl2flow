@@ -7,11 +7,7 @@ from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 import os
 
 PLANNER_URL = os.getenv("PLANNER_URL")
-PLANNER = (
-    Michael(url=PLANNER_URL)
-    if PLANNER_URL is not None
-    else Christian(url=DEFAULT_PLANNER_URL)
-)
+PLANNER = Michael(url=PLANNER_URL) if PLANNER_URL is not None else Christian(url=DEFAULT_PLANNER_URL)
 
 
 def test_basic() -> None:

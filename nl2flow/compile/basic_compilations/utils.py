@@ -1,6 +1,6 @@
 from typing import List, Dict, Union, Any
 
-from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty
+from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty, Parameter
 from nl2flow.compile.options import TypeOptions, MAX_RETRY, LOOKAHEAD
 
 
@@ -13,9 +13,7 @@ def get_source_map(compilation: Any) -> Dict[str, List[str]]:
         for operator in compilation.flow_definition.operators:
             outputs = operator.outputs[0]
             for o_output in outputs.outcomes:
-                params = [
-                    p if isinstance(p, str) else p.item_id for p in o_output.parameters
-                ]
+                params = [p if isinstance(p, str) else p.item_id for p in o_output.parameters]
 
                 if constant in params:
                     source_map[constant].append(operator.name)
@@ -69,12 +67,8 @@ def add_extra_objects(compilation: Any, **kwargs: Dict[str, Any]) -> None:
             new_objects = generate_new_objects(type_name, num_lookahead)
 
             for new_object in new_objects:
-                add_memory_item_to_constant_map(
-                    compilation, MemoryItem(item_id=new_object, item_type=type_name)
-                )
-                compilation.init.add(
-                    compilation.new_item(compilation.constant_map[new_object])
-                )
+                add_memory_item_to_constant_map(compilation, MemoryItem(item_id=new_object, item_type=type_name))
+                compilation.init.add(compilation.new_item(compilation.constant_map[new_object]))
 
                 if type_name != TypeOptions.ROOT.value:
                     temp_slot_properties = compilation.flow_definition.slot_properties
@@ -82,8 +76,7 @@ def add_extra_objects(compilation: Any, **kwargs: Dict[str, Any]) -> None:
                     for slot in temp_slot_properties:
                         if (
                             slot.propagate_desirability
-                            and get_type_of_constant(compilation, slot.slot_name)
-                            == type_name
+                            and get_type_of_constant(compilation, slot.slot_name) == type_name
                         ):
                             compilation.flow_definition.slot_properties.append(
                                 SlotProperty(
@@ -95,45 +88,30 @@ def add_extra_objects(compilation: Any, **kwargs: Dict[str, Any]) -> None:
 
 def add_type_item_to_type_map(compilation: Any, type_item: TypeItem) -> None:
     if type_item.parent and type_item.parent not in compilation.type_map:
-        compilation.type_map[type_item.parent] = compilation.lang.sort(
-            type_item.parent, TypeOptions.ROOT.value
-        )
+        compilation.type_map[type_item.parent] = compilation.lang.sort(type_item.parent, TypeOptions.ROOT.value)
 
     if type_item.name not in compilation.type_map:
-
         if type_item.parent:
-            compilation.type_map[type_item.name] = compilation.lang.sort(
-                type_item.name, type_item.parent
-            )
+            compilation.type_map[type_item.name] = compilation.lang.sort(type_item.name, type_item.parent)
 
         else:
             compilation.type_map[type_item.name] = compilation.lang.sort(type_item.name)
 
 
 def add_memory_item_to_constant_map(compilation: Any, memory_item: MemoryItem) -> None:
-    type_name: str = (
-        memory_item.item_type if memory_item.item_type else TypeOptions.ROOT.value
-    )
+    type_name: str = memory_item.item_type if memory_item.item_type else TypeOptions.ROOT.value
 
-    add_type_item_to_type_map(
-        compilation, TypeItem(name=type_name, parent=TypeOptions.ROOT.value)
-    )
+    add_type_item_to_type_map(compilation, TypeItem(name=type_name, parent=TypeOptions.ROOT.value))
 
     if memory_item.item_id not in compilation.constant_map:
-        compilation.constant_map[memory_item.item_id] = compilation.lang.constant(
-            memory_item.item_id, type_name
-        )
+        compilation.constant_map[memory_item.item_id] = compilation.lang.constant(memory_item.item_id, type_name)
 
 
-def add_to_condition_list_pre_check(
-    compilation: Any, parameter: Union[str, MemoryItem]
-) -> None:
+def add_to_condition_list_pre_check(compilation: Any, parameter: Union[str, MemoryItem]) -> None:
     if isinstance(parameter, str):
-        add_memory_item_to_constant_map(
-            compilation, MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value)
-        )
+        add_memory_item_to_constant_map(compilation, MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value))
 
-    elif isinstance(parameter, MemoryItem):
+    elif isinstance(parameter, Parameter):
         add_memory_item_to_constant_map(compilation, parameter)
     else:
-        raise TypeError
+        raise TypeError(f"This is not a valid parameter: {parameter}")

@@ -47,15 +47,9 @@ class TestTypingAdvanced(BaseTestAgents):
 
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "Plan of length 4."
-        assert BasicOperations.MAPPER.value in [
-            action.name for action in poi.plan
-        ], "Mapper in the plan."
+        assert BasicOperations.MAPPER.value in [action.name for action in poi.plan], "Mapper in the plan."
 
-        self.flow.add(
-            SlotProperty(
-                slot_name="New Email", slot_desirability=0, propagate_desirability=True
-            )
-        )
+        self.flow.add(SlotProperty(slot_name="New Email", slot_desirability=0, propagate_desirability=True))
 
         plans = self.get_plan()
         assert not plans.list_of_plans, "There should be no plans."
@@ -83,9 +77,7 @@ class TestTypingAdvanced(BaseTestAgents):
 
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "Plan of length 4."
-        assert "Fake Helper Agent" in [
-            action.name for action in poi.plan
-        ], "Fake helper agent in the plan."
+        assert "Fake Helper Agent" in [action.name for action in poi.plan], "Fake helper agent in the plan."
 
         self.flow.add(
             SlotProperty(
@@ -111,6 +103,4 @@ class TestTypingAdvanced(BaseTestAgents):
                 break
 
         assert count >= 2, "There must be at least two optimal plans."
-        assert (
-            is_helper_agent_there
-        ), "Original helper agent must be there among the optimal plans."
+        assert is_helper_agent_there, "Original helper agent must be there among the optimal plans."

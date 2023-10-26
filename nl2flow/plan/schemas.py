@@ -8,7 +8,7 @@ from nl2flow.compile.options import TypeOptions
 
 class Parameter(BaseModel):
     item_id: str
-    item_type: Optional[str]
+    item_type: Optional[str] = None
 
     @classmethod
     def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
@@ -26,10 +26,7 @@ class Step(BaseModel):
 
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
-        parameters = [
-            p if isinstance(p, Parameter) else Parameter(item_id=p)
-            for p in step.parameters
-        ]
+        parameters = [p if isinstance(p, Parameter) else Parameter(item_id=p) for p in step.parameters]
         return Step(
             name=string_transform(step.name, transforms),
             parameters=[p.transform(p, transforms) for p in parameters],
@@ -43,13 +40,13 @@ class Action(Step):
 
 class RawPlan(BaseModel):
     plan: List[str]
-    cost: float
+    cost: float = 1.0
 
 
 class ClassicalPlan(BaseModel):
-    cost: float
-    length: float
-    metadata: Optional[Any]
+    cost: float = 0.0
+    length: float = 0.0
+    metadata: Optional[Any] = None
     plan: List[Action] = []
 
 

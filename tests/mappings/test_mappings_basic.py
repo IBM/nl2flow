@@ -21,9 +21,7 @@ class TestMappingsBasic(BaseTestAgents):
         self.flow.add(imposter_agent)
 
         imposter_agent_preferred = Operator("Fake Find Errors Preferred")
-        imposter_agent_preferred.add_output(
-            SignatureItem(parameters=["preferred errors"])
-        )
+        imposter_agent_preferred.add_output(SignatureItem(parameters=["preferred errors"]))
         self.flow.add(imposter_agent_preferred)
 
     @staticmethod
@@ -38,14 +36,10 @@ class TestMappingsBasic(BaseTestAgents):
 
         step_2: Action = poi.plan[1]
         step_3: Action = poi.plan[2]
-        assert all(
-            o == BasicOperations.MAPPER.value for o in [step_2.name, step_3.name]
-        ), "Followed by two mappings."
+        assert all(o == BasicOperations.MAPPER.value for o in [step_2.name, step_3.name]), "Followed by two mappings."
 
         step_4: Action = poi.plan[3]
-        assert (
-            step_4.name == "Credit Score API"
-        ), "Final action should be the goal action."
+        assert step_4.name == "Credit Score API", "Final action should be the goal action."
 
     def test_mapper_basic(self) -> None:
         self.flow.add(
@@ -105,19 +99,13 @@ class TestMappingsBasic(BaseTestAgents):
         assert step_1.name == "Fake Find Errors", "Call fake error finder."
 
         step_2: Action = poi.plan[1]
-        assert (
-            step_2.name == BasicOperations.MAPPER.value
-        ), "Mapping preferred over filling slot directly."
+        assert step_2.name == BasicOperations.MAPPER.value, "Mapping preferred over filling slot directly."
 
         step_3: Action = poi.plan[2]
         assert step_3.name == "Fix Errors", "Final goal operator."
 
     def test_mapper_with_map_preference(self) -> None:
-        self.flow.add(
-            MappingItem(
-                source_name="errors", target_name="list of errors", probability=0.5
-            )
-        )
+        self.flow.add(MappingItem(source_name="errors", target_name="list of errors", probability=0.5))
         self.flow.add(
             MappingItem(
                 source_name="preferred errors",
@@ -168,18 +156,12 @@ class TestMappingsBasic(BaseTestAgents):
         )
 
         assert len(slot_fill_actions) == 2, "Two slot fill actions."
-        assert "Name" in [
-            action.inputs[0].item_id for action in slot_fill_actions
-        ], "One slot fill for Name."
-        assert "Email" in [
-            action.inputs[0].item_id for action in slot_fill_actions
-        ], "One slot fill for Email."
+        assert "Name" in [action.inputs[0].item_id for action in slot_fill_actions], "One slot fill for Name."
+        assert "Email" in [action.inputs[0].item_id for action in slot_fill_actions], "One slot fill for Email."
 
         assert BasicOperations.MAPPER.value in [
             action.name for action in poi.plan[1:3]
         ], "One mapping among 2nd and 3rd step."
 
         step_4: Action = poi.plan[-1]
-        assert (
-            step_4.name == "Credit Score API"
-        ), "Fix Errors using the mapping and alternative slot."
+        assert step_4.name == "Credit Score API", "Fix Errors using the mapping and alternative slot."

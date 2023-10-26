@@ -17,19 +17,14 @@ def fallback_and_last_resort_tests_should_look_the_same(
 
     step_1: Action = poi.plan[0]
     assert (
-        step_1.name == BasicOperations.SLOT_FILLER.value
-        and step_1.inputs[0].item_id == "database link"
+        step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0].item_id == "database link"
     ), "The first step should be looking to slot fill database link."
 
     step_2: Action = poi.plan[1]
-    assert (
-        step_2.name == "Find Errors"
-    ), "Step 2 acquires list of errors using Find Errors."
+    assert step_2.name == "Find Errors", "Step 2 acquires list of errors using Find Errors."
 
     step_3: Action = poi.plan[2]
-    assert (
-        step_3.name == "Fix Errors"
-    ), "Fix Errors without slot filling list of errors."
+    assert step_3.name == "Fix Errors", "Fix Errors without slot filling list of errors."
 
 
 class TestSlotFillerBasic(BaseTestAgents):
@@ -50,9 +45,7 @@ class TestSlotFillerBasic(BaseTestAgents):
             [step.inputs[0].item_id for step in poi.plan[:2]]
         ), "Two slot fills for account ID and email."
 
-        assert (
-            poi.plan[2].name == "Credit Score API"
-        ), "Third action should be the goal action."
+        assert poi.plan[2].name == "Credit Score API", "Third action should be the goal action."
 
     def test_not_slot_fillable_no_solution(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Credit Score API"))
@@ -80,12 +73,8 @@ class TestSlotFillerBasic(BaseTestAgents):
 
     def test_slot_preference(self) -> None:
         find_errors_api_alternative = Operator("Find Errors Alternative")
-        find_errors_api_alternative.add_input(
-            SignatureItem(parameters=["name of database"])
-        )
-        find_errors_api_alternative.add_output(
-            SignatureItem(parameters=["list of errors"])
-        )
+        find_errors_api_alternative.add_input(SignatureItem(parameters=["name of database"]))
+        find_errors_api_alternative.add_output(SignatureItem(parameters=["list of errors"]))
 
         self.flow.add(find_errors_api_alternative)
         self.flow.add(
@@ -106,8 +95,7 @@ class TestSlotFillerBasic(BaseTestAgents):
 
         step_1: Action = poi.plan[0]
         assert (
-            step_1.name == BasicOperations.SLOT_FILLER.value
-            and step_1.inputs[0].item_id == "name of database"
+            step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0].item_id == "name of database"
         ), "The first step should be looking to slot fill name of database instead of database link."
 
         step_2: Action = poi.plan[1]
