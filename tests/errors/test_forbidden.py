@@ -23,9 +23,7 @@ class TestForbidden(BaseTestAgents):
             self.flow.add(MappingItem(source_name="x", target_name="y", probability=-2))
 
         with pytest.raises(Exception):
-            self.flow.add(
-                MappingItem(source_name="x", target_name="y", probability=1.5)
-            )
+            self.flow.add(MappingItem(source_name="x", target_name="y", probability=1.5))
 
     def test_conflicting_types(self) -> None:
         self.flow.add(
@@ -35,13 +33,9 @@ class TestForbidden(BaseTestAgents):
             ]
         )
 
-        assert self.flow.validate()
-
-        self.flow.add(
-            [
-                MemoryItem(item_id="zipcode", item_type="location"),
-            ]
-        )
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    MemoryItem(item_id="zipcode", item_type="location"),
+                ]
+            )

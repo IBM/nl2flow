@@ -1,4 +1,4 @@
-from typing import Set, List, Union, Any, Tuple, Dict
+from typing import Set, List, Union, Any, Tuple, Dict, Optional
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
@@ -24,6 +24,7 @@ class Flow:
         self._confirm_option: Set[ConfirmOptions] = set()
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._goal_type = GoalOptions.AND_AND
+        self._lookahead = LOOKAHEAD
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
@@ -35,10 +36,6 @@ class Flow:
 
     @variable_life_cycle.setter
     def variable_life_cycle(self, options: Set[LifeCycleOptions]) -> None:
-        assert all(
-            [isinstance(option, LifeCycleOptions) for option in options]
-        ), f"Tried to set unknown lifecycle option: {options}."
-
         self._variable_life_cycle = options
 
     @property
@@ -47,10 +44,6 @@ class Flow:
 
     @confirm_options.setter
     def confirm_options(self, options: Set[ConfirmOptions]) -> None:
-        assert all(
-            [isinstance(option, ConfirmOptions) for option in options]
-        ), f"Tried to set unknown mapping option: {options}."
-
         self._confirm_option = options
 
     @property
@@ -59,8 +52,6 @@ class Flow:
 
     @mapping_options.setter
     def mapping_options(self, options: Set[MappingOptions]) -> None:
-        assert all([isinstance(option, MappingOptions) for option in options]), "Tried to set unknown mapping option."
-
         exclusive_set = {
             MappingOptions.relaxed,
             MappingOptions.immediate,
@@ -78,8 +69,6 @@ class Flow:
 
     @slot_options.setter
     def slot_options(self, options: Set[SlotOptions]) -> None:
-        assert all([isinstance(option, SlotOptions) for option in options]), "Tried to set unknown slot option."
-
         inclusive_set = {SlotOptions.higher_cost, SlotOptions.last_resort}
         assert (
             len(inclusive_set & options) >= 1
@@ -102,48 +91,15 @@ class Flow:
 
     @goal_type.setter
     def goal_type(self, goal_type: GoalOptions) -> None:
-        assert isinstance(goal_type, GoalOptions), "Tried to set unknown goal option."
         self._goal_type = goal_type
 
-    def add(self, new_item: Union[Any, List[Any]]) -> None:
-        if not isinstance(new_item, List):
-            new_item = [new_item]
+    @property
+    def lookahead(self) -> int:
+        return self._lookahead
 
-        for item in new_item:
-            if issubclass(type(item), Operator):
-                item = item.definition
-
-            type_of_item = type(item).__name__
-            key_name = next(
-                (field[0] for field in FlowDefinition.model_fields.items() if type_of_item in str(field[1].annotation)),
-                None,
-            )
-
-            if type_of_item == TypeItem.__name__ and item.children:
-                children = item.children
-
-                if not isinstance(children, Set):
-                    children = {children}
-
-                for child in children:
-                    self.add(TypeItem(name=child, parent=item.name, children=[]))
-
-            if key_name:
-                current_item_value = getattr(self.flow_definition, key_name)
-
-                if isinstance(current_item_value, List):
-                    current_item_value.append(item)
-                    setattr(self.flow_definition, key_name, current_item_value)
-            else:
-                raise TypeError("Attempted to add unknown type of object to flow.")
-
-    def set_start(self, operator_name: str) -> None:
-        assert operator_name in map(lambda x: str(x.name), self.flow_definition.operators), "Operator name not found!"
-        self.flow_definition.starts_with = operator_name
-
-    def set_end(self, operator_name: str) -> None:
-        assert operator_name in map(lambda x: str(x.name), self.flow_definition.operators), "Operator name not found!"
-        self.flow_definition.ends_with = operator_name
+    @lookahead.setter
+    def lookahead(self, lookahead: int) -> None:
+        self._lookahead = lookahead
 
     @property
     def flow_definition(self) -> FlowDefinition:
@@ -160,13 +116,50 @@ class Flow:
         else:
             raise TypeError(f"Tried to initialize with unknown object: {initialize}")
 
+    def add(self, new_item: Union[Any, List[Any]]) -> None:
+        if not isinstance(new_item, List):
+            new_item = [new_item]
+
+        for item in new_item:
+            if issubclass(type(item), Operator):
+                item = item.definition
+
+            type_of_item = type(item).__name__
+            key_name = next(
+                (field[0] for field in FlowDefinition.model_fields.items() if type_of_item in str(field[1].annotation)),
+                None,
+            )
+
+            if key_name:
+                current_item_value = getattr(self.flow_definition, key_name)
+
+                if isinstance(current_item_value, List):
+                    current_item_value.append(item)
+                    setattr(self.flow_definition, key_name, current_item_value)
+
+                    if type_of_item == TypeItem.__name__ and item.children:
+                        children = item.children
+
+                        if not isinstance(children, Set):
+                            children = {children}
+
+                        for child in children:
+                            self.add(TypeItem(name=child, parent=item.name, children=[]))
+            else:
+                raise TypeError("Attempted to add unknown type of object to flow.")
+
+    def set_start(self, operator_name: Optional[str]) -> None:
+        self.flow_definition.starts_with = operator_name
+
+    def set_end(self, operator_name: Optional[str]) -> None:
+        self.flow_definition.ends_with = operator_name
+
     def plan_it(
         self,
         planner: Any,
-        lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
-        pddl, transforms = self.compile_to_pddl(lookahead, compilation_type)
+        pddl, transforms = self.compile_to_pddl(compilation_type)
 
         raw_plans = planner.plan(pddl=pddl)
         parsed_plans: PlannerResponse = planner.parse(response=raw_plans, flow=self, transforms=transforms)
@@ -175,13 +168,8 @@ class Flow:
 
     def compile_to_pddl(
         self,
-        lookahead: int = LOOKAHEAD,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
-        assert isinstance(compilation_type, CompileOptions), "Encountered unknown compilation option."
-
-        assert isinstance(lookahead, int), "Length of lookahead must be an integer."
-
         if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
 
@@ -192,7 +180,7 @@ class Flow:
             confirm_options=self.confirm_options,
             variable_life_cycle=self.variable_life_cycle,
             goal_type=self.goal_type,
-            lookahead=lookahead,
+            lookahead=self.lookahead,
         )
 
         return pddl, transforms

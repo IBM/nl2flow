@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Set, List, Optional, Union, Any
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, FieldValidationInfo, ConfigDict
 
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.utils import string_transform, Transform
@@ -194,6 +194,8 @@ class PDDL(BaseModel):
 
 
 class FlowDefinition(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
     name: str
     type_hierarchy: List[TypeItem] = []
     operators: List[OperatorDefinition] = []
@@ -211,8 +213,6 @@ class FlowDefinition(BaseModel):
     def transform(cls, flow: FlowDefinition, transforms: List[Transform]) -> FlowDefinition:
         new_flow = FlowDefinition(
             name=string_transform(flow.name, transforms),
-            starts_with=string_transform(flow.starts_with, transforms),
-            ends_with=string_transform(flow.ends_with, transforms),
         )
 
         for defn in cls.model_fields.items():
@@ -223,4 +223,17 @@ class FlowDefinition(BaseModel):
                     [item.transform(item, transforms) for item in getattr(flow, defn[0])],
                 )
 
+        new_flow.starts_with = string_transform(flow.starts_with, transforms)
+        new_flow.ends_with = string_transform(flow.ends_with, transforms)
+
         return new_flow
+
+    @field_validator("starts_with", "ends_with")
+    @classmethod
+    def unknown_operator(cls, operator_name: str, info: FieldValidationInfo) -> str:
+        reference_flow_model = FlowDefinition.model_validate(info.data)
+        assert operator_name is None or operator_name in map(
+            lambda x: str(x.name), reference_flow_model.operators
+        ), "Operator name not found!"
+
+        return operator_name
