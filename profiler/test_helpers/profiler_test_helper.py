@@ -28,6 +28,7 @@ def get_str_from_file(path: str) -> str:
     content = ""
     with open(path, "r") as f:
         content = f.read()
+
     return content
 
 
@@ -45,4 +46,5 @@ def read_remove_pddl_plan(file_path: str) -> Tuple[str, str, str]:
     application_command = ["rm"]
     files = [domain_file_path, problem_file_path, plan_file_path]
     _ = subprocess.run(application_command + files, capture_output=False)
+
     return domain_pddl_str, problem_pddl_str, get_str_from_file(plan_file_path)

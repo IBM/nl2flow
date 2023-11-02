@@ -7,3 +7,7 @@ def get_hash(data: Dict) -> str:
     dhash = hashlib.md5()
     dhash.update(json.dumps(data, sort_keys=True).encode())
     return dhash.hexdigest()
+
+
+def get_hash_str(input: str) -> str:
+    return str(hash(input))

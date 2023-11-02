@@ -1,5 +1,5 @@
 from math import ceil
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
@@ -54,14 +54,16 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     return len(slot_fillable_var)
 
 
-def get_num_variables(agent_infos: List[AgentInfo], available_data: List[str]) -> int:
+def get_num_variables(
+    agent_infos: List[AgentInfo], available_data: List[Tuple[str, Optional[str]]]
+) -> int:
     vars: Set[str] = set()
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
             for item in agent_info["actuator_signature"][signature]:
                 vars.add(item["name"][:])
     for datum in available_data:
-        vars.add(datum[:])
+        vars.add(datum[0][:])  # add variable name
 
     return len(vars)
 
@@ -84,6 +86,7 @@ def check_num_input_parameters(
         for signature in SIGNATURE_TYPES:
             if num_input_parameters != len(agent_info["actuator_signature"][signature]):
                 return False
+
     return True
 
 
@@ -102,15 +105,23 @@ def check_sample(
     assert check_num_input_parameters(available_agents, input.num_input_parameters)
     # coupling
     num_coupled_agents, combs = get_stats_coupled_agents(available_agents)
-    assert (
-        ceil(input.num_agents * input.proportion_coupled_agents) == num_coupled_agents
+    expected_couple_agents = ceil(input.num_agents * input.proportion_coupled_agents)
+    expected_couple_agents = (
+        0 if expected_couple_agents == 1 else expected_couple_agents
     )
+    assert expected_couple_agents == num_coupled_agents
     # goals
     assert input.num_goal_agents == len(goal_agent_ids)
     # data mapper
-    assert ceil(
+    expected_prop_variables_mapping = ceil(
         input.num_var * input.proportion_mappable_variables
-    ) == get_num_variables_used_for_data_mapping(mappings)
+    )
+    expected_prop_variables_mapping = (
+        0 if expected_prop_variables_mapping == 1 else expected_prop_variables_mapping
+    )
+    assert expected_prop_variables_mapping == get_num_variables_used_for_data_mapping(
+        mappings
+    )
     # slot-filler
     assert ceil(
         input.num_var * input.proportion_slot_fillable_variables

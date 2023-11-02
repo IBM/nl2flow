@@ -4,6 +4,7 @@ from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
     NameGenerator,
 )
+import random
 
 
 class TestAgentInfoGenerator(unittest.TestCase):
@@ -20,7 +21,7 @@ class TestAgentInfoGenerator(unittest.TestCase):
         )
 
         samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input
+            agent_info_generator_input, random
         )
         self.assertTrue(True)
 
@@ -38,7 +39,7 @@ class TestAgentInfoGenerator(unittest.TestCase):
         )
 
         samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input
+            agent_info_generator_input, random
         )
 
     def test_generate_agent_infos_name_generator_dataset(self):
@@ -55,5 +56,5 @@ class TestAgentInfoGenerator(unittest.TestCase):
         )
 
         samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input
+            agent_info_generator_input, random
         )

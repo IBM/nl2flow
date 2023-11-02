@@ -78,6 +78,7 @@ def get_quadruples_from_test_file(
         )
         if quadruple is not None:
             quadruples.append(quadruple)
+
     return quadruples
 
 
@@ -105,4 +106,5 @@ def get_quadruples_from_folder(folder_path: str) -> List[Quadruple]:
                 method_names,
             )
         )
+
     return quadruples

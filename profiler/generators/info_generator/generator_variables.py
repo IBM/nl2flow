@@ -17,5 +17,23 @@ AGENT_INFO_SIGNATURE_ITEM_TEMPLATE: AgentInfoSignatureItem = {
     "required": True,
     "slot_fillable": False,
     "mappable": False,
+    "data_type": None,
 }
 SIGNATURE_TYPES = ["in_sig_full", "out_sig_full"]
+variable_data_types = [
+    "boolean",
+    "int32",
+    "int64",
+    "double",
+    "float",
+    "date",
+    "datetime",
+    "password",
+    "byte",
+    "binary",
+    "uuid",
+    "uri",
+    "hostname",
+    "ipv4",
+    "ipv6",
+]
