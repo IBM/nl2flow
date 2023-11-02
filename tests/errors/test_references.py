@@ -18,6 +18,14 @@ class TestReferences(BaseTestAgents):
         with pytest.raises(Exception):
             self.flow.add(MappingItem(source_name="x", target_name="y", probability=0.5))
 
+        with pytest.raises(Exception):
+            self.flow.add([MemoryItem(item_id="x"), MemoryItem(item_id="y")])
+            self.flow.add(MappingItem(source_name="x", target_name="y", probability=0.5))
+
+        operator = Operator("Agent")
+        operator.add_input(SignatureItem(parameters=["x", "y"]))
+
+        self.flow.add(operator)
         self.flow.add([MemoryItem(item_id="x"), MemoryItem(item_id="y")])
         self.flow.add(MappingItem(source_name="x", target_name="y", probability=0.5))
 

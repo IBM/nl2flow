@@ -21,100 +21,79 @@ class TestDuplicates(BaseTestAgents):
     def test_duplicate_operators(self) -> None:
         agent_1 = Operator("Agent")
         agent_2 = Operator("Agent")
-        self.flow.add([agent_1, agent_2])
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add([agent_1, agent_2])
 
     def test_duplicate_types(self) -> None:
-        self.flow.add(
-            [
-                TypeItem(name="Contact"),
-                TypeItem(name="Contact"),
-            ]
-        )
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    TypeItem(name="Contact"),
+                    TypeItem(name="Contact"),
+                ]
+            )
 
     def test_operator_hash_conflict(self) -> None:
         agent_1 = Operator("CASE CONFLICT")
         agent_2 = Operator("case conflict")
-        self.flow.add([agent_1, agent_2])
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add([agent_1, agent_2])
 
     def test_typing_hash_conflict(self) -> None:
-        self.flow.add(
-            [
-                TypeItem(name="Contact_Name"),
-                TypeItem(name="Contact Name"),
-            ]
-        )
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    TypeItem(name="Contact_Name"),
+                    TypeItem(name="Contact Name"),
+                ]
+            )
 
     def test_object_hash_conflict(self) -> None:
-        self.flow.add(
-            [
-                MemoryItem(item_id="Object Name"),
-                MemoryItem(item_id="object name"),
-            ]
-        )
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    MemoryItem(item_id="Object Name"),
+                    MemoryItem(item_id="object name"),
+                ]
+            )
 
     def test_object_hash_conflict_distributed_in_goal(self) -> None:
-        self.flow.add(
-            [
-                MemoryItem(item_id="Object Name"),
-                GoalItems(
-                    goals=GoalItem(
-                        goal_name="object_name", goal_type=GoalType.OBJECT_USED
-                    )
-                ),
-            ]
-        )
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    MemoryItem(item_id="Object Name"),
+                    GoalItems(goals=GoalItem(goal_name="object_name", goal_type=GoalType.OBJECT_USED)),
+                ]
+            )
 
     def test_object_hash_conflict_distributed_in_operator(self) -> None:
         agent_1 = Operator("Agent")
         agent_1.add_input(SignatureItem(parameters=["x"]))
 
-        self.flow.add([agent_1, MemoryItem(item_id="X")])
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add([agent_1, MemoryItem(item_id="X")])
 
     def test_signature_hash_conflict(self) -> None:
         agent_1 = Operator("Agent")
         agent_1.add_input(SignatureItem(parameters=["x"]))
         agent_1.add_output(SignatureItem(parameters=["X"]))
 
-        self.flow.add(agent_1)
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(agent_1)
 
     def test_constraint_operator_hash_conflict(self) -> None:
         agent_1 = Operator("Agent")
         agent_1.add_input(
             SignatureItem(
                 parameters=["x"],
-                constraints=[
-                    Constraint(constraint_id="case conflict", parameters=["X"])
-                ],
+                constraints=[Constraint(constraint_id="case conflict", parameters=["X"])],
             )
         )
-        self.flow.add(agent_1)
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(agent_1)
 
     def test_constraint_id_hash_conflict(self) -> None:
         agent_1 = Operator("Agent")
@@ -127,10 +106,9 @@ class TestDuplicates(BaseTestAgents):
                 ],
             )
         )
-        self.flow.add(agent_1)
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(agent_1)
 
     def test_constraint_id_hash_conflict_history(self) -> None:
         agent_1 = Operator("Agent")
@@ -142,30 +120,24 @@ class TestDuplicates(BaseTestAgents):
                 ],
             )
         )
-        self.flow.add(
-            [
-                agent_1,
-                Constraint(
-                    constraint_id="case_conflict", parameters=["Y"], truth_value=False
-                ),
-            ]
-        )
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(
+                [
+                    agent_1,
+                    Constraint(constraint_id="case_conflict", parameters=["Y"], truth_value=False),
+                ]
+            )
 
     def test_step_hash_conflict_history(self) -> None:
-        self.flow.add([Step(name="x"), Step(name="X")])
-
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add([Step(name="x"), Step(name="X")])
 
     def test_step_name_hash_conflict_history(self) -> None:
         agent_1 = Operator("Agent")
         agent_1.add_input(SignatureItem(parameters=["x"]))
 
         self.flow.add(agent_1)
-        self.flow.add(Step(name="X"))
 
         with pytest.raises(Exception):
-            self.flow.validate()
+            self.flow.add(Step(name="X"))

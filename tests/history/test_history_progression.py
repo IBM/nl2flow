@@ -137,12 +137,12 @@ class TestHistoryProgression(BaseTestAgents):
 
         self.flow.add(
             [
-                MappingItem(source_name="id123", target_name="W3 ID", probability=0),
                 MemoryItem(
                     item_id="id123",
                     item_type="Email Object",
                     item_state=MemoryState.KNOWN,
                 ),
+                MappingItem(source_name="id123", target_name="W3 ID", probability=0),
             ]
         )
 
