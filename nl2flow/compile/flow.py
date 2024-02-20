@@ -160,9 +160,7 @@ class Flow:
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
         pddl, transforms = self.compile_to_pddl(compilation_type)
-
-        raw_plans = planner.plan(pddl=pddl)
-        parsed_plans: PlannerResponse = planner.parse(response=raw_plans, flow=self, transforms=transforms)
+        parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms)
 
         return parsed_plans
 

@@ -38,11 +38,6 @@ class Action(Step):
     outputs: List[Parameter] = []
 
 
-class RawPlan(BaseModel):
-    plan: List[str]
-    cost: float = 1.0
-
-
 class ClassicalPlan(BaseModel):
     cost: float = 0.0
     length: float = 0.0
@@ -51,5 +46,13 @@ class ClassicalPlan(BaseModel):
 
 
 class PlannerResponse(BaseModel):
-    metadata: Any
     list_of_plans: List[ClassicalPlan] = []
+
+
+class RawPlan(BaseModel):
+    actions: List[str]
+    cost: float = 0.0
+
+
+class RawPlannerResult(BaseModel):
+    plans: List[RawPlan]

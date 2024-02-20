@@ -21,10 +21,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
 
     for constant in compilation.constant_map:
-        if (
-            is_this_a_datum(compilation, constant)
-            and MappingOptions.prohibit_direct not in mapping_options
-        ):
+        if is_this_a_datum(compilation, constant) and MappingOptions.prohibit_direct not in mapping_options:
             compilation.init.add(
                 compilation.mapped_to(
                     compilation.constant_map[constant],
@@ -42,7 +39,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             compilation.init.add(compilation.is_mappable(source, target))
             compilation.init.set(
                 compilation.map_affinity(source, target),
-                int((2 - mappable_item.probability) * CostOptions.UNIT.value),
+                int((2 - mappable_item.probability) * CostOptions.VERY_LOW.value),
             )
 
         if MappingOptions.transitive in mapping_options:
@@ -53,7 +50,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
                 compilation.init.add(compilation.is_mappable(target, source))
                 compilation.init.set(
                     compilation.map_affinity(target, source),
-                    int((2 - mappable_item.probability) * CostOptions.UNIT.value),
+                    int((2 - mappable_item.probability) * CostOptions.VERY_LOW.value),
                 )
 
     x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])

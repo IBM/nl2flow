@@ -107,7 +107,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         ), "A plan of length 5 full of slot fills and no mapping."
 
     def test_multi_instance_same_item(self) -> None:
-        self.flow.add(self.emails_in_memory)
+        self.flow.add(self.emails_in_memory[0])
         self.flow.add(
             [
                 MappingItem(source_name="from", target_name="to", probability=0.0),
@@ -197,7 +197,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
             action.name == BasicOperations.SLOT_FILLER.value for action in poi.plan[: len(poi.plan) - 1]
         ), "Three slot fills."
 
-        # Testing multi-instance producer pattern with an agent instaed
+        # Testing multi-instance producer pattern with an agent instead
         filename_producer_agent = Operator("Filename Producer Agent")
         filename_producer_agent.max_try = 3
         filename_producer_agent.add_output(
