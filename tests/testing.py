@@ -1,23 +1,13 @@
-from nl2flow.plan.planners import Michael, Christian
-from nl2flow.plan.options import DEFAULT_PLANNER_URL
-
+from nl2flow.plan.planners import ForbidIterative
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem
 from nl2flow.plan.schemas import PlannerResponse
 
-import os
-
-planner_url = os.getenv("PLANNER_URL")
-
 
 class BaseTestAgents:
     flow = Flow(name="NL2Flow Test")
-    planner = (
-        Michael(url=planner_url)
-        if planner_url is not None
-        else Christian(url=DEFAULT_PLANNER_URL)
-    )
+    planner = ForbidIterative()
 
     def setup_method(self) -> None:
         self.flow = Flow(name="NL2Flow Test")
@@ -29,7 +19,6 @@ class BaseTestAgents:
         return plans
 
     def __set_up_default_test_agents(self) -> None:
-
         # User Info agent provides user information on demand
         user_info_agent = Operator("User Info")
         user_info_agent.add_output(

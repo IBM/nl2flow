@@ -1,13 +1,12 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.planners import Michael, Christian
-from nl2flow.plan.options import DEFAULT_PLANNER_URL
+from nl2flow.plan.planners import ForbidIterative
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 
 import os
 
 PLANNER_URL = os.getenv("PLANNER_URL")
-PLANNER = Michael(url=PLANNER_URL) if PLANNER_URL is not None else Christian(url=DEFAULT_PLANNER_URL)
+PLANNER = ForbidIterative()
 
 
 def test_basic() -> None:
