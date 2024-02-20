@@ -9,11 +9,12 @@ from nl2flow.compile.options import (
     ConfirmOptions,
 )
 from nl2flow.compile.schemas import PDDL
+from json import JSONDecodeError
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, Dict
 from pathlib import Path
-from forbiditerative import planners
+from kstar_planner import planners
 
 import tempfile
 
@@ -60,14 +61,19 @@ class ForbidIterative(Planner):
             domain_file.write_text(pddl.domain)
             problem_file.write_text(pddl.problem)
 
-            result = planners.plan_unordered_topq(
-                domain_file=domain_file,
-                problem_file=problem_file,
-                quality_bound=QUALITY_BOUND,
-                number_of_plans_bound=NUM_PLANS,
-            )
+            try:
+                result = planners.plan_unordered_topq(
+                    domain_file=domain_file,
+                    problem_file=problem_file,
+                    quality_bound=QUALITY_BOUND,
+                    number_of_plans_bound=NUM_PLANS,
+                )
 
-            raw_planner_result = RawPlannerResult.model_validate(result)
+                raw_planner_result = RawPlannerResult.model_validate(result)
+
+            except JSONDecodeError:
+                raw_planner_result = RawPlannerResult(plans=[])
+
             return self.parse(raw_planner_result.plans, **kwargs)
 
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
