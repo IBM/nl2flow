@@ -3,14 +3,38 @@
 [![IBM](https://img.shields.io/badge/IBM%20Research-AI-green)](https://research.ibm.com)
 ![image](https://img.shields.io/badge/python->=3.9-darkblue)
 ![image](https://img.shields.io/badge/tarski-0.8.2-blue)
-[![AI](https://img.shields.io/badge/Planner-ForbidIterative-purple)](https://github.com/IBM/forbiditerative)
+[![AI](https://img.shields.io/badge/Planner-KStar-purple)](https://github.com/IBM/kstar)
 
 This package allows developers to easily integrate automated planning applications into their systems. Migrating research efforts to product creates knowledge gaps and blindspots, along with requirements for long-term support which often cannot be followed through. Particularly, the adoption of automated planners into products requires developers to get familiar with declarative modeling and understand the requirements of the [PDDL](https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language) syntax. This package mitigates this need by creating an abstraction around the underlying formal representation so that anyone can use automated planners to create workflows through a Python API, with their desired specifications. 
 
-&#129299; Read more about our work on natural language to workflow construction [here](https://link.springer.com/chapter/10.1007/978-3-031-16168-1_8).
+🤓 Read more about our work on natural language to workflow construction [here](https://link.springer.com/chapter/10.1007/978-3-031-16168-1_8).
 
+# Getting Started
 
-### Usage
+#### Clone the repository
+
+```bash
+user:~$ git clone git@github.com:IBM/nl2flow.git
+user:~$ cd nl2flow
+```
+
+#### Change to a virtual environment
+
+We also strongly recommend using a virtual environment, such
+as [anaconda](https://www.anaconda.com/), for development.
+
+```bash
+user:~$ conda create --name nl2flow
+user:~$ conda activate nl2flow
+```
+
+#### Install Lemming Dependencies
+
+```bash
+(nl2flow) user:~$ pip install -e .
+```
+
+## Usage
 
 Get started with constructing a simple flow where you have two operators, one target operator and another one which provides required items for the target operator.
 
