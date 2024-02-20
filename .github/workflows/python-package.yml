@@ -32,4 +32,7 @@ jobs:
         pip install -e '.[dev]'
     - name: Test with pytest
       run: |
+        pytest tests/ --ignore=tests/profiler --ignore=tests/sketch 2> errors.txt || true
+        echo ::set-output name=errors::`cat errors.txt`
         pytest tests/ --ignore=tests/profiler --ignore=tests/sketch
+g
