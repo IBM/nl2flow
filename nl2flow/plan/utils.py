@@ -39,15 +39,20 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
     )
 
     new_start_of_plan = 0
+    temp_plan = []
+
     for index, action in enumerate(plan.plan):
+        if action.name not in [item.value for item in BasicOperations]:
+            new_start_of_plan = index
+            break
+
         if action.name == action_name:
             new_action.inputs.extend(action.inputs)
 
         else:
-            new_start_of_plan = index
-            break
+            temp_plan.append(action)
 
-    new_plan.plan = [new_action] + plan.plan[new_start_of_plan:] if new_start_of_plan else plan.plan
+    new_plan.plan = [new_action] + temp_plan + plan.plan[new_start_of_plan:] if new_start_of_plan else plan.plan
     return new_plan
 
 
