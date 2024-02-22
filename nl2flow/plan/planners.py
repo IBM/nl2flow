@@ -16,7 +16,7 @@ from typing import Any, List, Set, Dict
 from pathlib import Path
 from kstar_planner import planners
 
-# import tempfile
+import tempfile
 
 
 class Planner(ABC):
@@ -51,51 +51,30 @@ class Planner(ABC):
 
 class ForbidIterative(Planner):
     def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
-        with open("domain.pddl", "w") as domain_file:
-            domain_file.write(pddl.domain)
+        with (
+            tempfile.NamedTemporaryFile() as domain_temp,
+            tempfile.NamedTemporaryFile() as problem_temp,
+        ):
+            domain_file = Path(tempfile.gettempdir()) / domain_temp.name
+            problem_file = Path(tempfile.gettempdir()) / problem_temp.name
 
-        with open("problem.pddl", "w") as problem_file:
-            problem_file.write(pddl.problem)
+            domain_file.write_text(pddl.domain)
+            problem_file.write_text(pddl.problem)
 
-        try:
-            result = planners.plan_unordered_topq(
-                domain_file=Path("domain.pddl"),
-                problem_file=Path("problem.pddl"),
-                quality_bound=QUALITY_BOUND,
-                number_of_plans_bound=NUM_PLANS,
-            )
+            try:
+                result = planners.plan_unordered_topq(
+                    domain_file=domain_file,
+                    problem_file=problem_file,
+                    quality_bound=QUALITY_BOUND,
+                    number_of_plans_bound=NUM_PLANS,
+                )
 
-            raw_planner_result = RawPlannerResult.model_validate(result)
+                raw_planner_result = RawPlannerResult.model_validate(result)
 
-        except JSONDecodeError:
-            raw_planner_result = RawPlannerResult(plans=[])
+            except JSONDecodeError:
+                raw_planner_result = RawPlannerResult(plans=[])
 
-        return self.parse(raw_planner_result.plans, **kwargs)
-
-        # with (
-        #     tempfile.NamedTemporaryFile() as domain_temp,
-        #     tempfile.NamedTemporaryFile() as problem_temp,
-        # ):
-        #     domain_file = Path(tempfile.gettempdir()) / domain_temp.name
-        #     problem_file = Path(tempfile.gettempdir()) / problem_temp.name
-        #
-        #     domain_file.write_text(pddl.domain)
-        #     problem_file.write_text(pddl.problem)
-        #
-        #     try:
-        #         result = planners.plan_unordered_topq(
-        #             domain_file=domain_file,
-        #             problem_file=problem_file,
-        #             quality_bound=QUALITY_BOUND,
-        #             number_of_plans_bound=NUM_PLANS,
-        #         )
-        #
-        #         raw_planner_result = RawPlannerResult.model_validate(result)
-        #
-        #     except JSONDecodeError:
-        #         raw_planner_result = RawPlannerResult(plans=[])
-        #
-        #     return self.parse(raw_planner_result.plans, **kwargs)
+            return self.parse(raw_planner_result.plans, **kwargs)
 
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
         planner_response = PlannerResponse()
