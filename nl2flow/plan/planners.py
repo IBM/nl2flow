@@ -48,7 +48,7 @@ class Planner(ABC):
         return pretty
 
 
-class ForbidIterative(Planner):
+class Kstar(Planner):
     def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
         with (
             tempfile.NamedTemporaryFile() as domain_temp,

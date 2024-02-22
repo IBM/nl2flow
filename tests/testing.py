@@ -1,4 +1,4 @@
-from nl2flow.plan.planners import ForbidIterative
+from nl2flow.plan.planners import Kstar
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem
@@ -7,7 +7,7 @@ from nl2flow.plan.schemas import PlannerResponse
 
 class BaseTestAgents:
     flow = Flow(name="NL2Flow Test")
-    planner = ForbidIterative()
+    planner = Kstar()
 
     def setup_method(self) -> None:
         self.flow = Flow(name="NL2Flow Test")

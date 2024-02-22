@@ -1,12 +1,12 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.planners import ForbidIterative
+from nl2flow.plan.planners import Kstar
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 
 import os
 
 PLANNER_URL = os.getenv("PLANNER_URL")
-PLANNER = ForbidIterative()
+PLANNER = Kstar()
 
 
 def test_basic() -> None:
