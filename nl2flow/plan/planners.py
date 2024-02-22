@@ -9,7 +9,6 @@ from nl2flow.compile.options import (
     ConfirmOptions,
 )
 from nl2flow.compile.schemas import PDDL
-from json import JSONDecodeError
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, Dict
@@ -49,7 +48,7 @@ class Planner(ABC):
         return pretty
 
 
-class ForbidIterative(Planner):
+class Kstar(Planner):
     def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
         with (
             tempfile.NamedTemporaryFile() as domain_temp,
@@ -61,19 +60,14 @@ class ForbidIterative(Planner):
             domain_file.write_text(pddl.domain)
             problem_file.write_text(pddl.problem)
 
-            try:
-                result = planners.plan_unordered_topq(
-                    domain_file=domain_file,
-                    problem_file=problem_file,
-                    quality_bound=QUALITY_BOUND,
-                    number_of_plans_bound=NUM_PLANS,
-                )
+            result = planners.plan_unordered_topq(
+                domain_file=domain_file,
+                problem_file=problem_file,
+                quality_bound=QUALITY_BOUND,
+                number_of_plans_bound=NUM_PLANS,
+            )
 
-                raw_planner_result = RawPlannerResult.model_validate(result)
-
-            except JSONDecodeError:
-                raw_planner_result = RawPlannerResult(plans=[])
-
+            raw_planner_result = RawPlannerResult.model_validate(result)
             return self.parse(raw_planner_result.plans, **kwargs)
 
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:

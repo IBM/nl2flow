@@ -13,7 +13,7 @@ This package allows developers to easily integrate automated planning applicatio
 
 #### Clone the repository
 
-```bash
+```commandline
 user:~$ git clone git@github.com:IBM/nl2flow.git
 user:~$ cd nl2flow
 ```
@@ -23,16 +23,18 @@ user:~$ cd nl2flow
 We also strongly recommend using a virtual environment, such
 as [anaconda](https://www.anaconda.com/), for development.
 
-```bash
+```commandline
 user:~$ conda create --name nl2flow
 user:~$ conda activate nl2flow
 ```
 
-#### Install Lemming Dependencies
+#### Install Dependencies
 
-```bash
+```commandline
 (nl2flow) user:~$ pip install -e .
 ```
+
+If you want to contribute code, check [here](docs/CONTRIBUTING.md)
 
 ## Usage
 

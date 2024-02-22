@@ -181,3 +181,5 @@ cython_debug/
 
 # Temporary planne files
 found_plans/
+**domain.pddl
+**problem.pddl
