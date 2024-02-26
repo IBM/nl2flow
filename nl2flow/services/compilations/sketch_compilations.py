@@ -12,7 +12,9 @@ def is_this_an_agent(item: str, catalog: Catalog) -> bool:
 
 
 def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
+
     for component in sketch.components:
+
         if isinstance(component, Goal):
             if is_this_an_agent(component.item, catalog):
                 flow.add(GoalItems(goals=GoalItem(goal_name=component.item, goal_type=GoalType.OPERATOR)))
