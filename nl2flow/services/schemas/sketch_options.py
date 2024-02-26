@@ -1,5 +1,5 @@
-import enum
+from enum import Enum, auto
 
 
-class SketchOptions(enum.Enum):
-    RELAXED = "relaxed"
+class SketchOptions(Enum):
+    INORDER = auto()

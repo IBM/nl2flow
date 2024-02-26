@@ -1,11 +1,6 @@
-# from nl2flow.services.schemas.sketch_options import SketchOptions
+from __future__ import annotations
 from typing import List, Optional, Union
 from pydantic import BaseModel
-
-
-class Object(BaseModel):
-    type: Optional[str]
-    name: str
 
 
 class Parameter(BaseModel):
@@ -14,31 +9,40 @@ class Parameter(BaseModel):
 
 
 class Goal(BaseModel):
-    goal: str
+    item: str
     parameters: List[Parameter] = []
 
 
+class Disjunction(BaseModel):
+    OR: List[Goal]
+
+
 class Ordering(BaseModel):
-    ordering: str
+    order: str
+
+
+class Condition(BaseModel):
+    condition: str
+    if_outcomes: List[Union[Goal, Condition, Disjunction, Ordering]] = []
+    else_outcomes: List[Union[Goal, Condition, Disjunction, Ordering]] = []
 
 
 class Mapping(BaseModel):
     source: str
     target: str
-    preference: float = 1.0
+    goodness: float = 1.0
 
 
 class Slot(BaseModel):
     name: str
-    preference: float = 1.0
+    goodness: float = 1.0
 
 
 class Sketch(BaseModel):
     sketch_name: str
     utterances: List[str] = []
-    options: List[str] = []
-    objects: List[Object] = []
-    components: List[Union[Goal, Ordering]] = []
+    options: Optional[List[str]] = []
+    components: List[Union[Goal, Condition, Disjunction, Ordering]] = []
     mapping: List[Mapping] = []
     slots: List[Slot] = []
 
@@ -50,7 +54,7 @@ class Constraint(BaseModel):
 
 class Signature(BaseModel):
     name: str
-    type: Optional[str]
+    type: Optional[str] = None
 
 
 class Agent(BaseModel):

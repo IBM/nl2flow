@@ -1,0 +1,7 @@
+---
+sketch_name: Conference Trip
+utterances:
+  - I want to book a trip to a conference
+components:
+  - item: Trip Approval
+  - item: Visa Application

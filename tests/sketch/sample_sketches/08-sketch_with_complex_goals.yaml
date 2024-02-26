@@ -1,0 +1,69 @@
+---
+sketch_name: Conference Trip
+utterances:
+  - I want to book a trip to a conference
+components:
+  - item: conference registration
+  - item: ticket to conference
+  - item: return ticket
+  - item: hotel booking
+  - item: Trip Approval
+  - item: visa
+  - item: Taxi
+    parameters:
+      - name: address
+        value: home address
+      - name: destination
+        value: home airport
+  - item: Taxi
+    parameters:
+      - name: address
+        value: destination airport
+      - name: destination
+        value: conference hotel
+  - item: Taxi
+    parameters:
+      - name: address
+        value: conference hotel
+      - name: destination
+        value: destination airport
+  - item: Taxi
+    parameters:
+      - name: address
+        value: home airport
+      - name: destination
+        value: home address
+  - condition: approval.status == FAILED
+    if_outcomes:
+      - item: Email Agent
+  - condition: visa.status == SUCCESS
+    if_outcomes:
+      - item: ticket to conference
+      - item: return ticket
+      - item: hotel booking
+    else_outcomes:
+      - item: Email Agent
+  - order: Trip Approval > Visa Application
+  - order: conference registration > Trip Approval
+  - OR:
+    - item: approval.status == FAILED
+    - item: flight to bahamas
+
+## The following is likely not derived from user
+## instruction. I have put it as part of the sketch
+## for illustrative purposes.
+
+slots:
+  - name: Employee ID
+    goodness: 0.2
+  - name: Employer Letter
+    goodness: 0.0
+  - name: W3 ID
+
+mappings:
+  - source: ticket to conference
+    target: flight_ticket
+  - source: return ticket
+    target: flight_ticket
+  - source: flight to bahamas
+    target: flight_ticket

@@ -1,9 +1,0 @@
----
-sketch_name: Business Trip
-utterances:
-  - I want to book a business trip
-options:
-  - relaxed
-components:
-  - goal: Trip Approval
-  - goal: visa

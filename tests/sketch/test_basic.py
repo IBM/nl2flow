@@ -1,24 +1,38 @@
 from tests.testing import BaseTestAgents
+from pathlib import Path
 
 # from nl2flow.plan.schemas import PlannerResponse
 # from nl2flow.services.sketch import BasicSketchCompilation
-# from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
+from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 
-# import yaml
-# import pytest
+import yaml  # type: ignore
+import os
 
-# with open("data/01-simple_sketch.yaml", "r") as sketch_file:
-#     sketch = yaml.safe_load(sketch_file)
-#
-# with open("data/catalog.yaml", "r") as catalog_file:
-#     catalog = yaml.safe_load(catalog_file)
+FILEPATH = Path(__file__).parent.resolve()
 
 
 class TestSketchBasic(BaseTestAgents):
     def setup_method(self) -> None:
         pass
 
-    # @pytest.mark.skip(reason="Coming soon.")
+    def test_parse_all_catalogs(self) -> None:
+        path_to_catalog_files = Path.joinpath(FILEPATH, "sample_catalogs").resolve()
+
+        for filename in os.listdir(path_to_catalog_files):
+            path_to_new_catalog_file = Path.joinpath(path_to_catalog_files, filename).resolve()
+            with open(path_to_new_catalog_file, "r") as new_catalog_file:
+                catalog = yaml.safe_load(new_catalog_file)
+                _ = Catalog(**catalog)
+
+    def test_parse_all_sketches(self) -> None:
+        path_to_sketch_files = Path.joinpath(FILEPATH, "sample_sketches").resolve()
+
+        for filename in os.listdir(path_to_sketch_files):
+            path_to_new_sketch_file = Path.joinpath(path_to_sketch_files, filename).resolve()
+            with open(path_to_new_sketch_file, "r") as new_sketch_file:
+                sketch = yaml.safe_load(new_sketch_file)
+                _ = Sketch(**sketch)
+
     # def test_basic(self) -> None:
     #
     #     sketch_object = Sketch(**sketch)
