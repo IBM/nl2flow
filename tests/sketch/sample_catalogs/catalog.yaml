@@ -1,37 +1,37 @@
 ---
 catalog_name: Book a Trip
 agents:
-  - id: Workday
-    inputs:
-      - name: w3
-        type: Email
-    outputs:
-      - name: name
-      - name: address
-        type: Location
-      - name: Employer Letter
-        type: File
-
-
-  - id: W3 Agent
-    inputs:
-      - name: w3
-        type: Email
-    outputs:
-      - name: name
-      - name: address
-        type: Location
-      - name: Employee ID
-      - name: Passport
-
-
-  - id: Author Workbench
-    inputs:
-      - name: w3
-        type: Email
-      - name: conference name
-    outputs:
-      - name: list of papers
+#  - id: Workday
+#    inputs:
+#      - name: w3
+#        type: Email
+#    outputs:
+#      - name: name
+#      - name: address
+#        type: Location
+#      - name: Employer Letter
+#        type: File
+#
+#
+#  - id: W3 Agent
+#    inputs:
+#      - name: w3
+#        type: Email
+#    outputs:
+#      - name: name
+#      - name: address
+#        type: Location
+#      - name: Employee ID
+#      - name: Passport
+#
+#
+#  - id: Author Workbench
+#    inputs:
+#      - name: w3
+#        type: Email
+#      - name: conference name
+#    outputs:
+#      - name: list of papers
 
 
   - id: Trip Approval
@@ -62,101 +62,101 @@ agents:
       - name: visa
 
 
-  - id: Kayak
-    inputs:
-      - constraint: is not business trip
-        evaluate: from(utterance)
-      - name: date
-        type: Datetime
-      - name: home
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: flight_ticket
-      - name: hotel_booking
+#  - id: Kayak
+#    inputs:
+#      - constraint: is not business trip
+#        evaluate: from(utterance)
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: flight_ticket
+#      - name: hotel_booking
 
 
-  - id: Concur
-    inputs:
-      - name: date
-        type: Datetime
-      - name: home
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: flight_ticket
-      - name: hotel_booking
-      - constraint: hotel policy
-        evaluate: hotel_booking.total_expense < 100
-      - constraint: flight policy
-        evaluate: flight_ticket.total_expense < 100
+#  - id: Concur
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: flight_ticket
+#      - name: hotel_booking
+#      - constraint: hotel policy
+#        evaluate: hotel_booking.total_expense < 100
+#      - constraint: flight policy
+#        evaluate: flight_ticket.total_expense < 100
 
 
-  - id: Hotel.com
-    inputs:
-      - name: date
-        type: Datetime
-      - name: home
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: hotel_booking
+#  - id: Hotel.com
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: home
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: hotel_booking
+#
+#
+#  - id: Uber
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
+#
+#
+#  - id: Lyft
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
 
 
-  - id: Uber
-    inputs:
-      - name: date
-        type: Datetime
-      - name: address
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: booking
-
-
-  - id: Lyft
-    inputs:
-      - name: date
-        type: Datetime
-      - name: address
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: booking
-
-
-  - id: Taxi
-    inputs:
-      - name: date
-        type: Datetime
-      - name: address
-        type: Location
-      - name: destination
-        type: Location
-    outputs:
-      - name: booking
-
-
-  - id: Email Agent
-    inputs:
-      - name: from
-        type: Email
-      - name: to
-        type: Email
-      - name: title
-      - name: body
-      - name: attachment
-        type: File
-
-
-  - id: Registration Bot
-    inputs:
-      - name: conference name
-      - name: list of papers
-      - name: username
-        type: Email
+#  - id: Taxi
+#    inputs:
+#      - name: date
+#        type: Datetime
+#      - name: address
+#        type: Location
+#      - name: destination
+#        type: Location
+#    outputs:
+#      - name: booking
+#
+#
+#  - id: Email Agent
+#    inputs:
+#      - name: from
+#        type: Email
+#      - name: to
+#        type: Email
+#      - name: title
+#      - name: body
+#      - name: attachment
+#        type: File
+#
+#
+#  - id: Registration Bot
+#    inputs:
+#      - name: conference name
+#      - name: list of papers
+#      - name: username
+#        type: Email

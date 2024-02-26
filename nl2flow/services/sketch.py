@@ -1,5 +1,7 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import PDDL, Transform
+from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.planners import Kstar
 
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 from nl2flow.services.schemas.sketch_options import SketchOptions
@@ -14,7 +16,6 @@ class SketchCompilation(ABC):
     def __init__(self, name: str) -> None:
         self.sketch = Sketch(sketch_name=name)
         self.flow = Flow(name=f"Flow for sketch: {name}")
-
         self._options: Set[SketchOptions] = set()
 
     @property
@@ -23,15 +24,16 @@ class SketchCompilation(ABC):
 
     @options.setter
     def options(self, options: Set[SketchOptions]) -> None:
-        assert all(
-            [isinstance(option, SketchOptions) for option in options]
-        ), "Tried to set unknown sketch option."
-
         self._options = options
 
     @abstractmethod
     def compile(self, sketch: Sketch, catalog: Catalog) -> Tuple[PDDL, List[Transform]]:
         pass
+
+    def plan_it(self, pddl: PDDL, transforms: List[Transform]) -> PlannerResponse:
+        planner = Kstar()
+        parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self.flow, transforms=transforms)
+        return parsed_plans
 
 
 class BasicSketchCompilation(SketchCompilation):

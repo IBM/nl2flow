@@ -49,7 +49,7 @@ class Planner(ABC):
 
 
 class Kstar(Planner):
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         with (
             tempfile.NamedTemporaryFile() as domain_temp,
             tempfile.NamedTemporaryFile() as problem_temp,
