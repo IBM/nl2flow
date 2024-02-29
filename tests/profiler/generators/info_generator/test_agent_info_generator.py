@@ -8,7 +8,7 @@ import random
 
 
 class TestAgentInfoGenerator(unittest.TestCase):
-    def test_generate_agent_infos(self):
+    def test_generate_agent_infos(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,
@@ -23,7 +23,8 @@ class TestAgentInfoGenerator(unittest.TestCase):
         samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
         self.assertTrue(True)
 
-    def test_generate_agent_infos_name_generator_haikunator(self):
+    @unittest.skip("hakunator package has an issue")
+    def test_generate_agent_infos_name_generator_haikunator(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,
@@ -38,7 +39,7 @@ class TestAgentInfoGenerator(unittest.TestCase):
 
         samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
 
-    def test_generate_agent_infos_name_generator_dataset(self):
+    def test_generate_agent_infos_name_generator_dataset(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,

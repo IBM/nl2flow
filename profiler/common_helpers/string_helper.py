@@ -6,5 +6,5 @@ def trim_pddl_str(pddl_text: str, keyword: str) -> str:
             idx_pddl_start = idx
             break
     if idx_pddl_start == -1:
-        return
+        return ""
     return "\n".join(lines[idx_pddl_start:])

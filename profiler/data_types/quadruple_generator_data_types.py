@@ -1,7 +1,6 @@
 from __future__ import annotations
-from ast import Dict
 from copy import deepcopy
-from typing import Optional
+from typing import Dict, Optional
 from pydantic import BaseModel
 from profiler.common_helpers.hash_helper import get_hash
 
@@ -20,7 +19,7 @@ class Quadruple(BaseModel):
     plan: str
 
     @staticmethod
-    def get_quadruple_from_dict(data: Dict) -> Optional[Quadruple]:
+    def get_quadruple_from_dict(data: Dict[str, str]) -> Optional[Quadruple]:
         if all(field in data for field in quadruple_fields):
             return Quadruple(
                 code=data["code"],

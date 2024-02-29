@@ -21,7 +21,7 @@ def get_sample_description(
     available_agents: List[AgentInfo],
     goal_agent_ids: Set[str],
     mappings: List[Tuple[str, str, float]],
-    available_data: List[str],
+    available_data: List[Tuple[str, Optional[str]]],
     slot_option: Optional[SlotOptions] = None,
 ) -> str:
     descriptions: list[str] = list()

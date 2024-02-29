@@ -32,21 +32,23 @@ def get_uuid() -> str:
 
 
 def get_name(signature_item: SignatureItem) -> str:
-    return signature_item[SEQUENCE_ALIAS][:] if SEQUENCE_ALIAS in signature_item else signature_item[NAME]
+    return (  # type: ignore
+        signature_item[SEQUENCE_ALIAS][:] if SEQUENCE_ALIAS in signature_item else signature_item[NAME]
+    )
 
 
 def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
     operators: List[Operator] = list()
     for agent_info in available_agents:
-        operator = Operator(agent_info[AGENT_ID])
+        operator = Operator(agent_info[AGENT_ID])  # type: ignore
         if ACTUATOR_SIGNATURE in agent_info:
             for signature_type in SIGNATURE_TYPES:
                 if (
-                    signature_type in agent_info[ACTUATOR_SIGNATURE]
-                    and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
+                    signature_type in agent_info[ACTUATOR_SIGNATURE]  # type: ignore
+                    and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None  # type: ignore
                 ):
                     signature_names: List[Parameter] = list()
-                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:
+                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:  # type: ignore
                         if signature_type == OUT_SIGNATURE:
                             signature_names.append(
                                 Parameter(
@@ -83,15 +85,15 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
         if ACTUATOR_SIGNATURE in agent_info:
             for signature_type in SIGNATURE_TYPES:
                 if (
-                    signature_type in agent_info[ACTUATOR_SIGNATURE]
-                    and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
+                    signature_type in agent_info[ACTUATOR_SIGNATURE]  # type: ignore
+                    and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None  # type: ignore
                 ):
-                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:
+                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:  # type: ignore
                         name = get_name(signature_item)
                         if SLOT_FILLABLE in signature_item and signature_item[SLOT_FILLABLE]:
                             if name not in slot_names:
                                 slot_names.add(name)
-                                slot_properties.append(SlotProperty(slot_name=name))
+                                slot_properties.append(SlotProperty(slot_name=name, slot_desirability=1.0))
                         else:
                             if name not in none_slot_fillable_names:
                                 none_slot_fillable_names.add(name)

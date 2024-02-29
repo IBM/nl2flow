@@ -7,11 +7,11 @@ from profiler.generators.dataset_generator.dataset_generator import (
 import random
 
 
-PLANNER = Kstar
+PLANNER = Kstar()
 
 
 class TestDatasetGenerator(unittest.TestCase):
-    def test_generate_dataset_with_info_generator_small(self):
+    def test_generate_dataset_with_info_generator_small(self) -> None:
         num_samples = 1
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=2,
@@ -27,7 +27,9 @@ class TestDatasetGenerator(unittest.TestCase):
 
         pddl_generator_outputs = generate_dataset_with_info_generator(agent_info_generator_input, PLANNER, random)
 
-        self.assertEqual(num_samples, len(pddl_generator_outputs))
+        self.assertIsNotNone(pddl_generator_outputs)
+        if pddl_generator_outputs is not None:
+            self.assertEqual(num_samples, len(pddl_generator_outputs))
         # with open("description.txt", "w") as f:
         #     f.write(output.description)
         # with open("domain.pddl", "w") as f:

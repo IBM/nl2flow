@@ -7,7 +7,7 @@ import random
 
 
 class TestDescriptionGenerator(unittest.TestCase):
-    def test_get_sample_description(self):
+    def test_get_sample_description(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,
@@ -22,7 +22,7 @@ class TestDescriptionGenerator(unittest.TestCase):
         samples, _ = generate_agent_infos(agent_info_generator_input, random)
         self.assertIsNotNone(samples[0].describe())
 
-    def test_get_sample_description_small(self):
+    def test_get_sample_description_small(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=3,
             num_var=6,
