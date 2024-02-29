@@ -23,9 +23,7 @@ class SketchCompilation(ABC):
 
     @options.setter
     def options(self, options: Set[SketchOptions]) -> None:
-        assert all(
-            [isinstance(option, SketchOptions) for option in options]
-        ), "Tried to set unknown sketch option."
+        assert all([isinstance(option, SketchOptions) for option in options]), "Tried to set unknown sketch option."
 
         self._options = options
 

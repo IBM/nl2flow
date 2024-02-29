@@ -1,4 +1,5 @@
-from typing import List, Optional, TypedDict
+from typing import List, Optional
+from typing_extensions import TypedDict
 
 
 class AgentInfoSignatureItem(TypedDict, total=False):

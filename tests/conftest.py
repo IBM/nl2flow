@@ -5,9 +5,7 @@ import inspect
 @pytest.mark.trylast
 def pytest_configure(config):
     terminal_reporter = config.pluginmanager.getplugin("terminalreporter")
-    config.pluginmanager.register(
-        TestDescriptionPlugin(terminal_reporter), "testdescription"
-    )
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), "testdescription")
 
 
 class TestDescriptionPlugin:

@@ -86,9 +86,7 @@ class TestHistoryReplan(BaseTestAgents):
 
         self.flow.add(
             [
-                MappingItem(
-                    source_name="item14311", target_name="from", probability=0.0
-                ),
+                MappingItem(source_name="item14311", target_name="from", probability=0.0),
                 Step(
                     name="Email Agent",
                     parameters=forbidden_parameters,
@@ -116,9 +114,7 @@ class TestHistoryReplan(BaseTestAgents):
 
         self.flow.add(
             [
-                MappingItem(
-                    source_name="item14311", target_name="from", probability=0.0
-                ),
+                MappingItem(source_name="item14311", target_name="from", probability=0.0),
                 Step(
                     name="Email Agent",
                     parameters=forbidden_parameters,

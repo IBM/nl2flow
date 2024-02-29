@@ -31,9 +31,7 @@ def generate_agent_infos(
         agent_names, variable_names = get_agent_variable_names(
             input.name_generator, input.num_agents, input.num_var, random
         )
-        agent_infos: List[AgentInfo] = get_agents(
-            agent_names, input.num_input_parameters
-        )
+        agent_infos: List[AgentInfo] = get_agents(agent_names, input.num_input_parameters)
         goals = get_goals(input.num_goal_agents, agent_infos, random)
         variables: List[VariableInfo] = get_variables(
             variable_names,

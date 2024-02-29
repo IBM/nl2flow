@@ -16,13 +16,7 @@ from nl2flow.compile.schemas import (
 
 
 def number_of_optimal_plans(plans: PlannerResponse) -> int:
-    return len(
-        [
-            plan
-            for plan in plans.list_of_plans
-            if plan.cost == plans.list_of_plans[0].cost
-        ]
-    )
+    return len([plan for plan in plans.list_of_plans if plan.cost == plans.list_of_plans[0].cost])
 
 
 def set_up_agents(test_class: BaseTestAgents) -> None:
@@ -31,20 +25,10 @@ def set_up_agents(test_class: BaseTestAgents) -> None:
         agent = Operator(f"Agent {item}")
         item = item.lower()
 
-        agent.add_input(
-            SignatureItem(
-                parameters=[
-                    Parameter(item_id=f"input-{item}", item_type=f"input-type-{item}")
-                ]
-            )
-        )
+        agent.add_input(SignatureItem(parameters=[Parameter(item_id=f"input-{item}", item_type=f"input-type-{item}")]))
 
         agent.add_output(
-            SignatureItem(
-                parameters=[
-                    Parameter(item_id=f"output-{item}", item_type=f"output-type-{item}")
-                ]
-            )
+            SignatureItem(parameters=[Parameter(item_id=f"output-{item}", item_type=f"output-type-{item}")])
         )
 
         test_class.flow.add(
@@ -87,12 +71,8 @@ class TestAndOrGoals(BaseTestAgents):
 
         self.flow.add(
             [
-                GoalItems(
-                    goals=[GoalItem(goal_name="Agent X"), GoalItem(goal_name="Agent Y")]
-                ),
-                GoalItems(
-                    goals=[GoalItem(goal_name="Agent A"), GoalItem(goal_name="Agent B")]
-                ),
+                GoalItems(goals=[GoalItem(goal_name="Agent X"), GoalItem(goal_name="Agent Y")]),
+                GoalItems(goals=[GoalItem(goal_name="Agent A"), GoalItem(goal_name="Agent B")]),
             ]
         )
 
@@ -106,25 +86,17 @@ class TestAndOrGoals(BaseTestAgents):
 
         for poi in plans.list_of_plans[:num_plans]:
             operator_names = {operator.name for operator in poi.plan}
-            assert (
-                len(operator_names.intersection({"Agent X", "Agent Y"})) == 1
-            ), "One from X and Y."
-            assert (
-                len(operator_names.intersection({"Agent A", "Agent B"})) == 1
-            ), "One from A and B."
+            assert len(operator_names.intersection({"Agent X", "Agent Y"})) == 1, "One from X and Y."
+            assert len(operator_names.intersection({"Agent A", "Agent B"})) == 1, "One from A and B."
 
     @staticmethod
     def extra_preference_check(plans: PlannerResponse) -> None:
         expected_number_of_optimal_plans = 1
-        assert (
-            number_of_optimal_plans(plans) == expected_number_of_optimal_plans
-        ), "One cheaper combinations left."
+        assert number_of_optimal_plans(plans) == expected_number_of_optimal_plans, "One cheaper combinations left."
 
         for poi in plans.list_of_plans[:expected_number_of_optimal_plans]:
             operator_names = {operator.name for operator in poi.plan}
-            assert (
-                len(operator_names.intersection({"Agent B", "Agent Y"})) == 0
-            ), "None of B and Y."
+            assert len(operator_names.intersection({"Agent B", "Agent Y"})) == 0, "None of B and Y."
 
     def test_and_or_with_type_known(self) -> None:
         set_up_agents(self)
@@ -133,22 +105,14 @@ class TestAndOrGoals(BaseTestAgents):
             [
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="output-type-x", goal_type=GoalType.OBJECT_KNOWN
-                        ),
-                        GoalItem(
-                            goal_name="output-type-y", goal_type=GoalType.OBJECT_KNOWN
-                        ),
+                        GoalItem(goal_name="output-type-x", goal_type=GoalType.OBJECT_KNOWN),
+                        GoalItem(goal_name="output-type-y", goal_type=GoalType.OBJECT_KNOWN),
                     ]
                 ),
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="output-type-a", goal_type=GoalType.OBJECT_KNOWN
-                        ),
-                        GoalItem(
-                            goal_name="output-type-b", goal_type=GoalType.OBJECT_KNOWN
-                        ),
+                        GoalItem(goal_name="output-type-a", goal_type=GoalType.OBJECT_KNOWN),
+                        GoalItem(goal_name="output-type-b", goal_type=GoalType.OBJECT_KNOWN),
                     ]
                 ),
             ]
@@ -196,22 +160,14 @@ class TestAndOrGoals(BaseTestAgents):
             [
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="input-type-x", goal_type=GoalType.OBJECT_USED
-                        ),
-                        GoalItem(
-                            goal_name="input-type-y", goal_type=GoalType.OBJECT_USED
-                        ),
+                        GoalItem(goal_name="input-type-x", goal_type=GoalType.OBJECT_USED),
+                        GoalItem(goal_name="input-type-y", goal_type=GoalType.OBJECT_USED),
                     ]
                 ),
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="input-type-a", goal_type=GoalType.OBJECT_USED
-                        ),
-                        GoalItem(
-                            goal_name="input-type-b", goal_type=GoalType.OBJECT_USED
-                        ),
+                        GoalItem(goal_name="input-type-a", goal_type=GoalType.OBJECT_USED),
+                        GoalItem(goal_name="input-type-b", goal_type=GoalType.OBJECT_USED),
                     ]
                 ),
             ]

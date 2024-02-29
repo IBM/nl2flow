@@ -20,9 +20,7 @@ def get_plan_str(plan: Plan) -> str:
     return "\n".join(action_strs)
 
 
-def execute_Val(
-    pddl_domain: str, pddl_problem: str, pddl_plan: str
-) -> Tuple[int, str, str]:
+def execute_Val(pddl_domain: str, pddl_problem: str, pddl_plan: str) -> Tuple[int, str, str]:
     """
     returns if a given plan is valid
     VAL is used for the validation
@@ -48,9 +46,7 @@ def execute_Val(
     return result.returncode, result.stderr, result.stdout
 
 
-def validate_pddl(
-    pddl_domain: str, pddl_problem: str, pddl_plan: str
-) -> PddlPlanValidatorOutput:
+def validate_pddl(pddl_domain: str, pddl_problem: str, pddl_plan: str) -> PddlPlanValidatorOutput:
     """
     returns if PDDL domain, problem, and plans are executable and valid
     """
@@ -67,6 +63,4 @@ def validate_pddl(
                 if obj is not None:
                     total_cost = int(obj.group(1), 10)
 
-    return PddlPlanValidatorOutput(
-        is_executable_plan=is_executable, is_valid_plan=is_vaild, total_cost=total_cost
-    )
+    return PddlPlanValidatorOutput(is_executable_plan=is_executable, is_valid_plan=is_vaild, total_cost=total_cost)

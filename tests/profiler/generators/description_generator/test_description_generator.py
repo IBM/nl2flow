@@ -19,9 +19,7 @@ class TestDescriptionGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
         self.assertIsNotNone(samples[0].describe())
 
     def test_get_sample_description_small(self):
@@ -36,11 +34,6 @@ class TestDescriptionGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
 
         self.assertIsNotNone(samples[0].describe())
-        description = samples[0].describe()
-        # with open("description.txt", "w") as f:
-        #     f.write(description)

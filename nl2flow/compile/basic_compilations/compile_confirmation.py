@@ -20,20 +20,10 @@ def compile_confirmation(compilation: Any, **kwargs: Any) -> None:
         compilation.problem.action(
             BasicOperations.CONFIRM.value,
             parameters=[x],
-            precondition=compilation.known(
-                x, compilation.constant_map[MemoryState.UNCERTAIN.value]
-            ),
+            precondition=compilation.known(x, compilation.constant_map[MemoryState.UNCERTAIN.value]),
             effects=[
-                fs.AddEffect(
-                    compilation.known(
-                        x, compilation.constant_map[MemoryState.KNOWN.value]
-                    )
-                ),
-                fs.DelEffect(
-                    compilation.known(
-                        x, compilation.constant_map[MemoryState.UNCERTAIN.value]
-                    )
-                ),
+                fs.AddEffect(compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value])),
+                fs.DelEffect(compilation.known(x, compilation.constant_map[MemoryState.UNCERTAIN.value])),
             ],
             cost=iofs.AdditiveActionCost(
                 compilation.problem.language.constant(
