@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import List, Tuple
+from typing import Tuple
 from nl2flow.compile.schemas import PDDL
 from nl2flow.plan.planners import Planner
 from nl2flow.plan.schemas import PlannerResponse
@@ -39,9 +39,7 @@ def read_remove_pddl_plan(file_path: str) -> Tuple[str, str, str]:
     plan_file_path = "/".join(test_directory_list + [plan_file_name])
 
     domain_pddl_str = trim_pddl_str(get_str_from_file(domain_file_path), pddl_start_key)
-    problem_pddl_str = trim_pddl_str(
-        get_str_from_file(problem_file_path), pddl_start_key
-    )
+    problem_pddl_str = trim_pddl_str(get_str_from_file(problem_file_path), pddl_start_key)
 
     application_command = ["rm"]
     files = [domain_file_path, problem_file_path, plan_file_path]

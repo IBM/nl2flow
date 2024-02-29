@@ -20,9 +20,7 @@ class TestAgentInfoGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
         self.assertTrue(True)
 
     def test_generate_agent_infos_name_generator_haikunator(self):
@@ -38,9 +36,7 @@ class TestAgentInfoGenerator(unittest.TestCase):
             name_generator=NameGenerator.HAIKUNATOR,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
 
     def test_generate_agent_infos_name_generator_dataset(self):
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
@@ -55,6 +51,4 @@ class TestAgentInfoGenerator(unittest.TestCase):
             name_generator=NameGenerator.DATASET,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)

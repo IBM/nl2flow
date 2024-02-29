@@ -15,51 +15,31 @@ class TestInfoGeneratorCouplingHelper(unittest.TestCase):
     def test_exist_variable_name_in_signature_not_exist(self):
         item: AgentInfoSignatureItem = {"name": "b"}
         agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
-        variable_info = VariableInfo(
-            variable_name="a", mappable=False, slot_fillable=False
-        )
+        variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
         agent_infos = [agent_info]
-        self.assertFalse(
-            exist_variable_name_in_signature(
-                agent_infos, variable_info, 0, "out_full_sig"
-            )
-        )
+        self.assertFalse(exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig"))
 
     def test_exist_variable_name_in_signature_exist(self):
         item: AgentInfoSignatureItem = {"name": "a"}
         agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
-        variable_info = VariableInfo(
-            variable_name="a", mappable=False, slot_fillable=False
-        )
+        variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
         agent_infos = [agent_info]
-        self.assertTrue(
-            exist_variable_name_in_signature(
-                agent_infos, variable_info, 0, "out_full_sig"
-            )
-        )
+        self.assertTrue(exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig"))
 
     def test_exist_variable_name_in_signature_exist_none(self):
         item: AgentInfoSignatureItem = {"name": "a"}
         agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
         variable_info = None
         agent_infos = [agent_info]
-        self.assertFalse(
-            exist_variable_name_in_signature(
-                agent_infos, variable_info, 0, "out_full_sig"
-            )
-        )
+        self.assertFalse(exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig"))
 
     @patch(
         "profiler.generators.info_generator.agent_info_generator_coupling_helper.exist_variable_name_in_signature",
         return_value=True,
     )
-    def test_get_out_item_position_to_couple_agents_fallback(
-        self, mock_exist_variable_name_in_signature
-    ):
+    def test_get_out_item_position_to_couple_agents_fallback(self, mock_exist_variable_name_in_signature):
         position_coupled = {}
-        variable_info = VariableInfo(
-            variable_name="a", mappable=False, slot_fillable=False
-        )
+        variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
         signature_type = "out_sig_full"
         (
             agent_index,
@@ -78,12 +58,8 @@ class TestInfoGeneratorCouplingHelper(unittest.TestCase):
         "profiler.generators.info_generator.agent_info_generator_coupling_helper.exist_variable_name_in_signature",
         return_value=True,
     )
-    def test_get_out_item_position_to_couple_agents_coupled_position(
-        self, mock_exist_variable_name_in_signature
-    ):
-        variable_info = VariableInfo(
-            variable_name="a", mappable=False, slot_fillable=False
-        )
+    def test_get_out_item_position_to_couple_agents_coupled_position(self, mock_exist_variable_name_in_signature):
+        variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
         signature_type = "out_sig_full"
         position_coupled = {(0, signature_type, 0)}
         (
@@ -106,9 +82,7 @@ class TestInfoGeneratorCouplingHelper(unittest.TestCase):
     def test_get_out_item_position_to_couple_agents_not_conflicting_signature(
         self, mock_exist_variable_name_in_signature
     ):
-        variable_info = VariableInfo(
-            variable_name="a", mappable=False, slot_fillable=False
-        )
+        variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
         signature_type = "out_sig_full"
         position_coupled = {}
         (

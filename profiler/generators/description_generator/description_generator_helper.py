@@ -32,11 +32,7 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
 
 
 def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
-    return (
-        ""
-        if type_str is None
-        else f"The type of Variable {variable_name} is {type_str}."
-    )
+    return "" if type_str is None else f"The type of Variable {variable_name} is {type_str}."
 
 
 def get_variable_name_from_sig_item(
@@ -52,9 +48,7 @@ def get_variable_type_from_sig_item(
         filter(
             lambda unfiltered_str: len(unfiltered_str) > 0,
             map(
-                lambda sig_item: get_variable_type_str(
-                    sig_item.get("name"), sig_item.get("data_type")
-                ),
+                lambda sig_item: get_variable_type_str(sig_item.get("name"), sig_item.get("data_type")),
                 sig_items,
             ),
         )
@@ -102,26 +96,17 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
     sig = agent_info.get("actuator_signature")
     # in sig
     in_sig = sig.get("in_sig_full")
-    agent_info_pre_cond_str = (
-        f"To execute Action {agent_id}, "
-        + get_signature_item_names(in_sig)
-        + " should be known."
-    )
+    agent_info_pre_cond_str = f"To execute Action {agent_id}, " + get_signature_item_names(in_sig) + " should be known."
 
     in_sig_items_description: List[str] = list()
     for in_sig_item in in_sig:
-        in_sig_items_description.append(
-            get_agent_info_signature_item_description(in_sig_item)
-        )
+        in_sig_items_description.append(get_agent_info_signature_item_description(in_sig_item))
 
     # out sig
     out_sig = sig.get("out_sig_full")
     be_out = " is " if len(out_sig) == 1 else " are "
     agent_info_effect_str = (
-        f"After executing Action {agent_id}, "
-        + get_signature_item_names(out_sig)
-        + be_out
-        + "known."
+        f"After executing Action {agent_id}, " + get_signature_item_names(out_sig) + be_out + "known."
     )
 
     return (
@@ -135,13 +120,7 @@ def get_agent_info_signature_item_description(sig_item: AgentInfoSignatureItem) 
     sig_name = sig_item.get("name")
     required_str = "required" if sig_item.get("required") else "not required"
     slot_fillable_str = "can" if sig_item.get("slot_fillable") else "cannot"
-    return (
-        f"Variable {sig_name} is "
-        + required_str
-        + " and "
-        + slot_fillable_str
-        + " be acquired by asking the user."
-    )
+    return f"Variable {sig_name} is " + required_str + " and " + slot_fillable_str + " be acquired by asking the user."
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
@@ -149,9 +128,7 @@ def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
 
 
 def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:
-    return " ".join(
-        list(map(lambda mapping: get_mapping_description(mapping), mappings))
-    )
+    return " ".join(list(map(lambda mapping: get_mapping_description(mapping), mappings)))
 
 
 def get_goal_description(goals: Set[str]) -> str:
@@ -160,11 +137,7 @@ def get_goal_description(goals: Set[str]) -> str:
     return f"The goal of the system is to execute {get_names(goals_list)}."
 
 
-def get_description_available_data(
-    available_items: List[Tuple[str, Optional[str]]]
-) -> str:
-    item_list = list(
-        map(lambda available_item: "Variable " + available_item[0], available_items)
-    )
+def get_description_available_data(available_items: List[Tuple[str, Optional[str]]]) -> str:
+    item_list = list(map(lambda available_item: "Variable " + available_item[0], available_items))
 
     return f"Values are available already for {get_names(item_list)}."

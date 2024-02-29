@@ -24,9 +24,7 @@ from profiler.generators.info_generator.generator_variables import variable_data
 
 
 def get_names_dataset(num: int, name_type: str, random: Any) -> List[str]:
-    num_names_dataset = (
-        len(agent_names) if name_type == "agent" else len(parameter_names)
-    )
+    num_names_dataset = len(agent_names) if name_type == "agent" else len(parameter_names)
     indices = [i for i in range(num_names_dataset)]
     names: Dict[str, int] = dict()
     name = ""
@@ -58,27 +56,17 @@ def get_names_from_haikunator(num_names: int) -> List[str]:
     return names
 
 
-def get_agent_variable_names_with_dataset(
-    num_agents: int, num_var: int, random: Any
-) -> Tuple[List[str], List[str]]:
-    return get_names_dataset(num_agents, "agent", random), get_names_dataset(
-        num_var, "parameter", random
-    )
+def get_agent_variable_names_with_dataset(num_agents: int, num_var: int, random: Any) -> Tuple[List[str], List[str]]:
+    return get_names_dataset(num_agents, "agent", random), get_names_dataset(num_var, "parameter", random)
 
 
-def get_agent_variable_names_with_haikunator(
-    num_agents: int, num_var: int
-) -> Tuple[List[str], List[str]]:
+def get_agent_variable_names_with_haikunator(num_agents: int, num_var: int) -> Tuple[List[str], List[str]]:
     names = list(get_names_from_haikunator(num_agents + num_var))
     return names[0:num_agents], names[num_agents:]
 
 
-def get_agent_variable_names_with_number(
-    num_agents: int, num_var: int
-) -> Tuple[List[str], List[str]]:
-    return [f"a__{str(i)}" for i in range(num_agents)], [
-        f"v__{str(i)}" for i in range(num_var)
-    ]
+def get_agent_variable_names_with_number(num_agents: int, num_var: int) -> Tuple[List[str], List[str]]:
+    return [f"a__{str(i)}" for i in range(num_agents)], [f"v__{str(i)}" for i in range(num_var)]
 
 
 def get_agent_variable_names(
@@ -114,9 +102,7 @@ def get_agents(agent_names: List[str], num_input_parameters: int) -> List[AgentI
     return agent_infos
 
 
-def get_variable_types(
-    num_variables: int, num_var_types: int, random: Any
-) -> List[Optional[str]]:
+def get_variable_types(num_variables: int, num_var_types: int, random: Any) -> List[Optional[str]]:
     """
     returns types for variables
     A None element indicates that no type should be assigned for a variable
@@ -149,12 +135,8 @@ def get_variables(
     num_variables = len(variable_names)
 
     # mappable
-    num_slot_fillable_variables = ceil(
-        num_variables * proportion_slot_fillable_variables
-    )
-    slot_fillable_variable_names = set(
-        random.sample(variable_names, num_slot_fillable_variables)
-    )
+    num_slot_fillable_variables = ceil(num_variables * proportion_slot_fillable_variables)
+    slot_fillable_variable_names = set(random.sample(variable_names, num_slot_fillable_variables))
 
     # mappable
     num_mappable_variables = ceil(num_variables * proportion_mappable_variables)
@@ -182,14 +164,10 @@ def get_variables(
 
 
 def get_goals(num_goals: int, agent_infos: List[AgentInfo], random: Any) -> Set[str]:
-    return random.sample(
-        list(map(lambda info: info["agent_id"][:], agent_infos)), num_goals
-    )
+    return random.sample(list(map(lambda info: info["agent_id"][:], agent_infos)), num_goals)
 
 
-def get_mappings(
-    variable_infos: List[VariableInfo], random: Any
-) -> List[Tuple[str, str, float]]:
+def get_mappings(variable_infos: List[VariableInfo], random: Any) -> List[Tuple[str, str, float]]:
     mappable_variable_names = list(
         map(
             lambda filtered_info: filtered_info.variable_name,
@@ -206,12 +184,8 @@ def get_mappings(
     mapping_score = 1.0
     for i in range(1, len(mappable_variable_names)):
         # mapping_score = random.uniform(0, 1)
-        mappings.append(
-            (previous_variable_name, mappable_variable_names[i], mapping_score)
-        )
-        mappings.append(
-            (mappable_variable_names[i], previous_variable_name, mapping_score)
-        )
+        mappings.append((previous_variable_name, mappable_variable_names[i], mapping_score))
+        mappings.append((mappable_variable_names[i], previous_variable_name, mapping_score))
         previous_variable_name = mappable_variable_names[i]
     return mappings
 
@@ -228,20 +202,14 @@ def get_new_signature_from_variable_info(
     return signature_item
 
 
-def get_uncoupled_agents(
-    agent_infos_input: List[AgentInfo], variable_infos: List[VariableInfo]
-) -> List[AgentInfo]:
+def get_uncoupled_agents(agent_infos_input: List[AgentInfo], variable_infos: List[VariableInfo]) -> List[AgentInfo]:
     # returns agent_infos with uncoupled agents
     agent_infos = deepcopy(agent_infos_input)
     for agent_info in agent_infos:
         parameter_counter = 0
         for signature_type in SIGNATURE_TYPES:
-            for item_idx, item in enumerate(
-                agent_info["actuator_signature"][signature_type]
-            ):
-                agent_info["actuator_signature"][signature_type][
-                    item_idx
-                ] = get_new_signature_from_variable_info(
+            for item_idx, item in enumerate(agent_info["actuator_signature"][signature_type]):
+                agent_info["actuator_signature"][signature_type][item_idx] = get_new_signature_from_variable_info(
                     item, variable_infos[parameter_counter]
                 )
                 parameter_counter += 1
@@ -265,9 +233,7 @@ def get_agent_infos_with_coupled_agents(
     # Tuple[agent_index, "in" or "out", item_index]
     position_item_coupled: Set[Tuple[int, str, int]] = set()
     previous_variable: Optional[VariableInfo] = (
-        deepcopy(variables_remaining_deque[0])
-        if len(variables_remaining_deque) > 0
-        else None
+        deepcopy(variables_remaining_deque[0]) if len(variables_remaining_deque) > 0 else None
     )
     chosen_agent_index = -1
     chosen_item_index = -1
@@ -277,9 +243,7 @@ def get_agent_infos_with_coupled_agents(
         for agent_i in range(loop_cnt):
             # keep using an unused variables until there is no unused variable
             variable_info: VariableInfo = (
-                deepcopy(variables_remaining_deque[0])
-                if len(variables_remaining_deque) > 0
-                else previous_variable
+                deepcopy(variables_remaining_deque[0]) if len(variables_remaining_deque) > 0 else previous_variable
             )
             previous_variable = deepcopy(variable_info)
 
@@ -300,9 +264,7 @@ def get_agent_infos_with_coupled_agents(
             if is_variable_used_for_coupling or previous_variable is None:
                 # use a variable already used for coupling agents
                 # use an initially assigned variable if there are only two agents
-                chosen_item = agent_infos[chosen_agent_index]["actuator_signature"][
-                    "out_sig_full"
-                ][chosen_item_index]
+                chosen_item = agent_infos[chosen_agent_index]["actuator_signature"]["out_sig_full"][chosen_item_index]
                 variable_info = VariableInfo(
                     variable_name=chosen_item["name"][:],
                     mappable=chosen_item["mappable"],
@@ -315,22 +277,16 @@ def get_agent_infos_with_coupled_agents(
             # couple agents
             # out
             source = agent_infos[chosen_agent_index]
-            source["actuator_signature"]["out_sig_full"][
-                chosen_item_index
-            ] = get_new_signature_from_variable_info(
+            source["actuator_signature"]["out_sig_full"][chosen_item_index] = get_new_signature_from_variable_info(
                 source["actuator_signature"]["out_sig_full"][chosen_item_index],
                 variable_info,
             )
             # add a position used for coupling agents
-            position_item_coupled.add(
-                (chosen_agent_index, "out_sig_full", chosen_item_index)
-            )
+            position_item_coupled.add((chosen_agent_index, "out_sig_full", chosen_item_index))
 
             # in
             destination = agent_infos[agent_i + 1]
-            destination["actuator_signature"]["in_sig_full"][
-                0
-            ] = get_new_signature_from_variable_info(
+            destination["actuator_signature"]["in_sig_full"][0] = get_new_signature_from_variable_info(
                 destination["actuator_signature"]["in_sig_full"][0], variable_info
             )
             # add a position used for coupling agents
@@ -359,9 +315,7 @@ def get_agent_info_with_remaining_variables(
             # The first agent should keep all initially assigned
             continue
         for signature_type in SIGNATURE_TYPES:
-            for item_i, item in enumerate(
-                agent_info["actuator_signature"][signature_type]
-            ):
+            for item_i, item in enumerate(agent_info["actuator_signature"][signature_type]):
                 if len(variables_remaining_deque) == 0:
                     # no more remaining variables
                     break
@@ -373,18 +327,14 @@ def get_agent_info_with_remaining_variables(
                     # skip to avoid breaking couplings among agents
                     continue
                 # assign a remaining variable to a signature
-                agent_info["actuator_signature"][signature_type][
-                    item_i
-                ] = get_new_signature_from_variable_info(
+                agent_info["actuator_signature"][signature_type][item_i] = get_new_signature_from_variable_info(
                     item, variables_remaining_deque.popleft()
                 )
 
     return agent_infos, variables_remaining_deque
 
 
-def get_shuffled_agent_infos(
-    agent_infos_input: List[AgentInfo], random: Any
-) -> List[AgentInfo]:
+def get_shuffled_agent_infos(agent_infos_input: List[AgentInfo], random: Any) -> List[AgentInfo]:
     agent_infos = deepcopy(agent_infos_input)
     random.shuffle(agent_infos)
     for agent_info in agent_infos:
@@ -406,13 +356,10 @@ def get_agents_with_variables(
     available_data: List[Tuple[str, Optional[str]]] = list()
     num_input_parameters = len(agent_infos[0]["actuator_signature"]["in_sig_full"])
 
-    slot_fillable_variable_infos = list(
-        filter(lambda var: var.slot_fillable, variable_infos)
-    )
-    none_slot_fillable_variable_infos = list(
-        filter(lambda var: not var.slot_fillable, variable_infos)
-    )
-    # assign slot_fillable variables to agents first to reduce the number of slot_fillable variables assigned to "available_data"
+    slot_fillable_variable_infos = list(filter(lambda var: var.slot_fillable, variable_infos))
+    none_slot_fillable_variable_infos = list(filter(lambda var: not var.slot_fillable, variable_infos))
+    # assign slot_fillable variables to agents first
+    # to reduce the number of slot_fillable variables assigned to "available_data"
     variable_infos = slot_fillable_variable_infos + none_slot_fillable_variable_infos
 
     # set non-coupled agents with the minimum number of variables
@@ -433,10 +380,7 @@ def get_agents_with_variables(
     )
 
     # check if any slot-fillable variables remains
-    if (
-        len(variables_remaining_deque) > 0
-        and variables_remaining_deque[0].slot_fillable
-    ):
+    if len(variables_remaining_deque) > 0 and variables_remaining_deque[0].slot_fillable:
         # slot-fillable variable should not be used for available_data
         return [], available_data
 

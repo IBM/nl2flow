@@ -1,7 +1,5 @@
-import os
 import unittest
-from nl2flow.plan.planners import Michael, Christian
-from nl2flow.plan.options import DEFAULT_PLANNER_URL
+from nl2flow.plan.planners import Kstar
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.generators.dataset_generator.dataset_generator import (
     generate_dataset_with_info_generator,
@@ -9,12 +7,7 @@ from profiler.generators.dataset_generator.dataset_generator import (
 import random
 
 
-PLANNER_URL = os.getenv("PLANNER_URL")
-PLANNER = (
-    Michael(url=PLANNER_URL)
-    if PLANNER_URL is not None
-    else Christian(url=DEFAULT_PLANNER_URL)
-)
+PLANNER = Kstar
 
 
 class TestDatasetGenerator(unittest.TestCase):
@@ -32,9 +25,7 @@ class TestDatasetGenerator(unittest.TestCase):
             num_var_types=3,
         )
 
-        pddl_generator_outputs = generate_dataset_with_info_generator(
-            agent_info_generator_input, PLANNER, random
-        )
+        pddl_generator_outputs = generate_dataset_with_info_generator(agent_info_generator_input, PLANNER, random)
 
         self.assertEqual(num_samples, len(pddl_generator_outputs))
         # with open("description.txt", "w") as f:

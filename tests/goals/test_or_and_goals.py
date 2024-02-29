@@ -21,12 +21,8 @@ class TestOrAndGoals(BaseTestAgents):
 
         self.flow.add(
             [
-                GoalItems(
-                    goals=[GoalItem(goal_name="Agent X"), GoalItem(goal_name="Agent Y")]
-                ),
-                GoalItems(
-                    goals=[GoalItem(goal_name="Agent A"), GoalItem(goal_name="Agent B")]
-                ),
+                GoalItems(goals=[GoalItem(goal_name="Agent X"), GoalItem(goal_name="Agent Y")]),
+                GoalItems(goals=[GoalItem(goal_name="Agent A"), GoalItem(goal_name="Agent B")]),
             ]
         )
 
@@ -40,24 +36,18 @@ class TestOrAndGoals(BaseTestAgents):
 
         for poi in plans.list_of_plans[:num_plans]:
             operator_names = {operator.name for operator in poi.plan}
-            assert operator_names.issuperset(
-                {"Agent X", "Agent Y"}
-            ) or operator_names.issuperset(
+            assert operator_names.issuperset({"Agent X", "Agent Y"}) or operator_names.issuperset(
                 {"Agent A", "Agent B"}
             ), "One of X and Y or A and B."
 
     @staticmethod
     def extra_preference_check(plans: PlannerResponse) -> None:
         expected_number_of_optimal_plans = 1
-        assert (
-            number_of_optimal_plans(plans) == expected_number_of_optimal_plans
-        ), "Only one plan left."
+        assert number_of_optimal_plans(plans) == expected_number_of_optimal_plans, "Only one plan left."
 
         for poi in plans.list_of_plans[:expected_number_of_optimal_plans]:
             operator_names = {operator.name for operator in poi.plan}
-            assert (
-                len(operator_names.intersection({"Agent A", "Agent B"})) == 0
-            ), "None of A and B."
+            assert len(operator_names.intersection({"Agent A", "Agent B"})) == 0, "None of A and B."
 
     def test_or_and_with_type_known(self) -> None:
         set_up_agents(self)
@@ -66,22 +56,14 @@ class TestOrAndGoals(BaseTestAgents):
             [
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="output-type-x", goal_type=GoalType.OBJECT_KNOWN
-                        ),
-                        GoalItem(
-                            goal_name="output-type-y", goal_type=GoalType.OBJECT_KNOWN
-                        ),
+                        GoalItem(goal_name="output-type-x", goal_type=GoalType.OBJECT_KNOWN),
+                        GoalItem(goal_name="output-type-y", goal_type=GoalType.OBJECT_KNOWN),
                     ]
                 ),
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="output-type-a", goal_type=GoalType.OBJECT_KNOWN
-                        ),
-                        GoalItem(
-                            goal_name="output-type-b", goal_type=GoalType.OBJECT_KNOWN
-                        ),
+                        GoalItem(goal_name="output-type-a", goal_type=GoalType.OBJECT_KNOWN),
+                        GoalItem(goal_name="output-type-b", goal_type=GoalType.OBJECT_KNOWN),
                     ]
                 ),
             ]
@@ -129,22 +111,14 @@ class TestOrAndGoals(BaseTestAgents):
             [
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="input-type-x", goal_type=GoalType.OBJECT_USED
-                        ),
-                        GoalItem(
-                            goal_name="input-type-y", goal_type=GoalType.OBJECT_USED
-                        ),
+                        GoalItem(goal_name="input-type-x", goal_type=GoalType.OBJECT_USED),
+                        GoalItem(goal_name="input-type-y", goal_type=GoalType.OBJECT_USED),
                     ]
                 ),
                 GoalItems(
                     goals=[
-                        GoalItem(
-                            goal_name="input-type-a", goal_type=GoalType.OBJECT_USED
-                        ),
-                        GoalItem(
-                            goal_name="input-type-b", goal_type=GoalType.OBJECT_USED
-                        ),
+                        GoalItem(goal_name="input-type-a", goal_type=GoalType.OBJECT_USED),
+                        GoalItem(goal_name="input-type-b", goal_type=GoalType.OBJECT_USED),
                     ]
                 ),
             ]

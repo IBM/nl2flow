@@ -14,9 +14,7 @@ from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 def generate_dataset_with_info_generator(
     agent_info_generator_input: AgentInfoGeneratorInput, planner: Planner, random: Any
 ) -> Optional[List[PddlGeneratorOutput]]:
-    samples, is_all_samples_collected = generate_agent_infos(
-        agent_info_generator_input, random
-    )
+    samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
     if not is_all_samples_collected:
         return None
     pddl_generator_outputs: List[PddlGeneratorOutput] = list()

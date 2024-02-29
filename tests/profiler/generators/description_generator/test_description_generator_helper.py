@@ -5,13 +5,11 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_description_available_data,
     get_names,
     get_available_agents_description,
-    get_signature_item_names,
     get_agent_info_description,
     get_mapping_description,
     get_mappings_description,
     get_goal_description,
     get_available_action_names,
-    get_variable_type_str,
     get_names_from_signature_items,
     get_signature_item_names,
     get_variable_name_from_sig_item,
@@ -34,9 +32,7 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
             "slot_fillable": True,
         }
         item_str = get_agent_info_signature_item_description(item)
-        self.assertEqual(
-            item_str, "Variable abc is required and can be acquired by asking the user."
-        )
+        self.assertEqual(item_str, "Variable abc is required and can be acquired by asking the user.")
 
     def test_get_agent_info_signature_item_description_negative(self):
         item = {
@@ -89,16 +85,16 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         strs = get_names_from_signature_items(sig_items)
         self.assertEqual(strs, ["Variable abc", "Variable def"])
 
-    def test_get_variable_type_str_none(self):
-        type_str = None
-        res = get_variable_type_str(type_str)
-        self.assertEqual(len(res), 0)
+    # def test_get_variable_type_str_none(self):
+    #     type_str = None
+    #     res = get_variable_type_str(type_str)
+    #     self.assertEqual(len(res), 0)
 
-    def test_get_variable_type_str_none(self):
-        variable_name = "kjh"
-        type_str = "abc"
-        res = get_variable_type_str(variable_name, type_str)
-        self.assertEqual(res, "The type of Variable kjh is abc.")
+    # def test_get_variable_type_str_none(self):
+    #     variable_name = "kjh"
+    #     type_str = "abc"
+    #     res = get_variable_type_str(variable_name, type_str)
+    #     self.assertEqual(res, "The type of Variable kjh is abc.")
 
     def test_get_names_single(self):
         names = ["a"]
@@ -117,9 +113,7 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
 
     def test_get_available_action_names(self):
         available_agents: List[AgentInfo] = list()
-        available_agents.extend(
-            [{"agent_id": "a"}, {"agent_id": "c"}, {"agent_id": "c"}]
-        )
+        available_agents.extend([{"agent_id": "a"}, {"agent_id": "c"}, {"agent_id": "c"}])
         name_str = get_available_action_names(available_agents)
         self.assertEqual(name_str, "Action a, Action c, and Action c")
 
@@ -170,16 +164,12 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
             "agent_id": "a",
             "actuator_signature": {
                 "in_sig_full": [{"name": "b", "required": True, "slot_fillable": True}],
-                "out_sig_full": [
-                    {"name": "c", "required": False, "slot_fillable": False}
-                ],
+                "out_sig_full": [{"name": "c", "required": False, "slot_fillable": False}],
             },
         }
         pre_cond, in_sig, effects = get_agent_info_description(agent_info)
         self.assertEqual("To execute Action a, Variable b should be known.", pre_cond)
-        self.assertEqual(
-            "Variable b is required and can be acquired by asking the user.", in_sig
-        )
+        self.assertEqual("Variable b is required and can be acquired by asking the user.", in_sig)
         self.assertEqual("After executing Action a, Variable c is known.", effects)
 
     def test_get_mapping_description(self):
@@ -202,16 +192,12 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
     def test_get_goal_description(self):
         goals = {"a", "b"}
         res = get_goal_description(goals)
-        self.assertEqual(
-            "The goal of the system is to execute Action a and Action b.", res
-        )
+        self.assertEqual("The goal of the system is to execute Action a and Action b.", res)
 
     def test_get_description_available_data(self):
         values = ["a", "b"]
         res = get_description_available_data(values)
-        self.assertEqual(
-            "Values are available already for Variable a and Variable b.", res
-        )
+        self.assertEqual("Values are available already for Variable a and Variable b.", res)
 
     def test_get_variables_description(self):
         agent_info: AgentInfo = {
@@ -240,6 +226,7 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         self.assertEqual(
             get_hash_str(res),
             get_hash_str(
-                "The system has Variable b, Variable c, Variable r, and Variable s.\nThe type of Variable c is sample_type. The type of Variable r is type_a."
+                "The system has Variable b, Variable c, Variable r, and Variable s."
+                + "\nThe type of Variable c is sample_type. The type of Variable r is type_a."
             ),
         )

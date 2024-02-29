@@ -23,17 +23,13 @@ def compile_constraints(
     compilation: Any,
     constraint: Constraint,
 ) -> Any:
-
     new_constraint_variable = f"status_{constraint.constraint_id}"
     set_variables = [compilation.constant_map[item] for item in constraint.parameters]
     closed_variables = [
-        compilation.type_map[get_type_of_constant(compilation, item)]
-        for item in constraint.parameters
+        compilation.type_map[get_type_of_constant(compilation, item)] for item in constraint.parameters
     ] + [compilation.type_map[TypeOptions.STATUS.value]]
 
-    if new_constraint_variable not in [
-        item.symbol for item in compilation.lang.predicates
-    ]:
+    if new_constraint_variable not in [item.symbol for item in compilation.lang.predicates]:
         new_constraint_predicate = compilation.lang.predicate(
             new_constraint_variable,
             *closed_variables,
@@ -49,16 +45,13 @@ def compile_constraints(
             del_effect_list = list()
 
             for index, parameter in enumerate(constraint.parameters):
-
                 if parameter not in compilation.constant_map:
                     add_memory_item_to_constant_map(
                         compilation,
                         MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value),
                     )
 
-                del_effect_list.append(
-                    compilation.free(compilation.constant_map[parameter])
-                )
+                del_effect_list.append(compilation.free(compilation.constant_map[parameter]))
                 precondition_list.extend(
                     [
                         compilation.known(
@@ -81,9 +74,7 @@ def compile_constraints(
                     compilation.problem.action(
                         enabler_name,
                         parameters=list(),
-                        precondition=land(
-                            compilation.free(compilation.constant_map[parameter])
-                        ),
+                        precondition=land(compilation.free(compilation.constant_map[parameter])),
                         effects=[
                             fs.DelEffect(set_predicate),
                             fs.DelEffect(shadow_predicate),
