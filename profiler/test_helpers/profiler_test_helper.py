@@ -14,7 +14,7 @@ from profiler.common_helpers.string_helper import trim_pddl_str
 
 
 def write_pddl_plan(pddl: PDDL, plans: PlannerResponse, planner: Planner) -> None:
-    current_directory = os.getenv("PYTEST_CURRENT_TEST")
+    current_directory = os.getenv("PYTEST_CURRENT_TEST", "")
     current_directory_list = current_directory.split("/")[:-1]
     with open("/".join(current_directory_list + [domain_file_name]), "w") as f:
         f.write(pddl.domain)

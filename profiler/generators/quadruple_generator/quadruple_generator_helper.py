@@ -80,7 +80,7 @@ def get_doc_string(original_text: str) -> str:
     ptrn_1 = r'("""[\w\s(),;:-]+""")'
     res = re.findall(ptrn_1, original_text[:])
 
-    return res[0].replace('"""', "").strip() if len(res) > 0 else ""
+    return str(res[0].replace('"""', "").strip()) if len(res) > 0 else ""
 
 
 def separate_docstring(original_text: str) -> Tuple[str, str]:
@@ -100,7 +100,7 @@ def run_pytest(test_file_path: str, test_name: str) -> None:
     _ = subprocess.run(tokens, capture_output=False)
 
 
-def get_method_names_in_classes(classes) -> List[str]:
+def get_method_names_in_classes(classes: List[ast.ClassDef]) -> List[str]:
     method_names: List[str] = list()
     for class_ in classes:
         # print("Class name:", class_.name)

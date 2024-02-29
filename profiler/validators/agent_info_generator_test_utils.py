@@ -14,7 +14,7 @@ def get_stats_coupled_agents(
     variable_agent_dict_outs: Dict[str, Set[str]] = dict()
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
+            for item in agent_info["actuator_signature"][signature]:  # type: ignore
                 if signature == "in_sig_full":
                     if item["name"] not in variable_agent_dict_ins:
                         variable_agent_dict_ins[item["name"]] = set()
@@ -47,7 +47,7 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     slot_fillable_var: Set[str] = set()
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
+            for item in agent_info["actuator_signature"][signature]:  # type: ignore
                 if item["slot_fillable"]:
                     slot_fillable_var.add(item["name"])
 
@@ -58,7 +58,7 @@ def get_num_variables(agent_infos: List[AgentInfo], available_data: List[Tuple[s
     vars: Set[str] = set()
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
+            for item in agent_info["actuator_signature"][signature]:  # type: ignore
                 vars.add(item["name"][:])
     for datum in available_data:
         vars.add(datum[0][:])  # add variable name
@@ -78,7 +78,7 @@ def get_num_variables_used_for_data_mapping(mappings: List[Tuple[(str, str, floa
 def check_num_input_parameters(agent_infos: List[AgentInfo], num_input_parameters: int) -> bool:
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
-            if num_input_parameters != len(agent_info["actuator_signature"][signature]):
+            if num_input_parameters != len(agent_info["actuator_signature"][signature]):  # type: ignore
                 return False
 
     return True
@@ -87,7 +87,7 @@ def check_num_input_parameters(agent_infos: List[AgentInfo], num_input_parameter
 def check_sample(
     input: AgentInfoGeneratorInput,
     available_agents: List[AgentInfo],
-    available_data: List[str],
+    available_data: List[Tuple[str, Optional[str]]],
     goal_agent_ids: Set[str],
     mappings: List[Tuple[str, str, float]],
 ) -> None:

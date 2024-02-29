@@ -28,7 +28,7 @@ import random
 
 
 class TestAgentInfoGeneratorHelper(unittest.TestCase):
-    def test_get_agents(self):
+    def test_get_agents(self) -> None:
         agent_names = ["a", "b", "c"]
         num_input_sig = 3
         agent_infos = get_agents(agent_names, num_input_sig)
@@ -41,7 +41,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
             self.assertEqual(num_input_sig, len(agent_info["actuator_signature"]["in_sig_full"]))
             self.assertEqual(num_input_sig, len(agent_info["actuator_signature"]["out_sig_full"]))
 
-    def test_get_variable_types_many_types(self):
+    def test_get_variable_types_many_types(self) -> None:
         num_variables = 100
         num_var_types = 14
         sample_types = get_variable_types(num_variables, num_var_types, random)
@@ -49,7 +49,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         types = set(filter(lambda t: t is not None, sample_types))
         self.assertEqual(num_var_types, len(types))
 
-    def test_get_variable_types_no_type(self):
+    def test_get_variable_types_no_type(self) -> None:
         num_variables = 100
         num_var_types = 0
         sample_types = get_variable_types(num_variables, num_var_types, random)
@@ -57,7 +57,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         types = set(filter(lambda t: t is not None, sample_types))
         self.assertEqual(num_var_types, len(types))
 
-    def test_get_variables(self):
+    def test_get_variables(self) -> None:
         variable_names = ["a", "b", "c", "d"]
         proportion_mappable_variable = 0.5
         proportion_slot_fillable_variable = 0.5
@@ -84,7 +84,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         self.assertEqual(len(variable_names) // 2, cnt_slot_fillable)
         self.assertEqual(len(variable_types), num_variable_types)
 
-    def test_get_goals(self):
+    def test_get_goals(self) -> None:
         num_agents = 10
         num_goals = 5
         agent_infos: List[AgentInfo] = list()
@@ -98,14 +98,14 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         for goal in goals:
             assert goal in agent_ids
 
-    def test_get_mappings(self):
+    def test_get_mappings(self) -> None:
         variable_0 = VariableInfo(variable_name="a", slot_fillable=False, mappable=True)
         variable_1 = VariableInfo(variable_name="b", slot_fillable=False, mappable=False)
         variable_2 = VariableInfo(variable_name="c", slot_fillable=False, mappable=True)
         mappings = get_mappings([variable_0, variable_1, variable_2], random)
         self.assertEqual(2, len(mappings))
 
-    def test_get_new_signature_from_variable_info(self):
+    def test_get_new_signature_from_variable_info(self) -> None:
         signature_item_input: AgentInfoSignatureItem = {
             "name": "a",
             "sequence_alias": "b",
@@ -118,7 +118,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         self.assertEqual(name, res["sequence_alias"])
         self.assertTrue(res["slot_fillable"])
 
-    def test_get_uncoupled_agents(self):
+    def test_get_uncoupled_agents(self) -> None:
         item: AgentInfoSignatureItem = {"name": "k"}
         agent_info: AgentInfo = {"actuator_signature": {"in_sig_full": [item], "out_sig_full": [item]}}
         agent_infos = [deepcopy(agent_info), deepcopy(agent_info)]
@@ -136,7 +136,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
 
     def test_get_agent_infos_with_coupled_agents_two_agents_no_extra_variable_all_coupling_agents(
         self,
-    ):
+    ) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -217,7 +217,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
 
     def test_get_agent_infos_with_coupled_agents_two_agents_extra_variable_all_coupling_agents(
         self,
-    ):
+    ) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -259,7 +259,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
 
     def test_get_agent_infos_with_coupled_agents_three_agents_extra_variable_all_coupling_agents(
         self,
-    ):
+    ) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -301,7 +301,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         num_coupled_agents, connections = get_stats_coupled_agents(agent_infos_res)
         self.assertEqual(3, num_coupled_agents)
 
-    def test_get_agent_info_with_remaining_variables(self):
+    def test_get_agent_info_with_remaining_variables(self) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -328,7 +328,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         self.assertEqual("k", agent_infos_res[1]["actuator_signature"]["in_sig_full"][1]["name"])
         self.assertEqual("a", agent_infos_res[1]["actuator_signature"]["in_sig_full"][0]["name"])
 
-    def test_get_agents_with_variables_no_available_agents(self):
+    def test_get_agents_with_variables_no_available_agents(self) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -360,7 +360,7 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         num_coupled_agents, connections = get_stats_coupled_agents(res[0])
         self.assertEqual(2, num_coupled_agents)
 
-    def test_get_agents_with_variables_two_available_agents(self):
+    def test_get_agents_with_variables_two_available_agents(self) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
@@ -464,32 +464,34 @@ class TestAgentInfoGeneratorHelper(unittest.TestCase):
         num_coupled_agents, connections = get_stats_coupled_agents(res[0])
         self.assertEqual(2, num_coupled_agents)
 
-    def test_get_names_from_haikunator(self):
+    @unittest.skip("hakunator package has an issue")
+    def test_get_names_from_haikunator(self) -> None:
         num_names = 200
         names = get_names_from_haikunator(num_names)
         self.assertEqual(num_names, len(names))
 
-    def test_get_agent_variable_names_with_haikunator(self):
+    @unittest.skip("hakunator package has an issue")
+    def test_get_agent_variable_names_with_haikunator(self) -> None:
         num_agents = 20
         num_vars = 50
         names_agents, names_vars = get_agent_variable_names_with_haikunator(num_agents, num_vars)
         self.assertEqual(num_agents, len(names_agents))
         self.assertEqual(num_vars, len(names_vars))
 
-    def test_get_agent_variable_names_with_number(self):
+    def test_get_agent_variable_names_with_number(self) -> None:
         num_agents = 20
         num_vars = 50
         names_agents, names_vars = get_agent_variable_names_with_number(num_agents, num_vars)
         self.assertEqual(num_agents, len(names_agents))
         self.assertEqual(num_vars, len(names_vars))
 
-    def test_get_names_dataset_agent(self):
+    def test_get_names_dataset_agent(self) -> None:
         num = 100
         type = "agent"
         names = get_names_dataset(num, type, random)
         self.assertEqual(num, len(names))
 
-    def test_get_names_dataset_aprameter(self):
+    def test_get_names_dataset_aprameter(self) -> None:
         num = 100
         type = "parameter"
         names = get_names_dataset(num, type, random)

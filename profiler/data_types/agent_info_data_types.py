@@ -9,6 +9,7 @@ class AgentInfoSignatureItem(TypedDict, total=False):
     sequence_alias: Optional[str]
     data_type: Optional[str]
     ont: Optional[str]
+    mappable: Optional[bool]
     slot_fillable: Optional[bool]
 
 
@@ -19,10 +20,9 @@ class AgentInfoSignature(TypedDict, total=False):
 
 class AgentInfo(TypedDict, total=False):
     agent_id: str
-    real_agent_id: Optional[str]  # agent_id before normalizing
-    agent_name: Optional[str]
-    evaluator_signature: Optional[AgentInfoSignature]
-    actuator_signature: Optional[AgentInfoSignature]
+    agent_name: str
+    evaluator_signature: AgentInfoSignature
+    actuator_signature: AgentInfoSignature
 
 
 class PlanAction(TypedDict):

@@ -27,15 +27,15 @@ class AgentInfoGeneratorOutputItem(BaseModel):
     agent_info_generator_input: AgentInfoGeneratorInput
 
     @model_validator(mode="after")
-    def check_data_integrity(cls, v):
+    def check_data_integrity(self):  # type: ignore
         check_sample(
-            v["agent_info_generator_input"],
-            v["available_agents"],
-            v["available_data"],
-            v["goal_agent_ids"],
-            v["mappings"],
+            self.agent_info_generator_input,
+            self.available_agents,
+            self.available_data,
+            self.goal_agent_ids,
+            self.mappings,
         )
-        return v
+        return self
 
     def describe(self) -> str:
         return get_sample_description(

@@ -6,7 +6,7 @@ from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 from profiler.test_helpers.profiler_test_helper import write_pddl_plan
 
 
-PLANNER = Kstar
+PLANNER = Kstar()
 
 
 class TestQuadrupleGenerator(unittest.TestCase):

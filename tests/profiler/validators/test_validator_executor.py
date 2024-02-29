@@ -9,7 +9,7 @@ from profiler.validators.validator_executer import (
 
 
 class TestValidatorExecutor(unittest.TestCase):
-    def test_execute_Val(self):
+    def test_execute_Val(self) -> None:
         pddl_domain = ""
         pddl_problem = ""
         pddl_plan = ""
@@ -25,7 +25,7 @@ class TestValidatorExecutor(unittest.TestCase):
         self.assertEqual(0, len(err))
         self.assertIsNotNone(return_code)
 
-    def test_validate_pddl(self):
+    def test_validate_pddl(self) -> None:
         pddl_domain = ""
         pddl_problem = ""
         pddl_plan = ""
