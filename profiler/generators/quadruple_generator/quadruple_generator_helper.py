@@ -42,9 +42,7 @@ def remove_default_indent(inputs: List[str], indent_size: int) -> List[str]:
     return output
 
 
-def get_function_code(
-    test_file_path: str, test_name: str, method_names: list[str]
-) -> str:
+def get_function_code(test_file_path: str, test_name: str, method_names: list[str]) -> str:
     lines: List[str] = list()
     with open(test_file_path, "r") as f:
         lines = f.readlines()
@@ -58,9 +56,7 @@ def get_function_code(
                 # end the function before the next function starts
                 index_end_function = tmp_idx - 1
 
-    function_body = lines[
-        index_start_function : index_start_function + index_end_function
-    ]
+    function_body = lines[index_start_function : index_start_function + index_end_function]
 
     return "\n".join(function_body)
 
@@ -84,7 +80,7 @@ def get_doc_string(original_text: str) -> str:
     ptrn_1 = r'("""[\w\s(),;:-]+""")'
     res = re.findall(ptrn_1, original_text[:])
 
-    return res[0].replace('"""', "").strip() if len(res) > 0 else ""
+    return str(res[0].replace('"""', "").strip()) if len(res) > 0 else ""
 
 
 def separate_docstring(original_text: str) -> Tuple[str, str]:
@@ -100,13 +96,11 @@ def run_pytest(test_file_path: str, test_name: str) -> None:
     flag_key_word = ["-k"]
     key_words = [test_name]
     flags = ["-rP", "--verbose"]
-    tokens: List[str] = (
-        application_command + file_path + flag_key_word + key_words + flags
-    )
+    tokens: List[str] = application_command + file_path + flag_key_word + key_words + flags
     _ = subprocess.run(tokens, capture_output=False)
 
 
-def get_method_names_in_classes(classes) -> List[str]:
+def get_method_names_in_classes(classes: List[ast.ClassDef]) -> List[str]:
     method_names: List[str] = list()
     for class_ in classes:
         # print("Class name:", class_.name)
@@ -135,12 +129,8 @@ def get_names_with_prefix(names: List[str], prefix: str) -> List[str]:
 
 def get_files_in_folder(folder_path: str) -> Tuple[List[str], List[str]]:
     files = os.listdir(folder_path)
-    file_paths = [
-        folder_path + "/" + f for f in files if os.path.isfile(folder_path + "/" + f)
-    ]
-    folder_paths = [
-        folder_path + "/" + f for f in files if os.path.isdir(folder_path + "/" + f)
-    ]
+    file_paths = [folder_path + "/" + f for f in files if os.path.isfile(folder_path + "/" + f)]
+    folder_paths = [folder_path + "/" + f for f in files if os.path.isdir(folder_path + "/" + f)]
 
     return file_paths, folder_paths
 
@@ -163,9 +153,7 @@ def get_setup_code_doctring_lists(
     setup_doc_str_list: List[str] = list()
     if len(setup_method_names) > 0:
         for setup_method_name in setup_method_names:
-            code_str, docstring_str = separate_docstring(
-                get_function_code(file_path, setup_method_name, method_names)
-            )
+            code_str, docstring_str = separate_docstring(get_function_code(file_path, setup_method_name, method_names))
             if does_contain_best_test_invocation(code_str):
                 code_str = code_str.replace(BASE_TEST_INVOCATION, "")
                 base_test_method_names = get_class_method_names(BASE_TEST_FILE_PATH)

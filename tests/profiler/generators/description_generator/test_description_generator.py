@@ -7,7 +7,7 @@ import random
 
 
 class TestDescriptionGenerator(unittest.TestCase):
-    def test_get_sample_description(self):
+    def test_get_sample_description(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
             num_var=7,
@@ -19,12 +19,10 @@ class TestDescriptionGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
         self.assertIsNotNone(samples[0].describe())
 
-    def test_get_sample_description_small(self):
+    def test_get_sample_description_small(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=3,
             num_var=6,
@@ -36,11 +34,6 @@ class TestDescriptionGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(
-            agent_info_generator_input, random
-        )
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
 
         self.assertIsNotNone(samples[0].describe())
-        description = samples[0].describe()
-        # with open("description.txt", "w") as f:
-        #     f.write(description)

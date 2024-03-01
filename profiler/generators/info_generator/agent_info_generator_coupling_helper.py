@@ -14,7 +14,7 @@ def exist_variable_name_in_signature(
         return False
     sig_names = map(
         lambda item: item["name"],
-        agent_infos[agent_index]["actuator_signature"][signature_type],
+        agent_infos[agent_index]["actuator_signature"][signature_type],  # type: ignore
     )
     return True if variable_info.variable_name in sig_names else False
 
@@ -27,7 +27,10 @@ def get_out_item_position_to_couple_agents(
     agent_infos: List[AgentInfo],
     signature_type: str,
 ) -> Tuple[Tuple[int, str, int], bool]:
-    # return 1) the position of a "out" item to couple agents and 2) and the status of choosing a "out_sig_full" item position already used for coupling
+    """
+    return 1) the position of a "out" item to couple agents
+    # and 2) and the status of choosing a "out_sig_full" item position
+    already used for coupling"""
     agent_idx = -1
     item_idx = -1
     max_try = 20
@@ -40,9 +43,7 @@ def get_out_item_position_to_couple_agents(
         if (agent_idx, signature_type, item_idx) in position_item_coupled:
             return ((agent_idx, signature_type[:], item_idx), True)
         # check if the same variable appears in a signature multiple times
-        if not exist_variable_name_in_signature(
-            agent_infos, variable_info, agent_idx, signature_type
-        ):
+        if not exist_variable_name_in_signature(agent_infos, variable_info, agent_idx, signature_type):
             return ((agent_idx, signature_type[:], item_idx), False)
         try_cnt += 1
 

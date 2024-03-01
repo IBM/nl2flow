@@ -25,14 +25,10 @@ class Operator(ABC):
     def max_try(self, max_try: int) -> None:
         if isinstance(max_try, int):
             if max_try > MAX_RETRY:
-                raise ValueError(
-                    f"Max retries too high! Tried to set {max_try}, maximum allowed {MAX_RETRY}."
-                )
+                raise ValueError(f"Max retries too high! Tried to set {max_try}, maximum allowed {MAX_RETRY}.")
 
             elif max_try < 0:
-                raise ValueError(
-                    f"Max try too low! Tried to set {max_try}, minimum allowed is 0."
-                )
+                raise ValueError(f"Max try too low! Tried to set {max_try}, minimum allowed is 0.")
 
             else:
                 self.operator_definition.max_try = max_try
@@ -53,18 +49,14 @@ class Operator(ABC):
             self.operator_definition.cost = cost.value
 
         else:
-            raise TypeError(
-                "Operator costs must be integers or off-the-shelf CostOptions"
-            )
+            raise TypeError("Operator costs must be integers or off-the-shelf CostOptions")
 
     def add_input(self, new_input: Union[SignatureItem, List[SignatureItem]]) -> None:
         if isinstance(new_input, SignatureItem):
             new_input = [new_input]
 
         for item in new_input:
-            assert isinstance(
-                item, SignatureItem
-            ), "Tried to add a non-signature item to an operator."
+            assert isinstance(item, SignatureItem), "Tried to add a non-signature item to an operator."
             self.operator_definition.inputs.append(item)
 
     @abstractmethod
@@ -88,18 +80,10 @@ class ClassicalOperator(Operator):
         self.operator_definition.outputs = Outcome()
 
     def add_outcome(self, outcome: Union[Outcome, List[Outcome]]) -> None:
-        assert isinstance(
-            outcome, Outcome
-        ), "Tried to add something else to the outcome list."
-        assert not isinstance(
-            outcome, List
-        ), "Can only add one outcome to a classical operator."
-        assert (
-            outcome.probability is None
-        ), "Cannot assign probability to a classical outcome."
-        assert not len(
-            outcome.conditions
-        ), "Cannot assign conditions to a classical outcome."
+        assert isinstance(outcome, Outcome), "Tried to add something else to the outcome list."
+        assert not isinstance(outcome, List), "Can only add one outcome to a classical operator."
+        assert outcome.probability is None, "Cannot assign probability to a classical outcome."
+        assert not len(outcome.conditions), "Cannot assign conditions to a classical outcome."
 
         self.operator_definition.outputs = outcome
 
@@ -108,9 +92,7 @@ class ClassicalOperator(Operator):
             new_output = [new_output]
 
         for item in new_output:
-            assert isinstance(
-                item, SignatureItem
-            ), "Tried to add a non-signature item to an operator."
+            assert isinstance(item, SignatureItem), "Tried to add a non-signature item to an operator."
 
             if isinstance(self.operator_definition.outputs, Outcome):
                 self.operator_definition.outputs.outcomes.append(item)
@@ -135,12 +117,8 @@ class ContingentOperator(Operator):
             outcome = [outcome]
 
         for item in outcome:
-            assert isinstance(
-                item, Outcome
-            ), "Tried to add something else to an outcome list."
-            assert (
-                item.probability is None
-            ), "Cannot assign probability to a contingent outcome."
+            assert isinstance(item, Outcome), "Tried to add something else to an outcome list."
+            assert item.probability is None, "Cannot assign probability to a contingent outcome."
 
             self.operator_definition.outputs.append(item)
 
@@ -168,9 +146,7 @@ class NonDeterministicOperator(Operator):
             outcome = [outcome]
 
         for item in outcome:
-            assert isinstance(
-                item, Outcome
-            ), "Tried to add something else to an outcome list."
+            assert isinstance(item, Outcome), "Tried to add something else to an outcome list."
             self.operator_definition.outputs.append(item)
 
         assert self.__validate_probabilities__(), "JAARL. Probabilities"

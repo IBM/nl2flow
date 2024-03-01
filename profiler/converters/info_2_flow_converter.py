@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from nl2flow.compile.flow import Flow
 from profiler.data_types.agent_info_data_types import AgentInfo, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
@@ -10,7 +10,6 @@ from nl2flow.compile.schemas import (
     GoalItems,
     GoalItem,
     SlotProperty,
-    MappingItem,
     Parameter,
 )
 from profiler.converters.converter_variables import (
@@ -33,10 +32,8 @@ def get_uuid() -> str:
 
 
 def get_name(signature_item: SignatureItem) -> str:
-    return (
-        signature_item[SEQUENCE_ALIAS][:]
-        if SEQUENCE_ALIAS in signature_item
-        else signature_item[NAME]
+    return (  # type: ignore
+        signature_item[SEQUENCE_ALIAS][:] if SEQUENCE_ALIAS in signature_item else signature_item[NAME]
     )
 
 
@@ -51,9 +48,7 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
                     and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
                 ):
                     signature_names: List[Parameter] = list()
-                    for signature_item in agent_info[ACTUATOR_SIGNATURE][
-                        signature_type
-                    ]:
+                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:
                         if signature_type == OUT_SIGNATURE:
                             signature_names.append(
                                 Parameter(
@@ -93,43 +88,30 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
                     signature_type in agent_info[ACTUATOR_SIGNATURE]
                     and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
                 ):
-                    for signature_item in agent_info[ACTUATOR_SIGNATURE][
-                        signature_type
-                    ]:
+                    for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:
                         name = get_name(signature_item)
-                        if (
-                            SLOT_FILLABLE in signature_item
-                            and signature_item[SLOT_FILLABLE]
-                        ):
+                        if SLOT_FILLABLE in signature_item and signature_item[SLOT_FILLABLE]:
                             if name not in slot_names:
                                 slot_names.add(name)
-                                slot_properties.append(SlotProperty(slot_name=name))
+                                slot_properties.append(SlotProperty(slot_name=name, slot_desirability=1.0))
                         else:
                             if name not in none_slot_fillable_names:
                                 none_slot_fillable_names.add(name)
-                                slot_properties.append(
-                                    SlotProperty(slot_name=name, slot_desirability=0.0)
-                                )
+                                slot_properties.append(SlotProperty(slot_name=name, slot_desirability=0.0))
 
     return slot_properties
 
 
-def get_data_mappers_for_flow(
-    mappings: List[Tuple[str, str, float]]
-) -> List[MappingItem]:
+def get_data_mappers_for_flow(mappings: List[Tuple[str, str, float]]) -> List[MappingItem]:
     return list(
         map(
-            lambda mapping: MappingItem(
-                source_name=mapping[0], target_name=mapping[1], probability=mapping[2]
-            ),
+            lambda mapping: MappingItem(source_name=mapping[0], target_name=mapping[1], probability=mapping[2]),
             mappings,
         )
     )
 
 
-def get_available_data_for_flow(
-    available_data: List[Tuple[str, Optional[str]]]
-) -> List[MemoryItem]:
+def get_available_data_for_flow(available_data: List[Tuple[str, Optional[str]]]) -> List[MemoryItem]:
     return list(
         map(
             lambda signature_item: MemoryItem(
@@ -153,9 +135,9 @@ def get_flow_from_agent_infos(
     flow = Flow(flow_name)
     flow.add(
         get_operators_for_flow(available_agents)
-        + get_slot_fillers_for_flow(available_agents)
-        + get_data_mappers_for_flow(mappings)
         + get_available_data_for_flow(available_data)
+        + get_data_mappers_for_flow(mappings)
+        + get_slot_fillers_for_flow(available_agents)
         + [get_goals_for_flow(goals)]
     )
     if slot_filler_option is not None and slot_filler_option == SlotOptions.last_resort:

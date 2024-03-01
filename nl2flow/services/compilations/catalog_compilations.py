@@ -6,16 +6,13 @@ from nl2flow.services.schemas.sketch_schemas import Catalog, Signature
 
 
 def basic_catalog_compilation(flow: Flow, catalog: Catalog) -> None:
-
     for agent in catalog.agents:
         new_agent = Operator(agent.id)
 
         for index, signature_items in enumerate([agent.inputs, agent.outputs]):
             new_signature_item = SignatureItem(
                 parameters=[
-                    Parameter(
-                        item_id=item.name, item_type=item.type or TypeOptions.ROOT.value
-                    )
+                    Parameter(item_id=item.name, item_type=item.type or TypeOptions.ROOT.value)
                     for item in signature_items
                     if isinstance(item, Signature)
                 ]

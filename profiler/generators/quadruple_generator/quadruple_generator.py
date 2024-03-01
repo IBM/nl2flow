@@ -27,13 +27,12 @@ def get_quadruple(
     method_names: List[str] = [],
 ) -> Optional[Quadruple]:
     """
-    test_file_path: the file path for a test (i.e. "./tests/profiler/generators/quadruple_generator/test_quadruple_generator.py")
+    test_file_path: the file path for a test
+    (i.e. "./tests/profiler/generators/quadruple_generator/test_quadruple_generator.py")
     test_name: the name of a test (i.e. "test_basic_test_output")
     """
     run_pytest(test_file_path, test_name)
-    code_str, docstring_str = separate_docstring(
-        get_function_code(test_file_path, test_name, method_names)
-    )
+    code_str, docstring_str = separate_docstring(get_function_code(test_file_path, test_name, method_names))
     code_str = setup_code_str + code_str
 
     if len(docstring_str) == 0:
@@ -41,10 +40,9 @@ def get_quadruple(
     docstring_str = setup_doc_str + docstring_str
     valid_pddl_plan_data = True
     try:
-        domain_pddl_str, problem_pddl_str, plan_str = read_remove_pddl_plan(
-            test_file_path
-        )
+        domain_pddl_str, problem_pddl_str, plan_str = read_remove_pddl_plan(test_file_path)
     except Exception as e:
+        print(e)
         valid_pddl_plan_data = False
 
     return (

@@ -17,18 +17,14 @@ from nl2flow.compile.options import (
 )
 
 
-def compile_goal_item(
-    compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]
-) -> None:
+def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]) -> None:
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
         if isinstance(goal, Step):
             new_goal_predicate = f"has_done_{goal.name}"
             new_goal_parameters = [
-                compilation.constant_map[p.item_id]
-                if isinstance(p, Parameter)
-                else compilation.constant_map[p]
+                compilation.constant_map[p.item_id] if isinstance(p, Parameter) else compilation.constant_map[p]
                 for p in goal.parameters
             ]
 
@@ -38,9 +34,7 @@ def compile_goal_item(
 
             try_level_parameter = compilation.constant_map[f"try_level_{try_level}"]
             new_goal_parameters.append(try_level_parameter)
-            goal_predicates.add(
-                getattr(compilation, new_goal_predicate)(*new_goal_parameters)
-            )
+            goal_predicates.add(getattr(compilation, new_goal_predicate)(*new_goal_parameters))
 
         elif isinstance(goal, str):
             goal_predicates.add(
@@ -65,10 +59,7 @@ def compile_goal_item(
             list_of_constants = [goal_item.goal_name]
 
         if goal_item.goal_type == GoalType.OBJECT_USED:
-            goal_predicates.update(
-                compilation.been_used(compilation.constant_map[item])
-                for item in list_of_constants
-            )
+            goal_predicates.update(compilation.been_used(compilation.constant_map[item]) for item in list_of_constants)
 
         elif goal_item.goal_type == GoalType.OBJECT_KNOWN:
             goal_predicates.update(

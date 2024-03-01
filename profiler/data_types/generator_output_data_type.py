@@ -1,6 +1,6 @@
 from copy import deepcopy
 from typing import List, Optional, Set, Tuple
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
@@ -26,16 +26,16 @@ class AgentInfoGeneratorOutputItem(BaseModel):
     available_data: List[Tuple[str, Optional[str]]]  # variable name, variable type
     agent_info_generator_input: AgentInfoGeneratorInput
 
-    @root_validator()
-    def check_data_integrity(cls, v):
+    @model_validator(mode="after")
+    def check_data_integrity(self):  # type: ignore
         check_sample(
-            v["agent_info_generator_input"],
-            v["available_agents"],
-            v["available_data"],
-            v["goal_agent_ids"],
-            v["mappings"],
+            self.agent_info_generator_input,
+            self.available_agents,
+            self.available_data,
+            self.goal_agent_ids,
+            self.mappings,
         )
-        return v
+        return self
 
     def describe(self) -> str:
         return get_sample_description(
@@ -60,4 +60,4 @@ class AgentInfoGeneratorOutputItem(BaseModel):
             mappings=deepcopy(self.mappings),
             available_data=deepcopy(self.available_data),
         )
-        return get_hash(core_info.json())
+        return get_hash(core_info.model_dump_json())

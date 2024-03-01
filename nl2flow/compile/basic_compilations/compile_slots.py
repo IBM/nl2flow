@@ -41,16 +41,10 @@ def get_not_slotfillable_types(compilation: Any) -> List[str]:
 
     for slot_item in compilation.flow_definition.slot_properties:
         if not slot_item.slot_desirability:
-            compilation.init.add(
-                compilation.not_slotfillable(
-                    compilation.constant_map[slot_item.slot_name]
-                )
-            )
+            compilation.init.add(compilation.not_slotfillable(compilation.constant_map[slot_item.slot_name]))
 
             if slot_item.propagate_desirability:
-                not_slotfillable_types.append(
-                    get_type_of_constant(compilation, slot_item.slot_name)
-                )
+                not_slotfillable_types.append(get_type_of_constant(compilation, slot_item.slot_name))
 
     return not_slotfillable_types
 
@@ -63,16 +57,11 @@ def get_goodness_map(compilation: Any) -> Dict[str, float]:
         if is_this_a_datum(compilation, constant):
             type_of_datum = get_type_of_constant(compilation, constant)
             if type_of_datum in not_slotfillable_types:
-                compilation.init.add(
-                    compilation.not_slotfillable(compilation.constant_map[constant])
-                )
+                compilation.init.add(compilation.not_slotfillable(compilation.constant_map[constant]))
 
             slot_goodness = SLOT_GOODNESS
             for slot in compilation.flow_definition.slot_properties:
-                if (
-                    type_of_datum == get_type_of_constant(compilation, slot.slot_name)
-                    and slot.propagate_desirability
-                ):
+                if type_of_datum == get_type_of_constant(compilation, slot.slot_name) and slot.propagate_desirability:
                     slot_goodness = slot.slot_desirability
                     break
 
@@ -126,8 +115,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
         BasicOperations.SLOT_FILLER.value,
         parameters=[x],
         precondition=land(*precondition_list, flat=True),
-        effects=[fs.AddEffect(add) for add in add_effect_list]
-        + [fs.DelEffect(dele) for dele in del_effect_list],
+        effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(dele) for dele in del_effect_list],
         cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
     )
 
@@ -196,9 +184,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         )
                     )
 
-            slot_cost = int(
-                (2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value
-            )
+            slot_cost = int((2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value)
 
             compilation.problem.action(
                 f"{BasicOperations.SLOT_FILLER.value}----{constant}",

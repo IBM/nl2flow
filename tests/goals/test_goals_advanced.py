@@ -31,15 +31,12 @@ class TestGoalsAdvanced(BaseTestAgents):
             assert (
                 poi.plan[0].name == BasicOperations.MAPPER.value
                 and len(poi.plan[0].inputs) == 8
-                and {poi.plan[0].inputs[i].item_id for i in range(0, 8, 2)}
-                == set(desired_goal_parameters)
+                and {poi.plan[0].inputs[i].item_id for i in range(0, 8, 2)} == set(desired_goal_parameters)
             ), "A giant mapping action with all the desired mappings ..."
             assert {action.name for action in poi.plan[1:-1]} == {
                 BasicOperations.CONFIRM.value
             }, "... followed by four confirms ...."
-            assert (
-                poi.plan[5].name == "Email Agent"
-            ), "... ending the final target agent."
+            assert poi.plan[5].name == "Email Agent", "... ending the final target agent."
 
         email_agent = Operator("Email Agent")
         email_agent.max_try = 2
@@ -66,9 +63,7 @@ class TestGoalsAdvanced(BaseTestAgents):
         self.flow.add(
             [
                 email_agent,
-                MemoryItem(
-                    item_id="message", item_type="Text", item_state=MemoryState.KNOWN
-                ),
+                MemoryItem(item_id="message", item_type="Text", item_state=MemoryState.KNOWN),
                 MemoryItem(
                     item_id="applicant_resume",
                     item_type="PDF",
@@ -130,9 +125,7 @@ class TestGoalsAdvanced(BaseTestAgents):
 
         for poi in plans.list_of_plans[:2]:
             operator_names = {operator.name for operator in poi.plan}
-            assert (
-                len(operator_names.intersection({"Agent X", "Agent Y"})) == 1
-            ), "One of X or Y."
+            assert len(operator_names.intersection({"Agent X", "Agent Y"})) == 1, "One of X or Y."
 
     def test_or_basic_together(self) -> None:
         goals = list()
