@@ -32,4 +32,4 @@ jobs:
         pip install -e '.[dev]'
     - name: Test with pytest
       run: |
-        pytest tests/ --ignore=tests/profiler
+        pytest tests/ --ignore=tests/conftest.py --ignore=tests/sketch
