@@ -17,7 +17,7 @@ class TestDescriptionPlugin:
     def pytest_runtest_protocol(self, item: Any) -> None:
         self.desc = inspect.getdoc(item.obj)
 
-    @pytest.skip("Need only for PyTest Reflection")
+    @pytest.mark.skip("Need only for PyTest Reflection")
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_logstart(self, nodeid: Any, location: Any) -> Generator[Any]:  # type: ignore
         if self.terminal_reporter.verbosity == 0:
