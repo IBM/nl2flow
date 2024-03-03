@@ -7,7 +7,9 @@ from nl2flow.compile.schemas import FlowDefinition
 from nl2flow.compile.basic_compilations.utils import (
     get_type_of_constant,
     is_this_a_datum,
-    get_source_map,
+    # get_agent_to_slot_map,
+    # get_item_requirement_map,
+    get_item_source_map,
     generate_new_objects,
 )
 
@@ -41,16 +43,10 @@ def get_not_slotfillable_types(compilation: Any) -> List[str]:
 
     for slot_item in compilation.flow_definition.slot_properties:
         if not slot_item.slot_desirability:
-            compilation.init.add(
-                compilation.not_slotfillable(
-                    compilation.constant_map[slot_item.slot_name]
-                )
-            )
+            compilation.init.add(compilation.not_slotfillable(compilation.constant_map[slot_item.slot_name]))
 
             if slot_item.propagate_desirability:
-                not_slotfillable_types.append(
-                    get_type_of_constant(compilation, slot_item.slot_name)
-                )
+                not_slotfillable_types.append(get_type_of_constant(compilation, slot_item.slot_name))
 
     return not_slotfillable_types
 
@@ -63,16 +59,11 @@ def get_goodness_map(compilation: Any) -> Dict[str, float]:
         if is_this_a_datum(compilation, constant):
             type_of_datum = get_type_of_constant(compilation, constant)
             if type_of_datum in not_slotfillable_types:
-                compilation.init.add(
-                    compilation.not_slotfillable(compilation.constant_map[constant])
-                )
+                compilation.init.add(compilation.not_slotfillable(compilation.constant_map[constant]))
 
             slot_goodness = SLOT_GOODNESS
             for slot in compilation.flow_definition.slot_properties:
-                if (
-                    type_of_datum == get_type_of_constant(compilation, slot.slot_name)
-                    and slot.propagate_desirability
-                ):
+                if type_of_datum == get_type_of_constant(compilation, slot.slot_name) and slot.propagate_desirability:
                     slot_goodness = slot.slot_desirability
                     break
 
@@ -92,9 +83,6 @@ def get_goodness_map(compilation: Any) -> Dict[str, float]:
 def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
-
-    # if SlotOptions.ordered in slot_options:
-    #     compile_ordered_slots(compilation, **kwargs)
 
     if SlotOptions.last_resort not in slot_options:
         _ = get_goodness_map(compilation)
@@ -122,21 +110,22 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
         ),
     ]
 
-    compilation.problem.action(
-        BasicOperations.SLOT_FILLER.value,
-        parameters=[x],
-        precondition=land(*precondition_list, flat=True),
-        effects=[fs.AddEffect(add) for add in add_effect_list]
-        + [fs.DelEffect(dele) for dele in del_effect_list],
-        cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
-    )
+    if SlotOptions.ordered not in slot_options:
+        compilation.problem.action(
+            BasicOperations.SLOT_FILLER.value,
+            parameters=[x],
+            precondition=land(*precondition_list, flat=True),
+            effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(dele) for dele in del_effect_list],
+            cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
+        )
+
+    else:
+        # for constant in compilation.constant_map:
+        #     if constant not in not_slots and is_this_a_datum(compilation, constant):
+        pass
 
     if SlotOptions.last_resort not in slot_options:
         compile_new_object_maps(compilation, **kwargs)
-
-
-# def compile_ordered_slots(compilation: Any, **kwargs: Any) -> None:
-#     pass
 
 
 def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
@@ -144,7 +133,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
 
     not_slots = get_not_slots(compilation)
-    source_map = get_source_map(compilation)
+    source_map = get_item_source_map(compilation)
     goodness_map = get_goodness_map(compilation)
 
     not_slots_as_last_resort = list(
@@ -196,9 +185,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         )
                     )
 
-            slot_cost = int(
-                (2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value
-            )
+            slot_cost = int((2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value)
 
             compilation.problem.action(
                 f"{BasicOperations.SLOT_FILLER.value}----{constant}",

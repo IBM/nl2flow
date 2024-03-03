@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Set, List, Dict, Optional, Union, Any
 from collections import Counter
-from pydantic import BaseModel, field_validator, model_validator, FieldValidationInfo, ConfigDict
+from pydantic import BaseModel, field_validator, model_validator, ConfigDict
+from pydantic_core.core_schema import FieldValidationInfo
 
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.utils import string_transform, Transform
@@ -363,7 +364,11 @@ class FlowDefinition(BaseModel):
         for item in flow.goal_items:
             goals: List[GoalItem] = item.goals if isinstance(item.goals, List) else [item.goals]
             for goal in goals:
-                if goal.goal_type != GoalType.OPERATOR and goal.goal_name not in [t.name for t in flow.type_hierarchy]:
+                if (
+                    goal.goal_type != GoalType.OPERATOR
+                    and not isinstance(goal.goal_name, Step)
+                    and goal.goal_name not in [t.name for t in flow.type_hierarchy]
+                ):
                     cls.update_object_map(list_of_objects, goal.goal_name, None)
 
                 elif goal.goal_type == GoalType.OPERATOR and isinstance(goal.goal_name, Step):
