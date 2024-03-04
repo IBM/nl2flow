@@ -24,11 +24,17 @@ class Flow:
         self._confirm_option: Set[ConfirmOptions] = set()
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._goal_type = GoalOptions.AND_AND
-        self._lookahead = LOOKAHEAD
+        self._lookahead: int = LOOKAHEAD
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
         }
+
+        self._compilation: Any = None
+
+    @property
+    def compilation(self) -> ClassicPDDL:
+        return self._compilation
 
     @property
     def variable_life_cycle(self) -> Set[LifeCycleOptions]:
@@ -170,8 +176,8 @@ class Flow:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
 
-        compilation = ClassicPDDL(self.flow_definition)
-        pddl, transforms = compilation.compile(
+        self._compilation = ClassicPDDL(self.flow_definition)
+        pddl, transforms = self._compilation.compile(
             slot_options=self.slot_options,
             mapping_options=self.mapping_options,
             confirm_options=self.confirm_options,

@@ -95,10 +95,11 @@ class SignatureItem(BaseModel):
 
     @classmethod
     def transform(cls, signature: SignatureItem, transforms: List[Transform]) -> SignatureItem:
+        parameters = signature.parameters if isinstance(signature.parameters, List) else [signature.parameters]
         return SignatureItem(
             parameters=[
                 string_transform(param, transforms) if isinstance(param, str) else param.transform(param, transforms)
-                for param in signature.parameters
+                for param in parameters
             ],
             constraints=[constraint.transform(constraint, transforms) for constraint in signature.constraints],
         )
@@ -279,7 +280,7 @@ class FlowDefinition(BaseModel):
             )
 
             for item in list_of_items:
-                if item not in reference_keys:
+                if item and item not in reference_keys:
                     reference_keys.append(item)
 
         transformed_keys = [string_transform(item, transforms) for item in reference_keys]
@@ -340,7 +341,11 @@ class FlowDefinition(BaseModel):
 
     @classmethod
     def signature_parser(cls, list_of_objects: Dict[str, Set[str]], signature_item: SignatureItem) -> None:
-        for parameter in signature_item.parameters:
+        parameters = (
+            signature_item.parameters if isinstance(signature_item.parameters, List) else [signature_item.parameters]
+        )
+
+        for parameter in parameters:
             parameter_name = parameter.item_id if isinstance(parameter, Parameter) else parameter
             parameter_type = parameter.item_type if isinstance(parameter, Parameter) else None
 

@@ -115,7 +115,8 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
             BasicOperations.SLOT_FILLER.value,
             parameters=[x],
             precondition=land(*precondition_list, flat=True),
-            effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(dele) for dele in del_effect_list],
+            effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
+            + [fs.DelEffect(del_e) for del_e in del_effect_list],
             cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
         )
 
@@ -192,7 +193,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                 parameters=[],
                 precondition=land(*precondition_list, flat=True),
                 effects=[fs.AddEffect(add) for add in add_effect_list]
-                + [fs.DelEffect(dele) for dele in del_effect_list],
+                + [fs.DelEffect(del_e) for del_e in del_effect_list],
                 cost=iofs.AdditiveActionCost(
                     compilation.problem.language.constant(
                         slot_cost,

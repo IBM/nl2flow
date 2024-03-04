@@ -1,25 +1,25 @@
-from typing import List, Dict, Union, Any
+from typing import List, Set, Dict, Union, Any
 
 from nl2flow.compile.options import TypeOptions, MAX_RETRY, LOOKAHEAD
 from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty, Parameter, SignatureItem
 
 
-def unpack_list_of_signature_items(signature_items: List[SignatureItem]) -> List[str]:
-    items = []
+def unpack_list_of_signature_items(signature_items: List[SignatureItem]) -> Set[str]:
+    items = set()
 
     for signature_item in signature_items:
         params = signature_item.parameters
 
         if isinstance(params, List):
-            items.extend([p if isinstance(p, str) else p.item_id for p in params])
+            items.update({p if isinstance(p, str) else p.item_id for p in params})
         else:
-            items.append(params if isinstance(params, str) else params.item_id)
+            items.add(params if isinstance(params, str) else params.item_id)
 
     return items
 
 
-def get_agent_to_slot_map(compilation: Any) -> Dict[str, List[str]]:
-    agent_to_slot_map: Dict[str, List[str]] = dict()
+def get_agent_to_slot_map(compilation: Any) -> Dict[str, Set[str]]:
+    agent_to_slot_map: Dict[str, Set[str]] = dict()
 
     for operator in compilation.flow_definition.operators:
         agent_to_slot_map[operator.name] = unpack_list_of_signature_items(operator.inputs)
@@ -27,45 +27,43 @@ def get_agent_to_slot_map(compilation: Any) -> Dict[str, List[str]]:
     return agent_to_slot_map
 
 
-def get_item_requirement_map(compilation: Any) -> Dict[str, List[str]]:
-    requirement_map: Dict[str, List[str]] = dict()
+def get_item_requirement_map(compilation: Any) -> Dict[str, Set[str]]:
+    requirement_map: Dict[str, Set[str]] = dict()
     agent_to_slot_map = get_agent_to_slot_map(compilation)
 
     for constant in compilation.constant_map:
-        requirement_map[constant] = list()
+        requirement_map[constant] = set()
 
         for operator in compilation.flow_definition.operators:
             if constant in agent_to_slot_map[operator.name]:
-                requirement_map[constant].append(operator.name)
+                requirement_map[constant].add(operator.name)
 
     return requirement_map
 
 
-def get_item_source_map(compilation: Any) -> Dict[str, List[str]]:
-    source_map: Dict[str, List[str]] = dict()
+def get_item_source_map(compilation: Any) -> Dict[str, Set[str]]:
+    source_map: Dict[str, Set[str]] = dict()
 
     for constant in compilation.constant_map:
-        source_map[constant] = list()
+        source_map[constant] = set()
 
         for operator in compilation.flow_definition.operators:
             outputs = operator.outputs[0]
             params = unpack_list_of_signature_items(outputs.outcomes)
 
             if constant in params:
-                source_map[constant].append(operator.name)
+                source_map[constant].add(operator.name)
 
     return source_map
 
 
 def get_type_of_constant(compilation: Any, constant: str) -> str:
-    constant_type: str = TypeOptions.ROOT.value
-
     for item in compilation.constant_map:
         if item == constant:
-            constant_type = compilation.constant_map[item].sort.name
-            break
+            constant_type: str = compilation.constant_map[item].sort.name
+            return constant_type
 
-    return constant_type
+    raise ValueError(f"Unknown constant: {constant}")
 
 
 def is_this_a_datum_type(type_name: str) -> bool:
