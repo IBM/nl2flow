@@ -18,6 +18,37 @@ class VariableInfo(BaseModel):
     variable_type: Optional[str] = None
 
 
+class AgentInfoGeneratorInputCheck(BaseModel):
+    # The number of available agents
+    num_agents: int
+    # The number of variables
+    num_var: int
+    # The number of input parameters for an agent (action)
+    # The number of output parameters for an agent is equal to The number of input parameters for an agent
+    num_input_parameters: int
+    # The number of input data sets to a planner
+    num_samples: int
+    # The number of goal agents in available agents
+    num_goal_agents: int
+    # The number of coupled agents
+    num_coupled_agents: int
+    # The number of slot-fillable variables
+    num_slot_fillable_variables: int
+    # The number of mappable variables
+    num_mappable_variables: int
+    # the number of types for variables
+    num_var_types: int = 0
+    # slot-filler type
+    slot_filler_option: Optional[SlotOptions] = None
+    # Name generator
+    name_generator: NameGenerator = NameGenerator.NUMBER
+    # error_message
+    error_message: Optional[str] = None
+
+    def __hash__(self) -> int:
+        return hash((type(self),) + tuple(self.__dict__.values()))
+
+
 class AgentInfoGeneratorInput(BaseModel):
     # The number of available agents
     num_agents: int
@@ -28,7 +59,7 @@ class AgentInfoGeneratorInput(BaseModel):
     num_input_parameters: int
     # The number of input data sets to a planner
     num_samples: int
-    # The proportion of goal agents in available agents
+    # The number of goal agents in available agents
     num_goal_agents: int
     # The proportion of coupled agents
     proportion_coupled_agents: float
