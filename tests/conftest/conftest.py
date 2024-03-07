@@ -19,7 +19,7 @@ class TestDescriptionPlugin:
 
     @pytest.mark.skip("Need only for PyTest Reflection")
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_logstart(self, nodeid: Any, location: Any) -> Generator[Any]:  # type: ignore
+    def pytest_runtest_logstart(self, nodeid: Any, location: Any) -> Generator[Any, None, None]:
         if self.terminal_reporter.verbosity == 0:
             yield
         else:

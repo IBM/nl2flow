@@ -1,7 +1,7 @@
 from enum import Enum
 from math import ceil
 from typing import Optional
-from pydantic import BaseModel, model_validator, validator
+from pydantic import BaseModel, field_validator, model_validator
 from nl2flow.compile.options import SlotOptions
 
 
@@ -45,7 +45,7 @@ class AgentInfoGeneratorInput(BaseModel):
     # error_message
     error_message: Optional[str] = None
 
-    @validator("num_agents")
+    @field_validator("num_agents")
     def check_num_agents_greater_than_zero(cls, v):  # type: ignore
         if v <= 0:
             raise ValueError("num_agents should be greater than 0")
@@ -79,13 +79,13 @@ class AgentInfoGeneratorInput(BaseModel):
             )
         return self
 
-    @validator("num_input_parameters")
+    @field_validator("num_input_parameters")
     def check_num_input_parameters_greater_than_zero(cls, v):  # type: ignore
         if v <= 0:
             raise ValueError("num_input_parameters should be greater than 0")
         return v
 
-    @validator("num_samples")
+    @field_validator("num_samples")
     def check_num_samples_greater_than_zero(cls, v):  # type: ignore
         if v <= 0:
             raise ValueError("num_samples should be greater than 0")
