@@ -50,13 +50,13 @@ def get_pddl_generator_output_batch(
             num_agents=agent_info_generator_input.num_agents,
             num_var=agent_info_generator_input.num_var,
             num_input_parameters=agent_info_generator_input.num_input_parameters,
-            num_samples=batch_input.num_samples,
+            num_samples=agent_info_generator_input.num_samples,
             num_goal_agents=agent_info_generator_input.num_goal_agents,
             num_coupled_agents=int(
                 agent_info_generator_input.num_agents * agent_info_generator_input.proportion_coupled_agents
             ),
             num_slot_fillable_variables=int(
-                agent_info_generator_input.num_var * agent_info_generator_input.prop_slot_fillable_variables
+                agent_info_generator_input.num_var * agent_info_generator_input.proportion_slot_fillable_variables
             ),
             num_mappable_variables=int(
                 agent_info_generator_input.num_var * agent_info_generator_input.proportion_mappable_variables
