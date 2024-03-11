@@ -166,20 +166,20 @@ class AgentInfoGeneratorInput(BaseModel):
 
 class AgentInfoGeneratorInputBatch(BaseModel):
     # The number of available agents
-    num_agents: List[int] = [21]
+    num_agents: List[int] = [3]
     # The number of variables
-    num_var: List[int] = [7]
+    num_var: List[int] = [6]
     # The number of input parameters for an agent (action)
     # The number of output parameters for an agent is equal to The number of input parameters for an agent
     num_input_parameters: List[int] = [2]
     # The number of input data sets to a planner
     num_samples: List[int] = [2]
     # The proportion of goal agents in available agents
-    num_goal_agents: List[int] = [5]
+    num_goal_agents: List[int] = [1]
     # The proportion of coupled agents
     proportion_coupled_agents: List[float] = [0.5]
     # The proportion of slot-fillable variables
-    proportion_slot_fillable_variables: List[float] = [0.2]
+    proportion_slot_fillable_variables: List[float] = [1.0]
     # The proportion of mappable variables
     proportion_mappable_variables: List[float] = [0.5]
     # the number of types for variables
