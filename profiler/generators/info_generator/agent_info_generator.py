@@ -56,7 +56,7 @@ def generate_agent_infos(
                     goal_agent_ids=goals,
                     mappings=mappings,
                     available_data=available_data,
-                    agent_info_generator_input=input.copy(deep=True),
+                    agent_info_generator_input=input.model_copy(deep=True),
                 )
             )
         except Exception as e:

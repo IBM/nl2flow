@@ -1,6 +1,6 @@
 from typing import List, Optional, Set, Tuple
 from nl2flow.compile.flow import Flow
-from profiler.data_types.agent_info_data_types import AgentInfo, Plan
+from profiler.data_types.agent_info_data_types import AgentInfo, AgentInfoSignatureItem, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import (
     MemoryItem,
@@ -31,10 +31,12 @@ def get_uuid() -> str:
     return str(uuid4())
 
 
-def get_name(signature_item: SignatureItem) -> str:
-    return (  # type: ignore
-        signature_item[SEQUENCE_ALIAS][:] if SEQUENCE_ALIAS in signature_item else signature_item[NAME]
-    )
+def get_name(signature_item: AgentInfoSignatureItem) -> str:
+    if SEQUENCE_ALIAS not in signature_item:
+        return str(signature_item[NAME])
+    if signature_item[SEQUENCE_ALIAS] is not None:
+        return str(signature_item[SEQUENCE_ALIAS])
+    return ""
 
 
 def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
