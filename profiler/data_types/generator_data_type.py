@@ -5,10 +5,10 @@ from pydantic import BaseModel, field_validator, model_validator
 from nl2flow.compile.options import SlotOptions
 
 
-class NameGenerator(Enum):
-    NUMBER = 1
-    HAIKUNATOR = 2
-    DATASET = 3
+class NameGenerator(str, Enum):
+    NUMBER = "NUMBER"
+    HAIKUNATOR = "HAIKUNATOR"
+    DATASET = "DATASET"
 
 
 class VariableInfo(BaseModel):
