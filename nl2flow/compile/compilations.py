@@ -36,7 +36,7 @@ from nl2flow.compile.basic_compilations.utils import (
 
 from nl2flow.compile.options import (
     SlotOptions,
-    # MappingOptions,
+    MappingOptions,
     TypeOptions,
     MemoryState,
     ConstraintState,
@@ -229,10 +229,10 @@ class ClassicPDDL(Compilation):
         if SlotOptions.last_resort in slot_options:
             compile_last_resort_slots(self, **kwargs)
 
-        # if len(self.flow_definition.list_of_mappings) > 0:
-        # if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
         compile_declared_mappings(self, **kwargs)
-        compile_typed_mappings(self, **kwargs)
+
+        if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
+            compile_typed_mappings(self, **kwargs)
 
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
