@@ -84,28 +84,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
-    x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])
-
-    precondition_list = [
-        neg(compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value])),
-        neg(compilation.not_slotfillable(x)),
-    ]
-
-    del_effect_list = [
-        compilation.not_usable(x),
-        compilation.mapped(x),
-    ]
-
-    add_effect_list = [
-        compilation.free(x),
-        compilation.mapped_to(x, x),
-        compilation.known(
-            x,
-            compilation.constant_map[MemoryState.UNCERTAIN.value]
-            if LifeCycleOptions.confirm_on_slot in variable_life_cycle
-            else compilation.constant_map[MemoryState.KNOWN.value],
-        ),
-    ]
+    get_goodness_map(compilation)
 
     if SlotOptions.ordered in slot_options:
         not_slots = get_not_slots(compilation)
@@ -116,23 +95,73 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
 
             for index, slot in enumerate(slot_list):
                 if slot not in not_slots:
-                    ordered_preconditions = [
+                    precondition_list = [
+                        neg(
+                            compilation.known(
+                                compilation.constant_map[slot], compilation.constant_map[MemoryState.KNOWN.value]
+                            )
+                        ),
+                        neg(compilation.not_slotfillable(compilation.constant_map[slot])),
+                    ]
+
+                    precondition_list.extend(
+                        [
+                            compilation.known(
+                                compilation.constant_map[item], compilation.constant_map[MemoryState.KNOWN.value]
+                            )
+                            for item in slot_list[:index]
+                        ]
+                    )
+
+                    del_effect_list = [
+                        compilation.not_usable(compilation.constant_map[slot]),
+                        compilation.mapped(compilation.constant_map[slot]),
+                    ]
+
+                    add_effect_list = [
+                        compilation.free(compilation.constant_map[slot]),
+                        compilation.mapped_to(compilation.constant_map[slot], compilation.constant_map[slot]),
                         compilation.known(
-                            compilation.constant_map[item], compilation.constant_map[MemoryState.KNOWN.value]
-                        )
-                        for item in slot_list[:index]
+                            compilation.constant_map[slot],
+                            compilation.constant_map[MemoryState.UNCERTAIN.value]
+                            if LifeCycleOptions.confirm_on_slot in variable_life_cycle
+                            else compilation.constant_map[MemoryState.KNOWN.value],
+                        ),
                     ]
 
                     compilation.problem.action(
                         f"{BasicOperations.SLOT_FILLER.value}----{slot}----for-agent-{operator.name}",
-                        parameters=[x],
-                        precondition=land(*precondition_list + ordered_preconditions, flat=True),
+                        parameters=[],
+                        precondition=land(*precondition_list, flat=True),
                         effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
                         + [fs.DelEffect(del_e) for del_e in del_effect_list],
-                        cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
+                        cost=iofs.AdditiveActionCost(compilation.slot_goodness(compilation.constant_map[slot])),
                     )
 
     else:
+        x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])
+
+        precondition_list = [
+            neg(compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value])),
+            neg(compilation.not_slotfillable(x)),
+        ]
+
+        del_effect_list = [
+            compilation.not_usable(x),
+            compilation.mapped(x),
+        ]
+
+        add_effect_list = [
+            compilation.free(x),
+            compilation.mapped_to(x, x),
+            compilation.known(
+                x,
+                compilation.constant_map[MemoryState.UNCERTAIN.value]
+                if LifeCycleOptions.confirm_on_slot in variable_life_cycle
+                else compilation.constant_map[MemoryState.KNOWN.value],
+            ),
+        ]
+
         compilation.problem.action(
             BasicOperations.SLOT_FILLER.value,
             parameters=[x],
@@ -143,7 +172,6 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
         )
 
     if SlotOptions.last_resort not in slot_options:
-        get_goodness_map(compilation)
         compile_new_object_maps(compilation, **kwargs)
 
 

@@ -90,7 +90,6 @@ class Kstar(Planner):
 
                 if action_name is not None:
                     new_action = parse_action(action_name=action_name, parameters=action_split[1:], **kwargs)
-
                 else:
                     raise ValueError("Could not parse action name.")
 

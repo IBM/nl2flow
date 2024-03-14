@@ -101,7 +101,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         step_2: Action = poi.plan[1]
         assert (
             step_2.name == "Find Errors Alternative"
-        ), "Step 2 acquires list of errors using alternative Find Errors operation."
+        ), "Step 2 acquires list of errors using alternative Find Erro;ljrs operation."
 
         step_3: Action = poi.plan[2]
         assert step_3.name == "Fix Errors", "Fix Errors using the alternative path."
