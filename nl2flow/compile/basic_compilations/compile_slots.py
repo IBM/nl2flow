@@ -7,8 +7,8 @@ from nl2flow.compile.schemas import FlowDefinition
 from nl2flow.compile.basic_compilations.utils import (
     get_type_of_constant,
     is_this_a_datum,
-    # get_agent_to_slot_map,
     # get_item_requirement_map,
+    get_agent_to_slot_map,
     get_item_source_map,
     generate_new_objects,
 )
@@ -84,9 +84,6 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
-    if SlotOptions.last_resort not in slot_options:
-        _ = get_goodness_map(compilation)
-
     x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])
 
     precondition_list = [
@@ -110,7 +107,32 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
         ),
     ]
 
-    if SlotOptions.ordered not in slot_options:
+    if SlotOptions.ordered in slot_options:
+        not_slots = get_not_slots(compilation)
+        agent_to_slot_map = get_agent_to_slot_map(compilation)
+
+        for operator in compilation.flow_definition.operators:
+            slot_list = agent_to_slot_map[operator.name]
+
+            for index, slot in enumerate(slot_list):
+                if slot not in not_slots:
+                    ordered_preconditions = [
+                        compilation.known(
+                            compilation.constant_map[item], compilation.constant_map[MemoryState.KNOWN.value]
+                        )
+                        for item in slot_list[:index]
+                    ]
+
+                    compilation.problem.action(
+                        f"{BasicOperations.SLOT_FILLER.value}----{slot}----for-agent-{operator.name}",
+                        parameters=[x],
+                        precondition=land(*precondition_list + ordered_preconditions, flat=True),
+                        effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
+                        + [fs.DelEffect(del_e) for del_e in del_effect_list],
+                        cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
+                    )
+
+    else:
         compilation.problem.action(
             BasicOperations.SLOT_FILLER.value,
             parameters=[x],
@@ -120,16 +142,17 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
             cost=iofs.AdditiveActionCost(compilation.slot_goodness(x)),
         )
 
-    else:
-        # for constant in compilation.constant_map:
-        #     if constant not in not_slots and is_this_a_datum(compilation, constant):
-        pass
-
     if SlotOptions.last_resort not in slot_options:
+        get_goodness_map(compilation)
         compile_new_object_maps(compilation, **kwargs)
 
 
 def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
+    slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
+    if SlotOptions.ordered in slot_options:
+        return
+
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     flow_definition: FlowDefinition = compilation.flow_definition
 
@@ -187,6 +210,9 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                     )
 
             slot_cost = int((2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value)
+
+            # if SlotOptions.ordered in slot_options:
+            #     requirement_map =
 
             compilation.problem.action(
                 f"{BasicOperations.SLOT_FILLER.value}----{constant}",

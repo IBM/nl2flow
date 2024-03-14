@@ -52,6 +52,7 @@ class ConfirmOptions(enum.Enum):
 
 
 class MappingOptions(enum.Enum):
+    ignore_types = "IGNORE_TYPES"
     group_maps = "GROUP"
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
@@ -65,6 +66,7 @@ class SlotOptions(enum.Enum):
     higher_cost = "COST"
     last_resort = "FALLBACK"
     ordered = "ORDERED"
+    all_together = "TOGETHER"
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"

@@ -46,14 +46,14 @@ class TestCompileUtils:
         operator_a = next(x for x in operators if x.name == "A")
         operator_b = next(x for x in operators if x.name == "B")
 
-        assert unpack_list_of_signature_items(operator_a.inputs) == {"a1", "a2", "a3", "a4", "a5", "a6"}
-        assert unpack_list_of_signature_items(operator_b.inputs) == {"a1", "b1", "b2"}
+        assert unpack_list_of_signature_items(operator_a.inputs) == ["a1", "a2", "a3", "a4", "a5", "a6"]
+        assert unpack_list_of_signature_items(operator_b.inputs) == ["b1", "a1", "b2"]
 
         outputs_a = operator_a.outputs if isinstance(operator_a.outputs, Outcome) else operator_a.outputs[0]
-        assert unpack_list_of_signature_items(outputs_a.outcomes) == {"ao1", "ao2"}
+        assert unpack_list_of_signature_items(outputs_a.outcomes) == ["ao1", "ao2"]
 
         outputs_b = operator_b.outputs if isinstance(operator_b.outputs, Outcome) else operator_b.outputs[0]
-        assert unpack_list_of_signature_items(outputs_b.outcomes) == {"ao2"}
+        assert unpack_list_of_signature_items(outputs_b.outcomes) == ["ao2"]
 
     def test_get_item_source_map(self) -> None:
         item_source_map = get_item_source_map(self.flow.compilation)
@@ -62,8 +62,8 @@ class TestCompileUtils:
 
     def test_get_agent_to_slot_map(self) -> None:
         agent_to_slot_map = get_agent_to_slot_map(self.flow.compilation)
-        assert agent_to_slot_map["a"] == {"a1", "a2", "a3", "a4", "a5", "a6"}
-        assert agent_to_slot_map["b"] == {"a1", "b1", "b2"}
+        assert agent_to_slot_map["a"] == ["a1", "a2", "a3", "a4", "a5", "a6"]
+        assert agent_to_slot_map["b"] == ["b1", "a1", "b2"]
 
     def test_get_item_requirement_map(self) -> None:
         item_requirement_map = get_item_requirement_map(self.flow.compilation)

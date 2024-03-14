@@ -4,22 +4,22 @@ from nl2flow.compile.options import TypeOptions, MAX_RETRY, LOOKAHEAD
 from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty, Parameter, SignatureItem
 
 
-def unpack_list_of_signature_items(signature_items: List[SignatureItem]) -> Set[str]:
-    items = set()
+def unpack_list_of_signature_items(signature_items: List[SignatureItem]) -> List[str]:
+    items = list()
 
     for signature_item in signature_items:
         params = signature_item.parameters
 
         if isinstance(params, List):
-            items.update({p if isinstance(p, str) else p.item_id for p in params})
+            items.extend([p if isinstance(p, str) else p.item_id for p in params])
         else:
-            items.add(params if isinstance(params, str) else params.item_id)
+            items.append(params if isinstance(params, str) else params.item_id)
 
     return items
 
 
-def get_agent_to_slot_map(compilation: Any) -> Dict[str, Set[str]]:
-    agent_to_slot_map: Dict[str, Set[str]] = dict()
+def get_agent_to_slot_map(compilation: Any) -> Dict[str, List[str]]:
+    agent_to_slot_map: Dict[str, List[str]] = dict()
 
     for operator in compilation.flow_definition.operators:
         agent_to_slot_map[operator.name] = unpack_list_of_signature_items(operator.inputs)

@@ -36,6 +36,7 @@ from nl2flow.compile.basic_compilations.utils import (
 
 from nl2flow.compile.options import (
     SlotOptions,
+    # MappingOptions,
     TypeOptions,
     MemoryState,
     ConstraintState,
@@ -228,8 +229,11 @@ class ClassicPDDL(Compilation):
         if SlotOptions.last_resort in slot_options:
             compile_last_resort_slots(self, **kwargs)
 
+        # if len(self.flow_definition.list_of_mappings) > 0:
+        # if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
         compile_declared_mappings(self, **kwargs)
         compile_typed_mappings(self, **kwargs)
+
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
 
@@ -237,7 +241,7 @@ class ClassicPDDL(Compilation):
         self.problem.init = self.init
 
         writer = FstripsWriter(self.problem)
-        domain = writer.print_domain(constant_objects=self.constant_map.values()).replace(" :numeric-fluents", "")
-        problem = writer.print_instance(constant_objects=self.constant_map.values())
+        domain = writer.print_domain(constant_objects=list(self.constant_map.values())).replace(" :numeric-fluents", "")
+        problem = writer.print_instance(constant_objects=list(self.constant_map.values()))
 
         return PDDL(domain=domain, problem=problem), self.cached_transforms

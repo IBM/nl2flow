@@ -66,7 +66,7 @@ def parse_action(
 
         for signature_item in signatures:
             for parameter in signature_item.parameters:
-                if isinstance(parameter, MemoryItem):
+                if isinstance(parameter, MemoryItem) or isinstance(parameter, Parameter):
                     list_of_parameters.append(
                         Parameter(
                             item_id=parameter.item_id,
