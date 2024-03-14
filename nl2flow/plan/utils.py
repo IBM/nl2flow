@@ -104,7 +104,11 @@ def parse_action(
             BasicOperations.MAPPER.value
         ):
             temp = action_name.split("----")
-            new_action.name = temp[0]
+            new_action.name = (
+                BasicOperations.SLOT_FILLER.value
+                if BasicOperations.SLOT_FILLER.value in temp[0]
+                else BasicOperations.MAPPER.value
+            )
 
             if temp[1:] and not parameters:
                 parameters = temp[1:]

@@ -19,6 +19,8 @@ from nl2flow.compile.basic_compilations.compile_confirmation import compile_conf
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
+    compile_new_object_maps,
+    get_goodness_map,
 )
 from nl2flow.compile.basic_compilations.compile_mappings import (
     compile_typed_mappings,
@@ -222,6 +224,10 @@ class ClassicPDDL(Compilation):
         add_extra_objects(self, **kwargs)
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
+        if len(slot_options) > 1:
+            compile_new_object_maps(self, **kwargs)
+            get_goodness_map(self)
 
         if SlotOptions.higher_cost in slot_options:
             compile_higher_cost_slots(self, **kwargs)

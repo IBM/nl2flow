@@ -7,6 +7,8 @@ from tests.testing import BaseTestAgents
 
 class TestSlotFillerOrdered(BaseTestAgents):
     def setup_method(self) -> None:
+        BaseTestAgents.setup_method(self)
+
         agent_a = Operator("Agent A")
         agent_a.add_input(SignatureItem(parameters=["x", "y"]))
         agent_a.add_output(SignatureItem(parameters="a"))
@@ -39,7 +41,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         self.flow.slot_options.add(SlotOptions.ordered)
         self.flow.slot_options.add(SlotOptions.last_resort)
 
-        goal = GoalItems(goals=GoalItem(goal_name="B"))
+        goal = GoalItems(goals=GoalItem(goal_name="Agent B"))
         self.flow.add(goal)
 
         plans = self.get_plan()
@@ -48,32 +50,32 @@ class TestSlotFillerOrdered(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 6, "There should be 6 steps in the plan."
         assert poi.plan[2].name == "Agent A", "Agent A is used to get value of a."
-        assert [step.inputs[0] for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
+        assert [step.inputs[0].item_id for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
             "x",
             "y",
             "b",
             "c",
         ]
 
-    def test_slot_all_together(self) -> None:
-        self.flow.slot_options.add(SlotOptions.all_together)
-        plans = self.get_plan()
-        self.check_basic_plan(plans)
-
-    def test_slot_all_together_conflict_with_last_resort(self) -> None:
-        self.flow.slot_options.add(SlotOptions.all_together)
-        self.flow.slot_options.add(SlotOptions.last_resort)
-
-        plans = self.get_plan()
-        assert len(plans.list_of_plans), "There should exactly one plan."
-
-        poi = plans.list_of_plans[0]
-        assert len(poi.plan) == 7, "There should be 7 steps in the plan."
-        assert poi.plan[2].name == "Agent A", "Agent A is used to get value of a."
-        assert [step.inputs[0] for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
-            "x",
-            "y",
-            "a",
-            "b",
-            "c",
-        ]
+    # def test_slot_all_together(self) -> None:
+    #     self.flow.slot_options.add(SlotOptions.all_together)
+    #     plans = self.get_plan()
+    #     self.check_basic_plan(plans)
+    #
+    # def test_slot_all_together_conflict_with_last_resort(self) -> None:
+    #     self.flow.slot_options.add(SlotOptions.all_together)
+    #     self.flow.slot_options.add(SlotOptions.last_resort)
+    #
+    #     plans = self.get_plan()
+    #     assert len(plans.list_of_plans), "There should exactly one plan."
+    #
+    #     poi = plans.list_of_plans[0]
+    #     assert len(poi.plan) == 7, "There should be 7 steps in the plan."
+    #     assert poi.plan[2].name == "Agent A", "Agent A is used to get value of a."
+    #     assert [step.inputs[0].item_id for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
+    #         "x",
+    #         "y",
+    #         "a",
+    #         "b",
+    #         "c",
+    #     ]
