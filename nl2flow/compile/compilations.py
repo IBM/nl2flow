@@ -19,6 +19,7 @@ from nl2flow.compile.basic_compilations.compile_confirmation import compile_conf
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
+    compile_all_together,
     compile_new_object_maps,
     get_goodness_map,
 )
@@ -234,6 +235,9 @@ class ClassicPDDL(Compilation):
 
         if SlotOptions.last_resort in slot_options:
             compile_last_resort_slots(self, **kwargs)
+
+        if SlotOptions.all_together in slot_options:
+            compile_all_together(self, **kwargs)
 
         compile_declared_mappings(self, **kwargs)
 

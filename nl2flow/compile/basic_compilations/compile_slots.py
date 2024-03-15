@@ -3,7 +3,6 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import List, Set, Dict, Any
 
-from nl2flow.compile.schemas import FlowDefinition
 from nl2flow.compile.basic_compilations.utils import (
     get_type_of_constant,
     is_this_a_datum,
@@ -72,6 +71,18 @@ def compile_new_object_maps(
                         compilation.constant_map[constant],
                     )
                 )
+
+
+def get_slots_as_not_last_resort(compilation: Any) -> List[str]:
+    return list(
+        map(
+            lambda ns: str(ns.slot_name),
+            filter(
+                lambda sp: sp.do_not_last_resort,
+                compilation.flow_definition.slot_properties,
+            ),
+        )
+    )
 
 
 def get_goodness_map(compilation: Any, no_edit: bool = False) -> Dict[str, float]:
@@ -197,23 +208,13 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
 def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    flow_definition: FlowDefinition = compilation.flow_definition
 
     not_slots = get_not_slots(compilation)
     source_map = get_item_source_map(compilation)
     requirement_map = get_item_requirement_map(compilation)
     agent_to_slot_map = get_agent_to_slot_map(compilation)
     goodness_map = get_goodness_map(compilation, no_edit=True)
-
-    not_slots_as_last_resort = list(
-        map(
-            lambda ns: str(ns.slot_name),
-            filter(
-                lambda sp: sp.do_not_last_resort,
-                flow_definition.slot_properties,
-            ),
-        )
-    )
+    not_slots_as_last_resort = get_slots_as_not_last_resort(compilation)
 
     for constant in compilation.constant_map:
         if constant not in not_slots and is_this_a_datum(compilation, constant):
@@ -269,7 +270,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                     ]
 
                     compilation.problem.action(
-                        f"{BasicOperations.SLOT_FILLER.value}--last-resort--for-agent-{operator_name}----{constant}",
+                        f"{BasicOperations.SLOT_FILLER.value}--last-resort--for-{operator_name}----{constant}",
                         parameters=[],
                         precondition=land(*precondition_list + extra_preconditions, flat=True),
                         effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
@@ -295,3 +296,84 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         )
                     ),
                 )
+
+
+def compile_all_together(compilation: Any, **kwargs: Any) -> None:
+    slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
+
+    not_slots = get_not_slots(compilation)
+    source_map = get_item_source_map(compilation)
+    agent_to_slot_map = get_agent_to_slot_map(compilation)
+    not_slots_as_last_resort = get_slots_as_not_last_resort(compilation)
+    goodness_map = get_goodness_map(compilation, no_edit=True)
+
+    for operator in compilation.flow_definition.operators:
+        slot_list = agent_to_slot_map[operator.name]
+
+        if len(slot_list) > 0:
+            precondition_list = []
+            add_effect_list = []
+            del_effect_list = []
+            params = []
+            slot_cost = 0
+
+            for constant in slot_list:
+                if constant not in not_slots:
+                    params.append(constant)
+                    precondition_list.append(
+                        neg(
+                            compilation.known(
+                                compilation.constant_map[constant],
+                                compilation.constant_map[MemoryState.KNOWN.value],
+                            )
+                        ),
+                    )
+
+                    del_effect_list.extend(
+                        [
+                            compilation.not_usable(compilation.constant_map[constant]),
+                            compilation.mapped(compilation.constant_map[constant]),
+                        ]
+                    )
+
+                    add_effect_list.extend(
+                        [
+                            compilation.free(compilation.constant_map[constant]),
+                            compilation.mapped_to(
+                                compilation.constant_map[constant],
+                                compilation.constant_map[constant],
+                            ),
+                            compilation.known(
+                                compilation.constant_map[constant],
+                                compilation.constant_map[MemoryState.UNCERTAIN.value]
+                                if LifeCycleOptions.confirm_on_slot in variable_life_cycle
+                                else compilation.constant_map[MemoryState.KNOWN.value],
+                            ),
+                        ]
+                    )
+
+                    if SlotOptions.last_resort in slot_options and constant not in not_slots_as_last_resort:
+                        for reference_operator in source_map[constant]:
+                            precondition_list.append(
+                                compilation.has_done(
+                                    compilation.constant_map[reference_operator],
+                                    compilation.constant_map[HasDoneState.past.value],
+                                )
+                            )
+
+                    slot_cost += int((2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value)
+
+            compilation.problem.action(
+                f"{BasicOperations.SLOT_FILLER.value}--for-{operator.name}----{'----'.join(params)}",
+                parameters=[],
+                precondition=land(*precondition_list, flat=True),
+                effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
+                + [fs.DelEffect(del_e) for del_e in del_effect_list],
+                cost=iofs.AdditiveActionCost(
+                    compilation.problem.language.constant(
+                        slot_cost,
+                        compilation.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
