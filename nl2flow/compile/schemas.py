@@ -90,7 +90,7 @@ class GoalItems(BaseModel):
 
 
 class SignatureItem(BaseModel):
-    parameters: Union[str, Parameter, MemoryItem, List[Union[str, MemoryItem, Parameter]]]
+    parameters: Union[str, Parameter, MemoryItem, List[Union[str, MemoryItem, Parameter]]] = []
     constraints: List[Constraint] = []
 
     @classmethod

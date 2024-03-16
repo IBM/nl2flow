@@ -15,7 +15,7 @@ from typing import Set, Tuple, List
 class SketchCompilation(ABC):
     def __init__(self, name: str) -> None:
         self.sketch = Sketch(sketch_name=name)
-        self.flow = Flow(name=f"Flow for sketch: {name}")
+        self.flow = Flow(name=name)
         self._options: Set[SketchOptions] = set()
 
     @property

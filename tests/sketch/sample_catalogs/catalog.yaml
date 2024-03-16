@@ -36,15 +36,19 @@ agents:
 
   - id: Trip Approval
     inputs:
-      - name: airfare to
-      - name: airfare from
-      - name: hotel
-      - name: username
-        type: Email
       - constraint: hotel policy
-        evaluate: hotel_booking.total_expense < 100
+        variables:
+          - name: hotel_booking
+        evaluate: hotel_booking.price < 100
       - constraint: flight policy
-        evaluate: flight_ticket.total_expense < 100
+        variables:
+          - name: flight_ticket
+        evaluate: flight_ticket.price < 100
+      - constraint: travel policy
+        variables:
+          - name: hotel_booking
+          - name: flight_ticket
+        evaluate: hotel_booking.price + flight_ticket.price < 150
     outputs:
       - name: approval
 
@@ -64,7 +68,7 @@ agents:
   - id: Kayak
     inputs:
       - constraint: is not business trip
-        evaluate: from(utterance)
+        evaluate: eval.state
       - name: date
         type: Datetime
       - name: home
@@ -88,9 +92,13 @@ agents:
       - name: flight_ticket
       - name: hotel_booking
       - constraint: hotel policy
-        evaluate: hotel_booking.total_expense < 100
+        variables:
+          - name: hotel_booking
+        evaluate: hotel_booking.price < 100
       - constraint: flight policy
-        evaluate: flight_ticket.total_expense < 100
+        variables:
+          - name: flight_ticket
+        evaluate: flight_ticket.price < 100
 
 
   - id: Hotel.com
@@ -142,13 +150,6 @@ agents:
 
 
   - id: Email Agent
-    inputs:
-      - name: from
-        type: Email
-      - name: to
-        type: Email
-      - name: title
-      - name: body
 
 
   - id: Registration Bot

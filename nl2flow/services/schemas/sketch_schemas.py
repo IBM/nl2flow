@@ -47,14 +47,15 @@ class Sketch(BaseModel):
     slots: List[Slot] = []
 
 
-class Constraint(BaseModel):
-    constraint: str
-    evaluate: str
-
-
 class Signature(BaseModel):
     name: str
     type: Optional[str] = None
+
+
+class Constraint(BaseModel):
+    constraint: str
+    variables: List[Signature] = []
+    evaluate: str
 
 
 class Agent(BaseModel):

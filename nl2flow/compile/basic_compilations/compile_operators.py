@@ -46,10 +46,10 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         del_effect_list = list()
         type_list = list()
 
-        for o_input in operator.inputs:
+        for index_of_input, o_input in enumerate(operator.inputs):
             for param in o_input.parameters:
                 add_to_condition_list_pre_check(compilation, param)
-                index_of_param = list(o_input.parameters).index(param)
+                index_of_param = index_of_input + list(o_input.parameters).index(param)
 
                 if isinstance(param, Parameter):
                     type_of_param = param.item_type or TypeOptions.ROOT.value
