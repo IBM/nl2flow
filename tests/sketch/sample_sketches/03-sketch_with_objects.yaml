@@ -1,0 +1,6 @@
+---
+sketch_name: Conference Trip
+utterances:
+  - I want to apply for a visa
+components:
+  - item: visa

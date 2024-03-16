@@ -3,11 +3,12 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land
 from typing import List, Set, Any
 
-from nl2flow.compile.basic_compilations.utils import get_type_of_constant
-from nl2flow.compile.schemas import GoalItem, GoalItems
+from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_memory_item_to_constant_map
+from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem
 
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
+    TypeOptions,
     GoalType,
     GoalOptions,
     RestrictedOperations,
@@ -57,6 +58,15 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
                     list_of_constants.append(item)
         else:
             list_of_constants = [goal_item.goal_name]
+
+        for item in list_of_constants:
+            if item not in compilation.constant_map:
+                add_memory_item_to_constant_map(
+                    compilation,
+                    memory_item=MemoryItem(
+                        item_id=item, item_type=TypeOptions.ROOT.value, item_state=MemoryState.UNKNOWN.value
+                    ),
+                )
 
         if goal_item.goal_type == GoalType.OBJECT_USED:
             goal_predicates.update(compilation.been_used(compilation.constant_map[item]) for item in list_of_constants)

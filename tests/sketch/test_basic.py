@@ -54,12 +54,16 @@ class TestSketchBasic:
         for plan in planner_response.list_of_plans:
             action_names = [step.name for step in plan.plan]
             assert (
-                len([a for a in action_names if a.startswith(BasicOperations.CONSTRAINT.value)]) == 1
-            ), "Only one constraint check."
+                len([a for a in action_names if a.startswith(BasicOperations.CONSTRAINT.value)]) == 2
+            ), "Two constraint checks."
 
-            assert [a.startswith(BasicOperations.CONSTRAINT.value) for a in action_names].index(
-                True
-            ) > action_names.index("Concur"), "Constraint check after Concur."
+            assert [
+                a.startswith(BasicOperations.CONSTRAINT.value) and "business trip" in a for a in action_names
+            ].index(True) < action_names.index("Concur"), "Constraint check for business trip before Concur."
+
+            assert [
+                a.startswith(BasicOperations.CONSTRAINT.value) and "travel policy" in a for a in action_names
+            ].index(True) > action_names.index("Concur"), "Constraint check for travel policy after Concur."
 
             action_names = [
                 a

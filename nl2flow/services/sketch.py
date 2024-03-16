@@ -1,6 +1,6 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import PDDL, Transform
-from nl2flow.compile.options import SlotOptions
+from nl2flow.compile.options import SlotOptions, MappingOptions
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.plan.planners import Kstar
 
@@ -18,6 +18,7 @@ class SketchCompilation(ABC):
         self.sketch = Sketch(sketch_name=name)
         self.flow = Flow(name=name)
         self.flow.slot_options.add(SlotOptions.ordered)
+        self.flow.mapping_options.add(MappingOptions.transitive)
         self._options: Set[SketchOptions] = set()
 
     @property

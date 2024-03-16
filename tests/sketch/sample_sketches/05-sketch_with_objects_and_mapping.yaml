@@ -3,29 +3,19 @@ sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
 components:
-  - item: conference registration
   - item: ticket to conference
-  - item: return ticket
-  - item: hotel booking
-  - item: Trip Approval
-  - item: visa
 
 ## The following is likely not derived from user
 ## instruction. I have put it as part of the sketch
 ## for illustrative purposes.
 
-slots:
-  - name: Employee ID
-    goodness: 0.2
-  - name: Employer Letter
-    goodness: 0.0
-  - name: W3 ID
-    goodness: 1.0
-
 mappings:
   - source: ticket to conference
     target: flight_ticket
-    preference: 1.0
-  - source: return ticket
-    target: flight_ticket
-    preference: 1.0
+    goodness: 0.7
+  - source: address
+    target: destination
+    goodness: 0.0
+  - source: home
+    target: destination
+    goodness: 0.0

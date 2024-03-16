@@ -3,8 +3,8 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Set, Any
 
-from nl2flow.compile.basic_compilations.utils import is_this_a_datum
-from nl2flow.compile.schemas import FlowDefinition
+from nl2flow.compile.schemas import FlowDefinition, MemoryItem
+from nl2flow.compile.basic_compilations.utils import is_this_a_datum, add_memory_item_to_constant_map
 from nl2flow.compile.options import (
     TypeOptions,
     LifeCycleOptions,
@@ -31,6 +31,15 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
 
     if len(flow_definition.list_of_mappings) > 0:
         for mappable_item in flow_definition.list_of_mappings:
+            for item in [mappable_item.source_name, mappable_item.target_name]:
+                if item not in compilation.constant_map:
+                    add_memory_item_to_constant_map(
+                        compilation,
+                        memory_item=MemoryItem(
+                            item_id=item, item_type=TypeOptions.ROOT.value, item_state=MemoryState.UNKNOWN.value
+                        ),
+                    )
+
             source = compilation.constant_map[mappable_item.source_name]
             target = compilation.constant_map[mappable_item.target_name]
 
@@ -63,7 +72,6 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             neg(compilation.not_mappable(x, y)),
             neg(compilation.mapped_to(x, y)),
             neg(compilation.new_item(y)),
-            compilation.been_used(y),
         ]
 
         effect_list = [

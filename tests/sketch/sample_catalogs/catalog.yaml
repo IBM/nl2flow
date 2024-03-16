@@ -3,8 +3,7 @@ catalog_name: Book a Trip
 agents:
   - id: Workday
     inputs:
-      - name: w3
-        type: Email
+      - name: Employee ID
     outputs:
       - name: name
       - name: address
@@ -81,6 +80,8 @@ agents:
 
   - id: Concur
     inputs:
+      - constraint: is a business trip
+        evaluate: eval.state
       - name: date
         type: Datetime
       - name: home
@@ -157,3 +158,5 @@ agents:
       - name: list of papers
       - name: username
         type: Email
+    output:
+      - name: invoice

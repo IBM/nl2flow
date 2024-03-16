@@ -1,10 +1,9 @@
 ---
 sketch_name: Conference Trip
 utterances:
-  - I want to book a trip to a conference
+  - Fetch my letter of employment
 components:
-  - item: Trip Approval
-  - item: Visa Application
+  - item: Employer Letter
 
 ## The following is likely not derived from user
 ## instruction. I have put it as part of the sketch
@@ -15,5 +14,5 @@ slots:
     goodness: 0.2
   - name: Employer Letter
     goodness: 0.0
-  - name: W3 ID
+  - name: w3
     goodness: 1.0
