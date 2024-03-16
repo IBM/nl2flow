@@ -131,7 +131,7 @@ def parse_action(
 
             for v in ConstraintState:
                 if action_name.endswith(f"_to_{string_transform(str(v.value), transforms)}"):
-                    new_action_name = f"{BasicOperations.CONSTRAINT.value}(new_action_name) = {v.value}"
+                    new_action_name = f"{BasicOperations.CONSTRAINT.value}({new_action_name}) = {v.value}"
 
             new_action.name = new_action_name
 

@@ -1,5 +1,6 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import PDDL, Transform
+from nl2flow.compile.options import SlotOptions
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.plan.planners import Kstar
 
@@ -16,6 +17,7 @@ class SketchCompilation(ABC):
     def __init__(self, name: str) -> None:
         self.sketch = Sketch(sketch_name=name)
         self.flow = Flow(name=name)
+        self.flow.slot_options.add(SlotOptions.ordered)
         self._options: Set[SketchOptions] = set()
 
     @property

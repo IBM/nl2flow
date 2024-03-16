@@ -3,6 +3,7 @@ from typing import Tuple
 
 import yaml  # type: ignore
 
+from nl2flow.compile.options import BasicOperations
 from nl2flow.plan.planners import Kstar
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.services.sketch import BasicSketchCompilation
@@ -44,8 +45,36 @@ def sketch_to_plan(catalog_name: str, sketch_name: str) -> PlannerResponse:
 class TestSketchBasic:
     def test_basic(self) -> None:
         planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="01-simple_sketch")
+        self.check_basic_plan(planner_response)
+
+    @staticmethod
+    def check_basic_plan(planner_response: PlannerResponse) -> None:
         assert planner_response.list_of_plans, "There should be plans."
 
-    def test_with_slots(self) -> None:
+        for plan in planner_response.list_of_plans:
+            action_names = [step.name for step in plan.plan]
+            assert (
+                len([a for a in action_names if a.startswith(BasicOperations.CONSTRAINT.value)]) == 1
+            ), "Only one constraint check."
+
+            assert [a.startswith(BasicOperations.CONSTRAINT.value) for a in action_names].index(
+                True
+            ) > action_names.index("Concur"), "Constraint check after Concur."
+
+            action_names = [
+                a
+                for a in action_names
+                if a not in BasicOperations._value2member_map_ and not a.startswith(BasicOperations.CONSTRAINT.value)
+            ]
+
+            assert set(action_names) == {"Workday", "W3 Agent", "Visa Application", "Concur", "Trip Approval"}
+
+    def test_with_order(self) -> None:
         planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="02-simple_sketch_in_order")
-        assert planner_response.list_of_plans, "There should be plans."
+        self.check_basic_plan(planner_response)
+
+        for plan in planner_response.list_of_plans:
+            action_names = [step.name for step in plan.plan]
+            assert action_names.index("Visa Application") > action_names.index(
+                "Trip Approval"
+            ), "Visa application always occurs after Trip Approval."

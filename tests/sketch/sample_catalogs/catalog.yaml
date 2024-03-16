@@ -55,10 +55,9 @@ agents:
 
   - id: Visa Application
     inputs:
-      - name: name
+      - name: Passport
       - name: address
         type: Location
-      - name: Passport
       - name: Employer Letter
         type: File
     outputs:
