@@ -25,9 +25,9 @@ from profiler.common_helpers.hash_helper import get_hash_str
 class TestDescriptionGeneratorHelper(unittest.TestCase):
     def test_get_variable_name_from_sig_item(self) -> None:
         sig_items = [
-            {"name": "abc", "data_type": "integer"},
-            {"name": "def", "data_type": "string"},
-            {"name": "ghi", "data_type": "date"},
+            AgentInfoSignatureItem(name="abc", data_type="integer"),
+            AgentInfoSignatureItem(name="def", data_type="string"),
+            AgentInfoSignatureItem(name="ghi", data_type="date"),
         ]
         variable_strs = get_variable_name_from_sig_item(sig_items)
         self.assertEqual(
@@ -37,9 +37,9 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
 
     def test_get_variable_type_from_sig_item(self) -> None:
         sig_items = [
-            {"name": "abc", "data_type": "integer"},
-            {"name": "def", "data_type": "string"},
-            {"name": "ghi", "data_type": "date"},
+            AgentInfoSignatureItem(name="abc", data_type="integer"),
+            AgentInfoSignatureItem(name="def", data_type="string"),
+            AgentInfoSignatureItem(name="ghi", data_type="date"),
         ]
         variable_type_strs = get_variable_type_from_sig_item(sig_items)
         self.assertEqual(
@@ -52,12 +52,16 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         )
 
     def test_get_signature_item_names(self) -> None:
-        sig_items = [{"name": "abc"}, {"name": "def"}, {"name": "ghi"}]
+        sig_items = [
+            AgentInfoSignatureItem(name="abc"),
+            AgentInfoSignatureItem(name="def"),
+            AgentInfoSignatureItem(name="ghi"),
+        ]
         names_str = get_signature_item_names(sig_items)
         self.assertEqual(names_str, "Variable abc, Variable def, and Variable ghi")
 
     def test_get_names_from_signature_items(self) -> None:
-        sig_items = [{"name": "abc"}, {"name": "def"}]
+        sig_items = [AgentInfoSignatureItem(name="abc"), AgentInfoSignatureItem(name="def")]
         strs = get_names_from_signature_items(sig_items)
         self.assertEqual(strs, ["Variable abc", "Variable def"])
 
@@ -201,7 +205,8 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         self.assertEqual(
             get_hash_str(res),
             get_hash_str(
-                "The system has Variable b, Variable c, Variable r, and Variable s."
-                + "\nThe type of Variable c is sample_type. The type of Variable r is type_a."
+                "Variable b can be acquired by asking the user.\n"
+                + "Variable c cannot be acquired by asking the user.\n"
+                + "The type of Variable c is sample_type. The type of Variable r is type_a."
             ),
         )

@@ -35,7 +35,6 @@ def get_sample_description(
     for agent_info in available_agents:
         pre_cond, effect = get_agent_info_description(agent_info)
         descriptions.append(pre_cond)
-        # descriptions.append(in_description)
         descriptions.append(effect)
     # known values
     if len(available_data) > 0:
