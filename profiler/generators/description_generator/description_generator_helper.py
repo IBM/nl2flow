@@ -122,9 +122,9 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
 
 def get_agent_info_signature_item_description(sig_item: AgentInfoSignatureItem) -> str:
     sig_name = sig_item.get("name")
-    required_str = "required" if sig_item.get("required") else "not required"
+    # required_str = "required" if sig_item.get("required") else "not required"
     slot_fillable_str = "can" if sig_item.get("slot_fillable") else "cannot"
-    return f"Variable {sig_name} is " + required_str + " and " + slot_fillable_str + " be acquired by asking the user."
+    return f"Variable {sig_name} {slot_fillable_str} be acquired by asking the user."
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:

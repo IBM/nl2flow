@@ -20,5 +20,3 @@ map_description = (
       for one variable can be used for another variable."""
     + "Action map maps variables with the same type."
 )
-ask_preference = """The system prefers to obtain values from Action
- ask-last-resort rather than from Action ask."""
