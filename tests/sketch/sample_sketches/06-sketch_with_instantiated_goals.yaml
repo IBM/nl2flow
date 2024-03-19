@@ -13,46 +13,34 @@ components:
     parameters:
       - name: date
         target: start date
-        type: Datetime
       - name: address
         target: home
-        type: Location
       - name: destination
         value: BOS
-        type: Location
   - item: Taxi
     parameters:
       - name: date
         target: start date
-        type: Datetime
       - name: address
         value: LAX
-        type: Location
       - name: destination
         value: JW Marriott Los Angeles LA 900 W Olympic Blvd
-        type: Location
   - item: Taxi
     parameters:
       - name: date
         target: end date
-        type: Datetime
       - name: address
         value: JW Marriott Los Angeles LA 900 W Olympic Blvd
-        type: Location
       - name: destination
         value: LAX
-        type: Location
   - item: Taxi
     parameters:
       - name: date
         target: end date
-        type: Datetime
       - name: address
         value: BOS
-        type: Location
       - name: destination
         target: home
-        type: Location
 
 ## The following is likely not derived from user
 ## instruction. I have put it as part of the sketch

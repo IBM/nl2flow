@@ -10,6 +10,12 @@ def is_this_an_agent(item: str, catalog: Catalog) -> bool:
     return item in [agent.id for agent in catalog.agents]
 
 
+def get_type_of_parameter(catalog: Catalog, agent_name: str, index: int) -> str:
+    agent_spec = list(filter(lambda x: x.id == agent_name, catalog.agents))[0]
+    derived_type = agent_spec.inputs[index].type or TypeOptions.ROOT.value
+    return derived_type
+
+
 def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
     for component in sketch.components:
         if isinstance(component, Goal):
@@ -18,14 +24,15 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
                     flow.add(GoalItems(goals=GoalItem(goal_name=component.item, goal_type=GoalType.OPERATOR)))
                 else:
                     targets = []
-                    for parameter in component.parameters:
+                    for index, parameter in enumerate(component.parameters):
                         new_target = parameter.value or parameter.target
+                        parameter_type = get_type_of_parameter(catalog, component.item, index)
 
                         if parameter.value:
                             flow.add(
                                 MemoryItem(
                                     item_id=new_target,
-                                    item_type=parameter.type or TypeOptions.ROOT.value,
+                                    item_type=parameter_type,
                                     item_state=MemoryState.KNOWN.value,
                                 )
                             )
