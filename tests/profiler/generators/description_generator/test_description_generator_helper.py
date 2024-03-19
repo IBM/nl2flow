@@ -14,7 +14,6 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_signature_item_names,
     get_variable_name_from_sig_item,
     get_variable_type_from_sig_item,
-    get_agent_info_signature_item_description,
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
@@ -24,29 +23,6 @@ from profiler.common_helpers.hash_helper import get_hash_str
 
 
 class TestDescriptionGeneratorHelper(unittest.TestCase):
-    def test_get_agent_info_signature_item_description_positive(self) -> None:
-        item = {
-            "name": "abc",
-            "data_type": "integer",
-            "required": True,
-            "slot_fillable": True,
-        }
-        item_str = get_agent_info_signature_item_description(item)
-        self.assertEqual(item_str, "Variable abc can be acquired by asking the user.")
-
-    def test_get_agent_info_signature_item_description_negative(self) -> None:
-        item = {
-            "name": "abc",
-            "data_type": "integer",
-            "required": False,
-            "slot_fillable": False,
-        }
-        item_str = get_agent_info_signature_item_description(item)
-        self.assertEqual(
-            item_str,
-            "Variable abc cannot be acquired by asking the user.",
-        )
-
     def test_get_variable_name_from_sig_item(self) -> None:
         sig_items = [
             {"name": "abc", "data_type": "integer"},
@@ -167,9 +143,8 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
                 "out_sig_full": [{"name": "c", "required": False, "slot_fillable": False}],
             },
         }
-        pre_cond, in_sig, effects = get_agent_info_description(agent_info)
+        pre_cond, effects = get_agent_info_description(agent_info)
         self.assertEqual("To execute Action a, Variable b should be known.", pre_cond)
-        self.assertEqual("Variable b can be acquired by asking the user.", in_sig)
         self.assertEqual("After executing Action a, Variable c is known.", effects)
 
     def test_get_mapping_description(self) -> None:

@@ -33,7 +33,7 @@ def get_sample_description(
     descriptions.append(ask_description[:])
     # actions
     for agent_info in available_agents:
-        pre_cond, in_description, effect = get_agent_info_description(agent_info)
+        pre_cond, effect = get_agent_info_description(agent_info)
         descriptions.append(pre_cond)
         # descriptions.append(in_description)
         descriptions.append(effect)
