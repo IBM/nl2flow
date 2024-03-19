@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 class Parameter(BaseModel):
     name: str
-    value: str
+    value: Optional[str] = None
+    target: Optional[str] = None
+    type: Optional[str] = None
 
 
 class Goal(BaseModel):

@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+options:
+  - CAREFUL
 components:
   - item: ticket to conference
 
@@ -10,12 +12,15 @@ components:
 ## for illustrative purposes.
 
 mappings:
-  - source: ticket to conference
-    target: flight_ticket
+  - source: flight_ticket
+    target: ticket to conference
     goodness: 0.7
   - source: address
     target: destination
     goodness: 0.0
   - source: home
     target: destination
+    goodness: 0.0
+  - source: start date
+    target: end date
     goodness: 0.0

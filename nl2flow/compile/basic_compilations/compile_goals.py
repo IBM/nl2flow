@@ -6,6 +6,7 @@ from typing import List, Set, Any
 from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_memory_item_to_constant_map
 from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem
 
+from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
     TypeOptions,
@@ -16,6 +17,31 @@ from nl2flow.compile.options import (
     MemoryState,
     HasDoneState,
 )
+
+
+def get_orphaned_items(compilation: Any, goal_items: List[str]) -> List[str]:
+    list_of_neighs = list()
+    list_of_orphans = list()
+
+    for item in compilation.flow_definition.memory_items:
+        list_of_neighs.append(item.item_id)
+
+    for operator in compilation.flow_definition.operators:
+        input_names = unpack_list_of_signature_items(operator.inputs)
+        list_of_neighs.extend(input_names)
+
+        output = operator.outputs
+        if isinstance(output, List):
+            output = output[0]
+
+        output_names = unpack_list_of_signature_items(output.outcomes)
+        list_of_neighs.extend(output_names)
+
+    for item in goal_items:
+        if item not in list_of_neighs:
+            list_of_orphans.append(item)
+
+    return list_of_orphans
 
 
 def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]) -> None:
@@ -68,20 +94,24 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
                     ),
                 )
 
-        if goal_item.goal_type == GoalType.OBJECT_USED:
-            goal_predicates.update(compilation.been_used(compilation.constant_map[item]) for item in list_of_constants)
+        for item in list_of_constants:
+            if goal_item.goal_type == GoalType.OBJECT_USED:
+                goal_predicates.add(compilation.been_used(compilation.constant_map[item]))
 
-        elif goal_item.goal_type == GoalType.OBJECT_KNOWN:
-            goal_predicates.update(
-                compilation.known(
-                    compilation.constant_map[item],
-                    compilation.constant_map[MemoryState.KNOWN.value],
+            elif goal_item.goal_type == GoalType.OBJECT_KNOWN:
+                goal_predicates.add(
+                    compilation.known(
+                        compilation.constant_map[item],
+                        compilation.constant_map[MemoryState.KNOWN.value],
+                    )
                 )
-                for item in list_of_constants
-            )
 
-        else:
-            raise TypeError("Unrecognized goal type.")
+                orphaned_items = get_orphaned_items(compilation, list_of_constants)
+                for orphan in orphaned_items:
+                    compilation.init.add(compilation.been_used(compilation.constant_map[orphan]))
+
+            else:
+                raise TypeError("Unrecognized goal type.")
 
 
 def compile_goals(compilation: Any, **kwargs: Any) -> None:

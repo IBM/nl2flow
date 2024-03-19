@@ -67,7 +67,9 @@ agents:
     inputs:
       - constraint: is not business trip
         evaluate: eval.state
-      - name: date
+      - name: start date
+        type: Datetime
+      - name: end date
         type: Datetime
       - name: home
         type: Location
@@ -82,7 +84,9 @@ agents:
     inputs:
       - constraint: is a business trip
         evaluate: eval.state
-      - name: date
+      - name: start date
+        type: Datetime
+      - name: end date
         type: Datetime
       - name: home
         type: Location
@@ -103,7 +107,9 @@ agents:
 
   - id: Hotel.com
     inputs:
-      - name: date
+      - name: start date
+        type: Datetime
+      - name: end date
         type: Datetime
       - name: home
         type: Location
@@ -158,5 +164,5 @@ agents:
       - name: list of papers
       - name: username
         type: Email
-    output:
+    outputs:
       - name: invoice

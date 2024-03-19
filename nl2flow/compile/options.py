@@ -21,13 +21,13 @@ class BasicOperations(enum.Enum):
 
 class CompileOptions(enum.Enum):
     CLASSICAL = "CLASSICAL"
-    ALLOUTCOMES = "ALL_OUTCOMES"
-    MAXOUTCOMES = "MOST_LIKELY_OUTCOME"
+    ALL_OUTCOMES = "ALL_OUTCOMES"
+    MAX_OUTCOMES = "MOST_LIKELY_OUTCOME"
 
 
 class TypeOptions(enum.Enum):
     RETRY = "num-retries"
-    HASDONE = "has-done-state"
+    HAS_DONE = "has-done-state"
     MEMORY = "datum-state"
     STATUS = "constraint-status"
     OPERATOR = "operator"
@@ -58,7 +58,7 @@ class MappingOptions(enum.Enum):
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
     transitive = "TRANSITIVE"
-    prohibit_direct = "INDIRECTMAP"
+    prohibit_direct = "INDIRECT_MAP"
 
 
 class SlotOptions(enum.Enum):

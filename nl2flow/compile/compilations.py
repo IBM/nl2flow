@@ -103,7 +103,7 @@ class ClassicPDDL(Compilation):
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
-            TypeOptions.HASDONE,
+            TypeOptions.HAS_DONE,
             TypeOptions.STATUS,
             TypeOptions.MEMORY,
             TypeOptions.RETRY,
@@ -113,7 +113,7 @@ class ClassicPDDL(Compilation):
             add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
 
         reserved_type_map = {
-            HasDoneState: TypeOptions.HASDONE,
+            HasDoneState: TypeOptions.HAS_DONE,
             ConstraintState: TypeOptions.STATUS,
             MemoryState: TypeOptions.MEMORY,
         }
@@ -131,7 +131,7 @@ class ClassicPDDL(Compilation):
         self.has_done = self.lang.predicate(
             "has_done",
             self.type_map[TypeOptions.OPERATOR.value],
-            self.type_map[TypeOptions.HASDONE.value],
+            self.type_map[TypeOptions.HAS_DONE.value],
         )
 
         self.been_used = self.lang.predicate(

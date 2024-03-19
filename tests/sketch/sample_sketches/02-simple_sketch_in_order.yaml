@@ -5,5 +5,7 @@ utterances:
 options:
   - INORDER
 components:
+  - item: W3 Agent
+  - item: Workday
   - item: Trip Approval
   - item: Visa Application

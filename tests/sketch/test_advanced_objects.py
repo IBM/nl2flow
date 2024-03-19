@@ -40,10 +40,31 @@ class TestSketchAdvanced:
                     if "ticket to conference" in parameters:
                         assert "flight_ticket" in parameters
 
-    # def test_with_instantiated_goals(self) -> None:
-    #     planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="01-simple_sketch")
-    #     assert planner_response.list_of_plans, "There should be plans."
+    def test_with_instantiated_goals(self) -> None:
+        planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="06-sketch_with_instantiated_goals")
+        assert planner_response.list_of_plans, "There should be plans."
 
-    # def test_with_execution(self) -> None:
-    #     planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="01-simple_sketch")
-    #     assert planner_response.list_of_plans, "There should be plans."
+        for plan in planner_response.list_of_plans:
+            assert len([step for step in plan.plan if step.name == "Taxi"]) == 4, "Four taxis."
+            assert (
+                len([step for step in plan.plan if step.name.startswith(BasicOperations.CONSTRAINT.value)]) == 2
+            ), "Two constraint checks."
+
+            for target in ["address", "destination"]:
+                assert set(
+                    [
+                        step.inputs[0].item_id
+                        for step in plan.plan
+                        if step.name.startswith(BasicOperations.MAPPER.value) and step.inputs[1].item_id == target
+                    ]
+                ) == {
+                    "BOS",
+                    "LAX",
+                    "JW Marriott Los Angeles LA 900 W Olympic Blvd",
+                    "home",
+                }
+
+
+# def test_with_execution(self) -> None:
+#     planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="01-simple_sketch")
+#     assert planner_response.list_of_plans, "There should be plans."

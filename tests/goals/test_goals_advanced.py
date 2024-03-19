@@ -141,7 +141,7 @@ class TestGoalsAdvanced(BaseTestAgents):
         plans = self.get_plan()
         self.simple_or_plan(plans)
 
-    def test_or_basic_seperated(self) -> None:
+    def test_or_basic_separated(self) -> None:
         for item in ["X", "Y"]:
             agent = Operator(f"Agent {item}")
             goal = GoalItem(goal_name=agent.name)

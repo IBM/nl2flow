@@ -70,7 +70,7 @@ def is_this_a_datum_type(type_name: str) -> bool:
     return type_name not in [
         TypeOptions.MEMORY.value,
         TypeOptions.OPERATOR.value,
-        TypeOptions.HASDONE.value,
+        TypeOptions.HAS_DONE.value,
         TypeOptions.RETRY.value,
         TypeOptions.STATUS.value,
     ]

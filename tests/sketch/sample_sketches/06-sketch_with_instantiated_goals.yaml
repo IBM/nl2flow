@@ -2,37 +2,57 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+options:
+  - NO_TYPING
 components:
   - item: conference registration
   - item: ticket to conference
-  - item: return ticket
-  - item: hotel booking
   - item: Trip Approval
   - item: visa
   - item: Taxi
     parameters:
+      - name: date
+        target: start date
+        type: Datetime
       - name: address
-        value: home address
+        target: home
+        type: Location
       - name: destination
-        value: home airport
+        value: BOS
+        type: Location
   - item: Taxi
     parameters:
+      - name: date
+        target: start date
+        type: Datetime
       - name: address
-        value: destination airport
+        value: LAX
+        type: Location
       - name: destination
-        value: conference hotel
+        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
+        type: Location
   - item: Taxi
     parameters:
+      - name: date
+        target: end date
+        type: Datetime
       - name: address
-        value: conference hotel
+        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
+        type: Location
       - name: destination
-        value: destination airport
+        value: LAX
+        type: Location
   - item: Taxi
     parameters:
+      - name: date
+        target: end date
+        type: Datetime
       - name: address
-        value: home airport
+        value: BOS
+        type: Location
       - name: destination
-        value: home address
+        target: home
+        type: Location
 
 ## The following is likely not derived from user
 ## instruction. I have put it as part of the sketch
@@ -43,13 +63,16 @@ slots:
     goodness: 0.2
   - name: Employer Letter
     goodness: 0.0
-  - name: W3 ID
+  - name: w3
     goodness: 1.0
 
 mappings:
   - source: ticket to conference
     target: flight_ticket
-    preference: 1.0
-  - source: return ticket
-    target: flight_ticket
-    preference: 1.0
+    goodness: 0.7
+  - source: conference registration
+    target: invoice
+    goodness: 0.5
+  - source: start date
+    target: end date
+    goodness: 0.0
