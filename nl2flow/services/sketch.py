@@ -30,7 +30,11 @@ class SketchCompilation(ABC):
         self._options = options
 
     @abstractmethod
-    def compile(self, sketch: Sketch, catalog: Catalog) -> Tuple[PDDL, List[Transform]]:
+    def compile_to_flow(self, sketch: Sketch, catalog: Catalog) -> Flow:
+        pass
+
+    @abstractmethod
+    def compile_to_pddl(self, sketch: Sketch, catalog: Catalog) -> Tuple[PDDL, List[Transform]]:
         pass
 
     def plan_it(self, pddl: PDDL, transforms: List[Transform]) -> PlannerResponse:
@@ -40,9 +44,12 @@ class SketchCompilation(ABC):
 
 
 class BasicSketchCompilation(SketchCompilation):
-    def compile(self, sketch: Sketch, catalog: Catalog) -> Tuple[PDDL, List[Transform]]:
+    def compile_to_flow(self, sketch: Sketch, catalog: Catalog) -> Flow:
         basic_catalog_compilation(self.flow, catalog)
         basic_sketch_compilation(self.flow, sketch, catalog)
+        return self.flow
 
+    def compile_to_pddl(self, sketch: Sketch, catalog: Catalog) -> Tuple[PDDL, List[Transform]]:
+        self.compile_to_flow(sketch, catalog)
         pddl, transforms = self.flow.compile_to_pddl()
         return pddl, transforms

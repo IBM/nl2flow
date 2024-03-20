@@ -65,7 +65,7 @@ agents:
 
   - id: Kayak
     inputs:
-      - constraint: is not business trip
+      - constraint: is not a business trip
         evaluate: eval.state
       - name: start date
         type: Datetime

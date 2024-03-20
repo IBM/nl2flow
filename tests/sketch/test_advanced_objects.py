@@ -1,5 +1,10 @@
-from nl2flow.compile.options import BasicOperations
-from tests.sketch.test_basic import sketch_to_plan
+from nl2flow.compile.schemas import Constraint
+from nl2flow.compile.options import BasicOperations, ConstraintState
+from nl2flow.plan.planners import Kstar
+from nl2flow.services.sketch import BasicSketchCompilation
+from tests.sketch.test_basic import sketch_to_plan, load_assets
+
+PLANNER = Kstar()
 
 
 class TestSketchAdvanced:
@@ -64,7 +69,33 @@ class TestSketchAdvanced:
                     "home",
                 }
 
+    def test_with_execution(self) -> None:
+        catalog, sketch = load_assets(catalog_name="catalog", sketch_name="01-simple_sketch")
 
-# def test_with_execution(self) -> None:
-#     planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="01-simple_sketch")
-#     assert planner_response.list_of_plans, "There should be plans."
+        sketch_compilation = BasicSketchCompilation(name=sketch.sketch_name)
+        flow_object = sketch_compilation.compile_to_flow(sketch, catalog)
+
+        flow_object.add(
+            [
+                Constraint(
+                    constraint_id="is a business trip",
+                    constraint="eval.state",
+                    parameters=[],
+                    truth_value=ConstraintState.FALSE.value,
+                ),
+            ]
+        )
+
+        planner_response = flow_object.plan_it(PLANNER)
+        print(PLANNER.pretty_print(planner_response))
+
+        assert planner_response.list_of_plans, "There should be plans."
+
+        for plan in planner_response.list_of_plans:
+            action_names = [step.name for step in plan.plan]
+            assert "Kayak" in action_names and "Concur" not in action_names
+
+            assert "check(is not a business trip) = True" in action_names
+            assert (
+                len([step.name for step in plan.plan if step.name.startswith(BasicOperations.CONSTRAINT.value)]) == 4
+            ), "Extra checks for travel policy due to Kayak."

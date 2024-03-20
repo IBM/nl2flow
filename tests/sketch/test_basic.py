@@ -34,7 +34,7 @@ def sketch_to_plan(catalog_name: str, sketch_name: str) -> PlannerResponse:
     catalog, sketch = load_assets(catalog_name=catalog_name, sketch_name=sketch_name)
 
     sketch_compilation = BasicSketchCompilation(name=sketch.sketch_name)
-    pddl, transforms = sketch_compilation.compile(sketch, catalog)
+    pddl, transforms = sketch_compilation.compile_to_pddl(sketch, catalog)
 
     planner_response = sketch_compilation.plan_it(pddl, transforms)
     print(planner.pretty_print(planner_response))

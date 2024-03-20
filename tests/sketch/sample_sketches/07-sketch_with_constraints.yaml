@@ -2,37 +2,45 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+options:
+  - NO_TYPING
 components:
   - item: conference registration
   - item: ticket to conference
-  - item: return ticket
-  - item: hotel booking
   - item: Trip Approval
   - item: visa
   - item: Taxi
     parameters:
+      - name: date
+        target: start date
       - name: address
-        value: home address
+        target: home
       - name: destination
-        value: home airport
+        value: BOS
   - item: Taxi
     parameters:
+      - name: date
+        target: start date
       - name: address
-        value: destination airport
+        value: LAX
       - name: destination
-        value: conference hotel
+        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
   - item: Taxi
     parameters:
+      - name: date
+        target: end date
       - name: address
-        value: conference hotel
+        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
       - name: destination
-        value: destination airport
+        value: LAX
   - item: Taxi
     parameters:
+      - name: date
+        target: end date
       - name: address
-        value: home airport
+        value: BOS
       - name: destination
-        value: home address
+        target: home
   - condition: approval.status == FAILED
     if_outcomes:
       - item: Email Agent
@@ -55,13 +63,16 @@ slots:
     goodness: 0.2
   - name: Employer Letter
     goodness: 0.0
-  - name: W3 ID
+  - name: w3
     goodness: 1.0
 
 mappings:
   - source: ticket to conference
     target: flight_ticket
-    preference: 1.0
-  - source: return ticket
-    target: flight_ticket
-    preference: 1.0
+    goodness: 0.7
+  - source: conference registration
+    target: invoice
+    goodness: 0.5
+  - source: start date
+    target: end date
+    goodness: 0.0
