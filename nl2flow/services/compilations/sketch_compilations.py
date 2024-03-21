@@ -1,9 +1,30 @@
-from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog, Goal
 from nl2flow.services.schemas.sketch_options import SketchOptions
+from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog, Goal, Ordering, Condition, Disjunction, Signature
 
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.options import GoalType, TypeOptions, LifeCycleOptions, MemoryState, MappingOptions
-from nl2flow.compile.schemas import GoalItems, GoalItem, PartialOrder, SlotProperty, MappingItem, Step, MemoryItem
+from nl2flow.compile.options import (
+    GoalType,
+    TypeOptions,
+    LifeCycleOptions,
+    MemoryState,
+    MappingOptions,
+    GoalOptions,
+    ConstraintState,
+)
+
+from nl2flow.compile.schemas import (
+    GoalItems,
+    GoalItem,
+    PartialOrder,
+    SlotProperty,
+    MappingItem,
+    Step,
+    MemoryItem,
+    Constraint,
+    SignatureItem,
+)
+
+from typing import List, Union
 
 
 def is_this_an_agent(item: str, catalog: Catalog) -> bool:
@@ -11,9 +32,75 @@ def is_this_an_agent(item: str, catalog: Catalog) -> bool:
 
 
 def get_type_of_parameter(catalog: Catalog, agent_name: str, index: int) -> str:
-    agent_spec = list(filter(lambda x: x.id == agent_name, catalog.agents))[0]
+    agent_spec = next(x for x in catalog.agents if x.id == agent_name)
     derived_type = agent_spec.inputs[index].type or TypeOptions.ROOT.value
     return derived_type
+
+
+def get_all_agent_names_with_this_output(item: str, catalog: Catalog) -> List[str]:
+    agent_names = []
+
+    for agent in catalog.agents:
+        for output in agent.outputs:
+            if isinstance(output, Signature) and item == output.name:
+                agent_names.append(agent.id)
+
+    return agent_names
+
+
+def set_condition_as_goal(
+    flow: Flow,
+    catalog: Catalog,
+    new_constraint: Constraint,
+    not_new_constraint: Constraint,
+    goal_items: List[Union[Goal, Condition, Disjunction, Ordering]],
+) -> None:
+    for goal_item in goal_items:
+        if isinstance(goal_item, Goal):
+            if is_this_an_agent(goal_item.item, catalog):
+                target_agents = [goal_item.item]
+            else:
+                target_agents = get_all_agent_names_with_this_output(goal_item.item, catalog)
+
+            for agent_name in target_agents:
+                agent_spec = next(x for x in flow.flow_definition.operators if x.name == agent_name)
+                agent_spec.inputs.append(SignatureItem(constraints=[new_constraint]))
+
+                flow.add(
+                    GoalItems(
+                        goals=[
+                            GoalItem(goal_name=agent_name, goal_type=GoalType.OPERATOR),
+                            GoalItem(goal_name=not_new_constraint, goal_type=GoalType.CONSTRAINT),
+                        ]
+                    )
+                )
+
+        elif isinstance(goal_item, Condition):
+            if goal_item.if_outcomes or goal_item.else_outcomes:
+                raise ValueError("This should be an assignment.")
+
+            flow.add(
+                GoalItems(
+                    goals=[
+                        GoalItem(
+                            goal_name=Constraint(
+                                constraint_id=goal_item.condition,
+                                constraint=goal_item.condition,
+                                parameters=[v.name for v in goal_item.variables],
+                                truth_value=ConstraintState.TRUE.value,
+                            ),
+                            goal_type=GoalType.CONSTRAINT,
+                        ),
+                        GoalItem(goal_name=not_new_constraint, goal_type=GoalType.CONSTRAINT),
+                    ]
+                )
+            )
+
+        elif isinstance(goal_item, Disjunction):
+            raise NotImplementedError
+
+        elif isinstance(goal_item, Ordering):
+            raise NotImplementedError
 
 
 def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
@@ -55,6 +142,37 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
             else:
                 flow.add(GoalItems(goals=GoalItem(goal_name=component.item, goal_type=GoalType.OBJECT_KNOWN)))
 
+        elif isinstance(component, Ordering):
+            if ">" in component.order:
+                split_order = component.order.split(">")
+                split_order = [item.strip() for item in split_order]
+                flow.add(PartialOrder(antecedent=split_order[0], consequent=split_order[1]))
+            elif "<" in component.order:
+                split_order = component.order.split("<")
+                split_order = [item.strip() for item in split_order]
+                flow.add(PartialOrder(antecedent=split_order[1], consequent=split_order[0]))
+            else:
+                raise ValueError(f"Unable to parse ordering in: {component.order}")
+
+        elif isinstance(component, Condition):
+            new_constraint = Constraint(
+                constraint_id=component.condition,
+                constraint=component.condition,
+                parameters=[v.name for v in component.variables],
+            )
+
+            not_new_constraint = Constraint(
+                constraint_id=f"not {component.condition}",
+                constraint=f"not({component.condition})",
+                parameters=[v.name for v in component.variables],
+            )
+
+            set_condition_as_goal(flow, catalog, new_constraint, not_new_constraint, component.if_outcomes)
+            set_condition_as_goal(flow, catalog, not_new_constraint, new_constraint, component.else_outcomes)
+
+        elif isinstance(component, Disjunction):
+            raise NotImplementedError
+
     for slot_info in sketch.slots:
         flow.add(
             SlotProperty(
@@ -88,3 +206,5 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
     if SketchOptions.CAREFUL.value in sketch.options:
         flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
         flow.variable_life_cycle.add(LifeCycleOptions.confirm_on_mapping)
+
+    flow.goal_type = GoalOptions.AND_OR

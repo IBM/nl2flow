@@ -65,7 +65,7 @@ class Constraint(BaseModel):
 
 
 class GoalItem(BaseModel):
-    goal_name: Union[str, Step]
+    goal_name: Union[str, Step, Constraint]
     goal_type: GoalType = GoalType.OPERATOR
 
     @classmethod
@@ -371,6 +371,7 @@ class FlowDefinition(BaseModel):
             for goal in goals:
                 if (
                     goal.goal_type != GoalType.OPERATOR
+                    and goal.goal_type != GoalType.CONSTRAINT
                     and not isinstance(goal.goal_name, Step)
                     and goal.goal_name not in [t.name for t in flow.type_hierarchy]
                 ):
@@ -383,6 +384,10 @@ class FlowDefinition(BaseModel):
                             param.item_id if isinstance(param, Parameter) else param,
                             None,
                         )
+
+                elif isinstance(goal.goal_name, Constraint):
+                    for param in goal.goal_name.parameters:
+                        cls.update_object_map(list_of_objects, param)
 
         for operator in flow.operators:
             for item in operator.inputs:

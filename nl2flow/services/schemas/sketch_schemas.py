@@ -24,6 +24,7 @@ class Ordering(BaseModel):
 
 class Condition(BaseModel):
     condition: str
+    variables: List[Parameter]
     if_outcomes: List[Union[Goal, Condition, Disjunction, Ordering]] = []
     else_outcomes: List[Union[Goal, Condition, Disjunction, Ordering]] = []
 

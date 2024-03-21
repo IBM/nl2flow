@@ -2,49 +2,30 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+options:
+  - NO_TYPING
 components:
   - item: conference registration
   - item: ticket to conference
-  - item: return ticket
   - item: hotel booking
   - item: Trip Approval
   - item: visa
-  - item: Taxi
-    parameters:
-      - name: address
-        value: home address
-      - name: destination
-        value: home airport
-  - item: Taxi
-    parameters:
-      - name: address
-        value: destination airport
-      - name: destination
-        value: conference hotel
-  - item: Taxi
-    parameters:
-      - name: address
-        value: conference hotel
-      - name: destination
-        value: destination airport
-  - item: Taxi
-    parameters:
-      - name: address
-        value: home airport
-      - name: destination
-        value: home address
   - condition: approval.status == FAILED
+    variables:
+      - name: approval
     if_outcomes:
       - item: Email Agent
   - condition: visa.status == SUCCESS
+    variables:
+      - name: visa
     if_outcomes:
       - item: ticket to conference
-      - item: return ticket
       - item: hotel booking
     else_outcomes:
       - item: Email Agent
-  - order: Trip Approval > Visa Application
-  - order: conference registration > Trip Approval
+      - condition: approval.status == FAILED
+        variables: approval
+  - order: Trip Approval > conference registration
   - OR:
     - item: approval.status == FAILED
     - item: flight to bahamas
@@ -63,7 +44,16 @@ slots:
 mappings:
   - source: ticket to conference
     target: flight_ticket
-  - source: return ticket
-    target: flight_ticket
+    goodness: 0.7
+  - source: flight to bahamas
+    target: ticket to conference
+    goodness: 0.0
   - source: flight to bahamas
     target: flight_ticket
+    goodness: 0.5
+  - source: conference registration
+    target: invoice
+    goodness: 0.5
+  - source: start date
+    target: end date
+    goodness: 0.0

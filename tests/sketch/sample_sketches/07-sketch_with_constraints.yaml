@@ -7,54 +7,27 @@ options:
 components:
   - item: conference registration
   - item: ticket to conference
+  - item: hotel_booking
   - item: Trip Approval
   - item: visa
-  - item: Taxi
-    parameters:
-      - name: date
-        target: start date
-      - name: address
-        target: home
-      - name: destination
-        value: BOS
-  - item: Taxi
-    parameters:
-      - name: date
-        target: start date
-      - name: address
-        value: LAX
-      - name: destination
-        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
-  - item: Taxi
-    parameters:
-      - name: date
-        target: end date
-      - name: address
-        value: JW Marriott Los Angeles LA 900 W Olympic Blvd
-      - name: destination
-        value: LAX
-  - item: Taxi
-    parameters:
-      - name: date
-        target: end date
-      - name: address
-        value: BOS
-      - name: destination
-        target: home
   - condition: approval.status == FAILED
+    variables:
+      - name: approval
     if_outcomes:
       - item: Email Agent
   - condition: visa.status == SUCCESS
+    variables:
+      - name: visa
     if_outcomes:
       - item: ticket to conference
-      - item: return ticket
       - item: hotel booking
     else_outcomes:
-      - item: Email Agent
-  - order: Trip Approval > Visa Application
-  - order: conference registration > Trip Approval
+      - condition: approval.status == FAILED
+        variables:
+          - name: approval
+  - order: Trip Approval > Registration Bot
 
-## The following is likely not derived from user
+## The following is likely not derived from user`
 ## instruction. I have put it as part of the sketch
 ## for illustrative purposes.
 

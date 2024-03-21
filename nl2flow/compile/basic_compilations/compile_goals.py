@@ -74,6 +74,9 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
         else:
             TypeError("Unrecognized goal type.")
 
+    elif goal_item.goal_type == GoalType.CONSTRAINT:
+        pass
+
     else:
         list_of_constants = list()
         if goal_item.goal_name in compilation.type_map:
