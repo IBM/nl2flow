@@ -64,6 +64,18 @@ class Constraint(BaseModel):
         )
 
 
+class ManifestConstraint(BaseModel):
+    manifest: Constraint
+    constraint: Constraint
+
+    @classmethod
+    def transform(cls, manifest_constraint: ManifestConstraint, transforms: List[Transform]) -> ManifestConstraint:
+        return ManifestConstraint(
+            manifest=manifest_constraint.manifest.transform(manifest_constraint.manifest, transforms),
+            constraint=manifest_constraint.constraint.transform(manifest_constraint.constraint, transforms),
+        )
+
+
 class GoalItem(BaseModel):
     goal_name: Union[str, Step, Constraint]
     goal_type: GoalType = GoalType.OPERATOR
@@ -209,6 +221,7 @@ class FlowDefinition(BaseModel):
     slot_properties: List[SlotProperty] = []
     list_of_mappings: List[MappingItem] = []
     partial_orders: List[PartialOrder] = []
+    manifest_constraints: List[ManifestConstraint] = []
     starts_with: Optional[str] = None
     ends_with: Optional[str] = None
 

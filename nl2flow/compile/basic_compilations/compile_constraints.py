@@ -16,10 +16,28 @@ from nl2flow.compile.options import (
 )
 
 
+def compile_manifest_constraints(compilation: Any) -> None:
+    for manifest_constraint in compilation.flow_definition.manifest_constraints:
+        manifest_predicate = compile_constraints(compilation, manifest_constraint.manifest)
+        reference_predicate = compile_constraints(compilation, manifest_constraint.constraint)
+
+        compilation.problem.action(
+            f"{RestrictedOperations.MANIFEST.value}_{manifest_constraint.manifest.constraint_id}",
+            parameters=list(),
+            precondition=land(reference_predicate),
+            effects=[fs.AddEffect(manifest_predicate)],
+            cost=iofs.AdditiveActionCost(
+                compilation.problem.language.constant(
+                    CostOptions.UNIT.value,
+                    compilation.problem.language.get_sort("Integer"),
+                )
+            ),
+        )
+
+
 def compile_constraints(
     compilation: Any,
     constraint: Constraint,
-    # precs: List[Any] = (),
 ) -> Any:
     new_constraint_variable = f"status_{constraint.constraint_id}"
     set_variables = list()
@@ -110,7 +128,7 @@ def compile_constraints(
                     + [fs.DelEffect(del_e) for del_e in del_effect_list],
                     cost=iofs.AdditiveActionCost(
                         compilation.problem.language.constant(
-                            CostOptions.UNIT.value,
+                            CostOptions.VERY_LOW.value,
                             compilation.problem.language.get_sort("Integer"),
                         )
                     ),

@@ -29,6 +29,7 @@ from nl2flow.compile.basic_compilations.compile_mappings import (
 )
 from nl2flow.compile.basic_compilations.compile_goals import compile_goals
 from nl2flow.compile.basic_compilations.compile_history import compile_history
+from nl2flow.compile.basic_compilations.compile_constraints import compile_manifest_constraints
 
 from nl2flow.compile.basic_compilations.utils import (
     add_type_item_to_type_map,
@@ -246,6 +247,7 @@ class ClassicPDDL(Compilation):
 
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
+        compile_manifest_constraints(self)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

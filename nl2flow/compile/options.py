@@ -7,6 +7,7 @@ SLOT_GOODNESS: float = 0.5
 
 
 class RestrictedOperations(enum.Enum):
+    MANIFEST = "manifest"
     ENABLER = "enabler_operator"
     GOAL = "goal_operator"
 

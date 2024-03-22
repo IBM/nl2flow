@@ -22,6 +22,7 @@ from nl2flow.compile.schemas import (
     MemoryItem,
     Constraint,
     SignatureItem,
+    ManifestConstraint,
 )
 
 from typing import List, Union
@@ -83,22 +84,30 @@ def set_condition_as_goal(
                 raise ValueError("This should be an assignment.")
 
             temp_c = deepcopy(new_constraint)
-            temp_c.truth_value = not truth_value
+            temp_c.truth_value = truth_value
 
-            # flow.add(
-            #     ManifestConstraint
-            # )
+            goal_c = Constraint(
+                constraint_id=goal_item.condition,
+                constraint=goal_item.condition,
+                parameters=[v.name for v in goal_item.variables],
+                truth_value=ConstraintState.TRUE.value,
+            )
+
+            flow.add(
+                ManifestConstraint(
+                    manifest=goal_c,
+                    constraint=temp_c,
+                )
+            )
+
+            temp_c = deepcopy(new_constraint)
+            temp_c.truth_value = not truth_value
 
             flow.add(
                 GoalItems(
                     goals=[
                         GoalItem(
-                            goal_name=Constraint(
-                                constraint_id=goal_item.condition,
-                                constraint=goal_item.condition,
-                                parameters=[v.name for v in goal_item.variables],
-                                truth_value=ConstraintState.TRUE.value,
-                            ),
+                            goal_name=goal_c,
                             goal_type=GoalType.CONSTRAINT,
                         ),
                         GoalItem(goal_name=temp_c, goal_type=GoalType.CONSTRAINT),

@@ -9,6 +9,7 @@ from nl2flow.compile.options import (
 from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
     Constraint,
+    ManifestConstraint,
     MemoryItem,
     SignatureItem,
     GoalItems,
@@ -144,3 +145,40 @@ class TestConstraints(BaseTestAgents):
             assert plan.plan[-1].name.startswith(
                 BasicOperations.CONSTRAINT.value
             ), "Check it again against your list and see consistency."
+
+    def test_manifest_constraint(self) -> None:
+        self.flow.add(
+            ManifestConstraint(
+                manifest=Constraint(
+                    constraint_id="Char limit for a tweet",
+                    constraint="len(tweet) <= 240",
+                    parameters=["tweet"],
+                    truth_value=ConstraintState.TRUE.value,
+                ),
+                constraint=Constraint(
+                    constraint_id="Proper tweet",
+                    constraint="eval(state)",
+                    parameters=["tweet"],
+                    truth_value=ConstraintState.TRUE.value,
+                ),
+            )
+        )
+
+        self.flow.add(
+            [
+                MemoryItem(item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN),
+                GoalItems(goals=GoalItem(goal_name="Twitter")),
+                Constraint(
+                    constraint_id="Proper tweet",
+                    constraint="eval(state)",
+                    parameters=["tweet"],
+                    truth_value=ConstraintState.TRUE.value,
+                ),
+            ]
+        )
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        for plan in plans.list_of_plans:
+            assert len(plan.plan) == 1 and plan.plan[0].name == "Twitter", "Just one direct Tweet operation."
