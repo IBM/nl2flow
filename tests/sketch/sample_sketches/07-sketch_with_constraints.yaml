@@ -5,11 +5,6 @@ utterances:
 options:
   - NO_TYPING
 components:
-  - item: conference registration
-  - item: ticket to conference
-  - item: hotel_booking
-  - item: Trip Approval
-  - item: visa
   - condition: approval.status == FAILED
     variables:
       - name: approval
@@ -19,13 +14,20 @@ components:
     variables:
       - name: visa
     if_outcomes:
-      - item: ticket to conference
-      - item: hotel booking
+      - item: Registration Bot
+      - item: Trip Approval
     else_outcomes:
+      - item: Vacation Bot
       - condition: approval.status == FAILED
         variables:
           - name: approval
   - order: Trip Approval > Registration Bot
+
+# approval.status == failed = false OR email agent (approval.status == failed = true)
+# visa.status == success = false OR registration bot (visa.status == success = true)
+# visa.status == success = false OR trip approval (visa.status == success = true)
+# visa.status == success = true OR vacation bot (visa.status == success = false)
+
 
 ## The following is likely not derived from user`
 ## instruction. I have put it as part of the sketch
@@ -40,12 +42,6 @@ slots:
     goodness: 1.0
 
 mappings:
-  - source: ticket to conference
-    target: flight_ticket
-    goodness: 0.7
-  - source: conference registration
-    target: invoice
-    goodness: 0.5
   - source: start date
     target: end date
     goodness: 0.0

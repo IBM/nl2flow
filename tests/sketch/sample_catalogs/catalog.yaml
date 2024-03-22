@@ -157,6 +157,10 @@ agents:
 
   - id: Email Agent
 
+  - id: Vacation Bot
+    inputs:
+      - name: w3
+        type: Email
 
   - id: Registration Bot
     inputs:

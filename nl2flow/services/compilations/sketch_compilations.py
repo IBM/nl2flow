@@ -25,6 +25,7 @@ from nl2flow.compile.schemas import (
 )
 
 from typing import List, Union
+from copy import deepcopy
 
 
 def is_this_an_agent(item: str, catalog: Catalog) -> bool:
@@ -52,8 +53,8 @@ def set_condition_as_goal(
     flow: Flow,
     catalog: Catalog,
     new_constraint: Constraint,
-    not_new_constraint: Constraint,
-    goal_items: List[Union[Goal, Condition, Disjunction, Ordering]],
+    goal_items: List[Union[Goal, Condition]],
+    truth_value: bool = True,
 ) -> None:
     for goal_item in goal_items:
         if isinstance(goal_item, Goal):
@@ -62,22 +63,31 @@ def set_condition_as_goal(
             else:
                 target_agents = get_all_agent_names_with_this_output(goal_item.item, catalog)
 
+            temp_c = deepcopy(new_constraint)
+            temp_c.truth_value = truth_value
+
+            or_goals = []
             for agent_name in target_agents:
                 agent_spec = next(x for x in flow.flow_definition.operators if x.name == agent_name)
-                agent_spec.inputs.append(SignatureItem(constraints=[new_constraint]))
+                agent_spec.inputs.append(SignatureItem(constraints=[temp_c]))
+                or_goals.append(GoalItem(goal_name=agent_name, goal_type=GoalType.OPERATOR))
 
-                flow.add(
-                    GoalItems(
-                        goals=[
-                            GoalItem(goal_name=agent_name, goal_type=GoalType.OPERATOR),
-                            GoalItem(goal_name=not_new_constraint, goal_type=GoalType.CONSTRAINT),
-                        ]
-                    )
-                )
+            temp_c = deepcopy(new_constraint)
+            temp_c.truth_value = not truth_value
+
+            or_goals.append(GoalItem(goal_name=temp_c, goal_type=GoalType.CONSTRAINT))
+            flow.add(GoalItems(goals=or_goals))
 
         elif isinstance(goal_item, Condition):
             if goal_item.if_outcomes or goal_item.else_outcomes:
                 raise ValueError("This should be an assignment.")
+
+            temp_c = deepcopy(new_constraint)
+            temp_c.truth_value = not truth_value
+
+            # flow.add(
+            #     ManifestConstraint
+            # )
 
             flow.add(
                 GoalItems(
@@ -91,16 +101,13 @@ def set_condition_as_goal(
                             ),
                             goal_type=GoalType.CONSTRAINT,
                         ),
-                        GoalItem(goal_name=not_new_constraint, goal_type=GoalType.CONSTRAINT),
+                        GoalItem(goal_name=temp_c, goal_type=GoalType.CONSTRAINT),
                     ]
                 )
             )
 
-        elif isinstance(goal_item, Disjunction):
-            raise NotImplementedError
-
-        elif isinstance(goal_item, Ordering):
-            raise NotImplementedError
+        else:
+            raise ValueError(f"Unknown conditional outcome {goal_item}")
 
 
 def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
@@ -161,14 +168,8 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
                 parameters=[v.name for v in component.variables],
             )
 
-            not_new_constraint = Constraint(
-                constraint_id=f"not {component.condition}",
-                constraint=f"not({component.condition})",
-                parameters=[v.name for v in component.variables],
-            )
-
-            set_condition_as_goal(flow, catalog, new_constraint, not_new_constraint, component.if_outcomes)
-            set_condition_as_goal(flow, catalog, not_new_constraint, new_constraint, component.else_outcomes)
+            set_condition_as_goal(flow, catalog, new_constraint, component.if_outcomes)
+            set_condition_as_goal(flow, catalog, new_constraint, component.else_outcomes, False)
 
         elif isinstance(component, Disjunction):
             raise NotImplementedError

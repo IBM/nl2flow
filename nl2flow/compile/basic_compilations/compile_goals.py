@@ -4,9 +4,10 @@ from tarski.syntax import land
 from typing import List, Set, Any
 
 from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_memory_item_to_constant_map
-from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem
-
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
+from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
+
+from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
     TypeOptions,
@@ -75,7 +76,8 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
             TypeError("Unrecognized goal type.")
 
     elif goal_item.goal_type == GoalType.CONSTRAINT:
-        pass
+        temp = compile_constraints(compilation, goal_item.goal_name)
+        goal_predicates.add(temp)
 
     else:
         list_of_constants = list()

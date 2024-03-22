@@ -4,6 +4,7 @@ from nl2flow.compile.options import (
     MemoryState,
     ConstraintState,
     BasicOperations,
+    GoalType,
 )
 from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
@@ -100,3 +101,46 @@ class TestConstraints(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 2, "There should be 2 step plan."
         assert poi.plan[0].name == "TweetGen", "No extra constraint check."
+
+    def test_constraints_in_goal(self) -> None:
+        goal = GoalItems(
+            goals=GoalItem(
+                goal_name=Constraint(
+                    constraint_id="Char limit for a tweet",
+                    constraint="len(tweet) <= 240",
+                    parameters=["tweet"],
+                ),
+                goal_type=GoalType.CONSTRAINT,
+            )
+        )
+        self.flow.add(goal)
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        for plan in plans.list_of_plans:
+            assert len(plan.plan) == 2
+            assert plan.plan[0].name == BasicOperations.SLOT_FILLER.value and plan.plan[0].inputs[0].item_id == "tweet"
+            assert plan.plan[1].name.startswith(BasicOperations.CONSTRAINT.value)
+
+        self.flow.add(
+            [
+                MemoryItem(item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN),
+                Constraint(
+                    constraint_id="Char limit for a tweet",
+                    constraint="len(tweet) <= 240",
+                    parameters=["tweet"],
+                    truth_value=ConstraintState.FALSE.value,
+                ),
+            ]
+        )
+
+        plans = self.get_plan()
+        assert plans.list_of_plans, "There should be plans."
+
+        for plan in plans.list_of_plans:
+            assert len(plan.plan) == 4
+            assert "Bitly" in [step.name for step in plan.plan], "There must be a Bitly now."
+            assert plan.plan[-1].name.startswith(
+                BasicOperations.CONSTRAINT.value
+            ), "Check it again against your list and see consistency."
