@@ -23,12 +23,6 @@ components:
           - name: approval
   - order: Trip Approval > Registration Bot
 
-# approval.status == failed = false OR email agent (approval.status == failed = true)
-# visa.status == success = false OR registration bot (visa.status == success = true)
-# visa.status == success = false OR trip approval (visa.status == success = true)
-# visa.status == success = true OR vacation bot (visa.status == success = false)
-
-
 ## The following is likely not derived from user`
 ## instruction. I have put it as part of the sketch
 ## for illustrative purposes.
