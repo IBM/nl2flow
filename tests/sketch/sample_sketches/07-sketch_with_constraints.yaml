@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+descriptions:
+  - Apply for a pre-travel approval to a conference. Apply for a visa as well. Only apply for the approval and register for the conference if the visa process is successful, otherwise mark the approval process as failed and book a vacation instead. Make sure that the trip approval is done before registering for the conference. Email me if the trip is not approved.
 options:
   - NO_TYPING
 components:

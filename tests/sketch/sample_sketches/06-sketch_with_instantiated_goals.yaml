@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+descriptions:
+  - Book at ticket to a conference. Register for the conference. Apply for pre-travel approval and visa as well. Book a taxi from my home to the boston airport and back again from the airport to my home when I come back. I also need a taxi from LAX to JW Marriott when I reach Los Angeles and another one from there to the airport on the day of return."
 options:
   - NO_TYPING
 components:

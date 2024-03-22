@@ -2,5 +2,7 @@
 sketch_name: Conference Trip
 utterances:
   - I want to apply for a visa
+descriptions:
+  - Initiate a visa approval process.
 components:
   - item: visa

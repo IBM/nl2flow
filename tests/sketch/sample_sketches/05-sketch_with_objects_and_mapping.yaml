@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+descriptions:
+  - Book a trip to a conference
 options:
   - CAREFUL
 components:

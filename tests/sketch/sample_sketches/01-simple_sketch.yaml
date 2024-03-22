@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - I want to book a trip to a conference
+descriptions:
+  - Make a workflow for a business trip pre-approval process. Include a visa application step.
 components:
   - item: Trip Approval
   - item: Visa Application

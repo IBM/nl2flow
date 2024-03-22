@@ -11,8 +11,7 @@ from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 
 
 FILEPATH = Path(__file__).parent.resolve()
-
-planner = Kstar()
+PLANNER = Kstar()
 
 
 def load_assets(catalog_name: str, sketch_name: str) -> Tuple[Catalog, Sketch]:
@@ -27,6 +26,9 @@ def load_assets(catalog_name: str, sketch_name: str) -> Tuple[Catalog, Sketch]:
         sketch = yaml.safe_load(new_sketch_file)
         sketch_object = Sketch(**sketch)
 
+    assert len(sketch_object.utterances) == 1
+    assert len(sketch_object.descriptions) == 1
+
     return catalog_object, sketch_object
 
 
@@ -37,7 +39,7 @@ def sketch_to_plan(catalog_name: str, sketch_name: str) -> PlannerResponse:
     pddl, transforms = sketch_compilation.compile_to_pddl(sketch, catalog)
 
     planner_response = sketch_compilation.plan_it(pddl, transforms)
-    print(planner.pretty_print(planner_response))
+    print(PLANNER.pretty_print(planner_response))
 
     return planner_response
 

@@ -2,6 +2,8 @@
 sketch_name: Conference Trip
 utterances:
   - Fetch my letter of employment
+descriptions:
+  - Fetch my employment verification letter.
 components:
   - item: Employer Letter
 

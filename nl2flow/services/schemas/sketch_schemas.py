@@ -43,6 +43,7 @@ class Slot(BaseModel):
 class Sketch(BaseModel):
     sketch_name: str
     utterances: List[str] = []
+    descriptions: List[str] = []
     options: List[str] = []
     components: List[Union[Goal, Condition, Disjunction, Ordering]] = []
     mappings: List[Mapping] = []
