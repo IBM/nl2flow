@@ -1,4 +1,5 @@
-from typing import Any, List, Optional
+from types import ModuleType
+from typing import List, Optional
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.data_types.pddl_generator_datatypes import PddlGeneratorOutput
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos
@@ -12,7 +13,7 @@ from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 
 
 def generate_dataset_with_info_generator(
-    agent_info_generator_input: AgentInfoGeneratorInput, planner: Planner, random: Any
+    agent_info_generator_input: AgentInfoGeneratorInput, planner: Planner, random: ModuleType
 ) -> Optional[List[PddlGeneratorOutput]]:
     samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
     if not is_all_samples_collected:
