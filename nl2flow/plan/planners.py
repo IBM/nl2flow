@@ -49,7 +49,7 @@ class Planner(ABC):
 
 
 class Kstar(Planner):
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         with (
             tempfile.NamedTemporaryFile() as domain_temp,
             tempfile.NamedTemporaryFile() as problem_temp,
@@ -90,7 +90,6 @@ class Kstar(Planner):
 
                 if action_name is not None:
                     new_action = parse_action(action_name=action_name, parameters=action_split[1:], **kwargs)
-
                 else:
                     raise ValueError("Could not parse action name.")
 

@@ -19,6 +19,9 @@ from nl2flow.compile.basic_compilations.compile_confirmation import compile_conf
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
+    compile_all_together,
+    compile_new_object_maps,
+    get_goodness_map,
 )
 from nl2flow.compile.basic_compilations.compile_mappings import (
     compile_typed_mappings,
@@ -26,6 +29,7 @@ from nl2flow.compile.basic_compilations.compile_mappings import (
 )
 from nl2flow.compile.basic_compilations.compile_goals import compile_goals
 from nl2flow.compile.basic_compilations.compile_history import compile_history
+from nl2flow.compile.basic_compilations.compile_constraints import compile_manifest_constraints
 
 from nl2flow.compile.basic_compilations.utils import (
     add_type_item_to_type_map,
@@ -36,6 +40,7 @@ from nl2flow.compile.basic_compilations.utils import (
 
 from nl2flow.compile.options import (
     SlotOptions,
+    MappingOptions,
     TypeOptions,
     MemoryState,
     ConstraintState,
@@ -99,7 +104,7 @@ class ClassicPDDL(Compilation):
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
-            TypeOptions.HASDONE,
+            TypeOptions.HAS_DONE,
             TypeOptions.STATUS,
             TypeOptions.MEMORY,
             TypeOptions.RETRY,
@@ -109,7 +114,7 @@ class ClassicPDDL(Compilation):
             add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
 
         reserved_type_map = {
-            HasDoneState: TypeOptions.HASDONE,
+            HasDoneState: TypeOptions.HAS_DONE,
             ConstraintState: TypeOptions.STATUS,
             MemoryState: TypeOptions.MEMORY,
         }
@@ -127,7 +132,7 @@ class ClassicPDDL(Compilation):
         self.has_done = self.lang.predicate(
             "has_done",
             self.type_map[TypeOptions.OPERATOR.value],
-            self.type_map[TypeOptions.HASDONE.value],
+            self.type_map[TypeOptions.HAS_DONE.value],
         )
 
         self.been_used = self.lang.predicate(
@@ -222,22 +227,33 @@ class ClassicPDDL(Compilation):
 
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
+        if len(slot_options) > 1:
+            compile_new_object_maps(self, **kwargs)
+            get_goodness_map(self)
+
         if SlotOptions.higher_cost in slot_options:
             compile_higher_cost_slots(self, **kwargs)
 
         if SlotOptions.last_resort in slot_options:
             compile_last_resort_slots(self, **kwargs)
 
+        if SlotOptions.all_together in slot_options:
+            compile_all_together(self, **kwargs)
+
         compile_declared_mappings(self, **kwargs)
-        compile_typed_mappings(self, **kwargs)
+
+        if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
+            compile_typed_mappings(self, **kwargs)
+
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
+        compile_manifest_constraints(self)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
 
         writer = FstripsWriter(self.problem)
-        domain = writer.print_domain(constant_objects=self.constant_map.values()).replace(" :numeric-fluents", "")
-        problem = writer.print_instance(constant_objects=self.constant_map.values())
+        domain = writer.print_domain(constant_objects=list(self.constant_map.values())).replace(" :numeric-fluents", "")
+        problem = writer.print_instance(constant_objects=list(self.constant_map.values()))
 
         return PDDL(domain=domain, problem=problem), self.cached_transforms

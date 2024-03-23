@@ -1,0 +1,172 @@
+---
+catalog_name: Book a Trip
+agents:
+  - id: Workday
+    inputs:
+      - name: Employee ID
+    outputs:
+      - name: name
+      - name: address
+        type: Location
+      - name: Employer Letter
+        type: File
+
+
+  - id: W3 Agent
+    inputs:
+      - name: w3
+        type: Email
+    outputs:
+      - name: name
+      - name: address
+        type: Location
+      - name: Employee ID
+      - name: Passport
+
+
+  - id: Author Workbench
+    inputs:
+      - name: w3
+        type: Email
+      - name: conference name
+    outputs:
+      - name: list of papers
+
+
+  - id: Trip Approval
+    inputs:
+      - constraint: hotel policy
+        variables:
+          - name: hotel_booking
+        evaluate: hotel_booking.price < 100
+      - constraint: flight policy
+        variables:
+          - name: flight_ticket
+        evaluate: flight_ticket.price < 100
+      - constraint: travel policy
+        variables:
+          - name: hotel_booking
+          - name: flight_ticket
+        evaluate: hotel_booking.price + flight_ticket.price < 150
+    outputs:
+      - name: approval
+
+
+  - id: Visa Application
+    inputs:
+      - name: Passport
+      - name: address
+        type: Location
+      - name: Employer Letter
+        type: File
+    outputs:
+      - name: visa
+
+
+  - id: Kayak
+    inputs:
+      - constraint: is not a business trip
+        evaluate: eval.state
+      - name: start date
+        type: Datetime
+      - name: end date
+        type: Datetime
+      - name: home
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: flight_ticket
+      - name: hotel_booking
+
+
+  - id: Concur
+    inputs:
+      - constraint: is a business trip
+        evaluate: eval.state
+      - name: start date
+        type: Datetime
+      - name: end date
+        type: Datetime
+      - name: home
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: flight_ticket
+      - name: hotel_booking
+      - constraint: hotel policy
+        variables:
+          - name: hotel_booking
+        evaluate: hotel_booking.price < 100
+      - constraint: flight policy
+        variables:
+          - name: flight_ticket
+        evaluate: flight_ticket.price < 100
+
+
+  - id: Hotel.com
+    inputs:
+      - name: start date
+        type: Datetime
+      - name: end date
+        type: Datetime
+      - name: home
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: hotel_booking
+
+
+  - id: Uber
+    inputs:
+      - name: date
+        type: Datetime
+      - name: address
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: booking
+
+
+  - id: Lyft
+    inputs:
+      - name: date
+        type: Datetime
+      - name: address
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: booking
+
+
+  - id: Taxi
+    inputs:
+      - name: date
+        type: Datetime
+      - name: address
+        type: Location
+      - name: destination
+        type: Location
+    outputs:
+      - name: booking
+
+
+  - id: Email Agent
+
+  - id: Vacation Bot
+    inputs:
+      - name: w3
+        type: Email
+
+  - id: Registration Bot
+    inputs:
+      - name: conference name
+      - name: list of papers
+      - name: username
+        type: Email
+    outputs:
+      - name: invoice

@@ -1,5 +1,7 @@
-import enum
+from enum import Enum
 
 
-class SketchOptions(enum.Enum):
-    RELAXED = "relaxed"
+class SketchOptions(Enum):
+    INORDER = "INORDER"
+    CAREFUL = "CAREFUL"
+    NO_TYPING = "NO_TYPING"

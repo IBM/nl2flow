@@ -7,6 +7,7 @@ SLOT_GOODNESS: float = 0.5
 
 
 class RestrictedOperations(enum.Enum):
+    MANIFEST = "manifest"
     ENABLER = "enabler_operator"
     GOAL = "goal_operator"
 
@@ -21,13 +22,13 @@ class BasicOperations(enum.Enum):
 
 class CompileOptions(enum.Enum):
     CLASSICAL = "CLASSICAL"
-    ALLOUTCOMES = "ALL_OUTCOMES"
-    MAXOUTCOMES = "MOST_LIKELY_OUTCOME"
+    ALL_OUTCOMES = "ALL_OUTCOMES"
+    MAX_OUTCOMES = "MOST_LIKELY_OUTCOME"
 
 
 class TypeOptions(enum.Enum):
     RETRY = "num-retries"
-    HASDONE = "has-done-state"
+    HAS_DONE = "has-done-state"
     MEMORY = "datum-state"
     STATUS = "constraint-status"
     OPERATOR = "operator"
@@ -52,12 +53,13 @@ class ConfirmOptions(enum.Enum):
 
 
 class MappingOptions(enum.Enum):
+    ignore_types = "IGNORE_TYPES"
     group_maps = "GROUP"
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
     transitive = "TRANSITIVE"
-    prohibit_direct = "INDIRECTMAP"
+    prohibit_direct = "INDIRECT_MAP"
 
 
 class SlotOptions(enum.Enum):
@@ -65,6 +67,7 @@ class SlotOptions(enum.Enum):
     higher_cost = "COST"
     last_resort = "FALLBACK"
     ordered = "ORDERED"
+    all_together = "TOGETHER"
     relaxed = "RELAXED"
     immediate = "IMMEDIATE"
     eventual = "EVENTUAL"
@@ -104,3 +107,4 @@ class GoalType(enum.Enum):
     OPERATOR = "OPERATOR"
     OBJECT_KNOWN = "OBJECT_KNOWN"
     OBJECT_USED = "OBJECT_USED"
+    CONSTRAINT = "CONSTRAINT"

@@ -25,7 +25,7 @@ def test_basic() -> None:
     new_flow.add(goal)
 
     pddl, _ = new_flow.compile_to_pddl()
-    _ = pddl
+    _ = pddl  # explore the pddl
 
     plans = new_flow.plan_it(PLANNER)
     print(PLANNER.pretty_print(plans))

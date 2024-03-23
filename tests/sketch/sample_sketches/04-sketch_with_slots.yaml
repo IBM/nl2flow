@@ -1,0 +1,20 @@
+---
+sketch_name: Conference Trip
+utterances:
+  - Fetch my letter of employment
+descriptions:
+  - Fetch my employment verification letter.
+components:
+  - item: Employer Letter
+
+## The following is likely not derived from user
+## instruction. I have put it as part of the sketch
+## for illustrative purposes.
+
+slots:
+  - name: Employee ID
+    goodness: 0.2
+  - name: Employer Letter
+    goodness: 0.0
+  - name: w3
+    goodness: 1.0

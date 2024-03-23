@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Set, List, Dict, Optional, Union, Any
 from collections import Counter
-from pydantic import BaseModel, field_validator, model_validator, FieldValidationInfo, ConfigDict
+from pydantic import BaseModel, field_validator, model_validator, ConfigDict
+from pydantic_core.core_schema import FieldValidationInfo
 
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.utils import string_transform, Transform
@@ -63,8 +64,20 @@ class Constraint(BaseModel):
         )
 
 
+class ManifestConstraint(BaseModel):
+    manifest: Constraint
+    constraint: Constraint
+
+    @classmethod
+    def transform(cls, manifest_constraint: ManifestConstraint, transforms: List[Transform]) -> ManifestConstraint:
+        return ManifestConstraint(
+            manifest=manifest_constraint.manifest.transform(manifest_constraint.manifest, transforms),
+            constraint=manifest_constraint.constraint.transform(manifest_constraint.constraint, transforms),
+        )
+
+
 class GoalItem(BaseModel):
-    goal_name: Union[str, Step]
+    goal_name: Union[str, Step, Constraint]
     goal_type: GoalType = GoalType.OPERATOR
 
     @classmethod
@@ -89,15 +102,16 @@ class GoalItems(BaseModel):
 
 
 class SignatureItem(BaseModel):
-    parameters: Union[str, Parameter, MemoryItem, List[Union[str, MemoryItem, Parameter]]]
+    parameters: Union[str, Parameter, MemoryItem, List[Union[str, MemoryItem, Parameter]]] = []
     constraints: List[Constraint] = []
 
     @classmethod
     def transform(cls, signature: SignatureItem, transforms: List[Transform]) -> SignatureItem:
+        parameters = signature.parameters if isinstance(signature.parameters, List) else [signature.parameters]
         return SignatureItem(
             parameters=[
                 string_transform(param, transforms) if isinstance(param, str) else param.transform(param, transforms)
-                for param in signature.parameters
+                for param in parameters
             ],
             constraints=[constraint.transform(constraint, transforms) for constraint in signature.constraints],
         )
@@ -207,6 +221,7 @@ class FlowDefinition(BaseModel):
     slot_properties: List[SlotProperty] = []
     list_of_mappings: List[MappingItem] = []
     partial_orders: List[PartialOrder] = []
+    manifest_constraints: List[ManifestConstraint] = []
     starts_with: Optional[str] = None
     ends_with: Optional[str] = None
 
@@ -278,7 +293,7 @@ class FlowDefinition(BaseModel):
             )
 
             for item in list_of_items:
-                if item not in reference_keys:
+                if item and item not in reference_keys:
                     reference_keys.append(item)
 
         transformed_keys = [string_transform(item, transforms) for item in reference_keys]
@@ -339,7 +354,11 @@ class FlowDefinition(BaseModel):
 
     @classmethod
     def signature_parser(cls, list_of_objects: Dict[str, Set[str]], signature_item: SignatureItem) -> None:
-        for parameter in signature_item.parameters:
+        parameters = (
+            signature_item.parameters if isinstance(signature_item.parameters, List) else [signature_item.parameters]
+        )
+
+        for parameter in parameters:
             parameter_name = parameter.item_id if isinstance(parameter, Parameter) else parameter
             parameter_type = parameter.item_type if isinstance(parameter, Parameter) else None
 
@@ -363,7 +382,12 @@ class FlowDefinition(BaseModel):
         for item in flow.goal_items:
             goals: List[GoalItem] = item.goals if isinstance(item.goals, List) else [item.goals]
             for goal in goals:
-                if goal.goal_type != GoalType.OPERATOR and goal.goal_name not in [t.name for t in flow.type_hierarchy]:
+                if (
+                    goal.goal_type != GoalType.OPERATOR
+                    and goal.goal_type != GoalType.CONSTRAINT
+                    and not isinstance(goal.goal_name, Step)
+                    and goal.goal_name not in [t.name for t in flow.type_hierarchy]
+                ):
                     cls.update_object_map(list_of_objects, goal.goal_name, None)
 
                 elif goal.goal_type == GoalType.OPERATOR and isinstance(goal.goal_name, Step):
@@ -373,6 +397,10 @@ class FlowDefinition(BaseModel):
                             param.item_id if isinstance(param, Parameter) else param,
                             None,
                         )
+
+                elif isinstance(goal.goal_name, Constraint):
+                    for param in goal.goal_name.parameters:
+                        cls.update_object_map(list_of_objects, param)
 
         for operator in flow.operators:
             for item in operator.inputs:

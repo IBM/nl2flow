@@ -1,0 +1,43 @@
+---
+sketch_name: Conference Trip
+utterances:
+  - I want to book a trip to a conference
+descriptions:
+  - Apply for a pre-travel approval to a conference. Apply for a visa as well. Only apply for the approval and register for the conference if the visa process is successful, otherwise mark the approval process as failed and book a vacation instead. Make sure that the trip approval is done before registering for the conference. Email me if the trip is not approved.
+options:
+  - NO_TYPING
+components:
+  - condition: approval.status == FAILED
+    variables:
+      - name: approval
+    if_outcomes:
+      - item: Email Agent
+  - condition: visa.status == SUCCESS
+    variables:
+      - name: visa
+    if_outcomes:
+      - item: Registration Bot
+      - item: Trip Approval
+    else_outcomes:
+      - item: Vacation Bot
+      - condition: approval.status == FAILED
+        variables:
+          - name: approval
+  - order: Trip Approval > Registration Bot
+
+## The following is likely not derived from user`
+## instruction. I have put it as part of the sketch
+## for illustrative purposes.
+
+slots:
+  - name: Employee ID
+    goodness: 0.2
+  - name: Employer Letter
+    goodness: 0.0
+  - name: w3
+    goodness: 1.0
+
+mappings:
+  - source: start date
+    target: end date
+    goodness: 0.0

@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Union
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import revert_string_transform
+from nl2flow.compile.utils import revert_string_transform, string_transform
 from nl2flow.plan.schemas import ClassicalPlan, Action, Parameter
 from nl2flow.compile.options import (
     BasicOperations,
@@ -9,6 +9,7 @@ from nl2flow.compile.options import (
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
+    ConstraintState,
 )
 from nl2flow.compile.schemas import (
     OperatorDefinition,
@@ -65,8 +66,14 @@ def parse_action(
         list_of_parameters: List[Parameter] = list()
 
         for signature_item in signatures:
-            for parameter in signature_item.parameters:
-                if isinstance(parameter, MemoryItem):
+            signature_parameters = (
+                signature_item.parameters
+                if isinstance(signature_item.parameters, List)
+                else [signature_item.parameters]
+            )
+
+            for parameter in signature_parameters:
+                if isinstance(parameter, Parameter):
                     list_of_parameters.append(
                         Parameter(
                             item_id=parameter.item_id,
@@ -96,6 +103,7 @@ def parse_action(
 
         return list_of_parameters
 
+    transforms = kwargs["transforms"]
     new_action = Action(name=action_name)
     flow: Flow = kwargs["flow"]
 
@@ -104,14 +112,32 @@ def parse_action(
             BasicOperations.MAPPER.value
         ):
             temp = action_name.split("----")
-            new_action.name = temp[0]
+            new_action.name = (
+                BasicOperations.SLOT_FILLER.value
+                if BasicOperations.SLOT_FILLER.value in temp[0]
+                else BasicOperations.MAPPER.value
+            )
 
             if temp[1:] and not parameters:
                 parameters = temp[1:]
 
+        elif action_name.startswith(BasicOperations.CONSTRAINT.value):
+            new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "")
+
+            for v in ConstraintState:
+                new_action_name = new_action_name.replace(f"_to_{string_transform(str(v.value), transforms)}", "")
+
+            new_action_name = revert_string_transform(new_action_name, transforms)
+
+            for v in ConstraintState:
+                if action_name.endswith(f"_to_{string_transform(str(v.value), transforms)}"):
+                    new_action_name = f"{BasicOperations.CONSTRAINT.value}({new_action_name}) = {v.value}"
+
+            new_action.name = new_action_name
+
         new_action.inputs = [
             Parameter(
-                item_id=revert_string_transform(param, kwargs["transforms"]),
+                item_id=revert_string_transform(param, transforms),
                 item_type=TypeOptions.ROOT.value,
             )
             for param in parameters

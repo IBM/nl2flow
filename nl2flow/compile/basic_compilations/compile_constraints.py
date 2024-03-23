@@ -3,10 +3,7 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Any
 
-from nl2flow.compile.basic_compilations.utils import (
-    add_memory_item_to_constant_map,
-    get_type_of_constant,
-)
+from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map, get_type_of_constant
 
 from nl2flow.compile.schemas import Constraint, MemoryItem
 from nl2flow.compile.options import (
@@ -19,12 +16,39 @@ from nl2flow.compile.options import (
 )
 
 
+def compile_manifest_constraints(compilation: Any) -> None:
+    for manifest_constraint in compilation.flow_definition.manifest_constraints:
+        manifest_predicate = compile_constraints(compilation, manifest_constraint.manifest)
+        reference_predicate = compile_constraints(compilation, manifest_constraint.constraint)
+
+        compilation.problem.action(
+            f"{RestrictedOperations.MANIFEST.value}_{manifest_constraint.manifest.constraint_id}",
+            parameters=list(),
+            precondition=land(reference_predicate),
+            effects=[fs.AddEffect(manifest_predicate)],
+            cost=iofs.AdditiveActionCost(
+                compilation.problem.language.constant(
+                    CostOptions.UNIT.value,
+                    compilation.problem.language.get_sort("Integer"),
+                )
+            ),
+        )
+
+
 def compile_constraints(
     compilation: Any,
     constraint: Constraint,
 ) -> Any:
     new_constraint_variable = f"status_{constraint.constraint_id}"
-    set_variables = [compilation.constant_map[item] for item in constraint.parameters]
+    set_variables = list()
+    for item in constraint.parameters:
+        if item not in compilation.constant_map:
+            add_memory_item_to_constant_map(
+                compilation,
+                MemoryItem(item_id=item, item_type=TypeOptions.ROOT.value),
+            )
+        set_variables.append(compilation.constant_map[item])
+
     closed_variables = [
         compilation.type_map[get_type_of_constant(compilation, item)] for item in constraint.parameters
     ] + [compilation.type_map[TypeOptions.STATUS.value]]
@@ -45,12 +69,6 @@ def compile_constraints(
             del_effect_list = list()
 
             for index, parameter in enumerate(constraint.parameters):
-                if parameter not in compilation.constant_map:
-                    add_memory_item_to_constant_map(
-                        compilation,
-                        MemoryItem(item_id=parameter, item_type=TypeOptions.ROOT.value),
-                    )
-
                 del_effect_list.append(compilation.free(compilation.constant_map[parameter]))
                 precondition_list.extend(
                     [
@@ -107,10 +125,10 @@ def compile_constraints(
                     parameters=list(),
                     precondition=land(*precondition_list, flat=True),
                     effects=[fs.AddEffect(add) for add in add_effect_list]
-                    + [fs.DelEffect(dele) for dele in del_effect_list],
+                    + [fs.DelEffect(del_e) for del_e in del_effect_list],
                     cost=iofs.AdditiveActionCost(
                         compilation.problem.language.constant(
-                            CostOptions.UNIT.value,
+                            CostOptions.VERY_LOW.value,
                             compilation.problem.language.get_sort("Integer"),
                         )
                     ),

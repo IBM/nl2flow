@@ -46,10 +46,10 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         del_effect_list = list()
         type_list = list()
 
-        for o_input in operator.inputs:
+        for index_of_input, o_input in enumerate(operator.inputs):
             for param in o_input.parameters:
                 add_to_condition_list_pre_check(compilation, param)
-                index_of_param = list(o_input.parameters).index(param)
+                index_of_param = index_of_input + list(o_input.parameters).index(param)
 
                 if isinstance(param, Parameter):
                     type_of_param = param.item_type or TypeOptions.ROOT.value
@@ -180,7 +180,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
             operator.name,
             parameters=parameter_list,
             precondition=land(*precondition_list, flat=True),
-            effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(dele) for dele in del_effect_list],
+            effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(del_e) for del_e in del_effect_list],
             cost=iofs.AdditiveActionCost(
                 compilation.problem.language.constant(operator.cost, compilation.problem.language.get_sort("Integer"))
             ),
