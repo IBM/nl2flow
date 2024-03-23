@@ -15,7 +15,7 @@ class Goal(BaseModel):
 
 
 class Disjunction(BaseModel):
-    OR: List[Goal]
+    OR: List[Union[Goal, Condition]]
 
 
 class Ordering(BaseModel):

@@ -1,7 +1,9 @@
 from nl2flow.compile.schemas import Constraint, MemoryItem, Step
 from nl2flow.compile.options import ConstraintState, MemoryState
 from nl2flow.plan.planners import Kstar
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.services.sketch import BasicSketchCompilation
+from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 from tests.sketch.test_basic import load_assets
 from copy import deepcopy
 
@@ -9,9 +11,8 @@ PLANNER = Kstar()
 
 
 class TestSketchConstraints:
-    def test_with_constraints(self) -> None:
-        catalog, sketch = load_assets(catalog_name="catalog", sketch_name="07-sketch_with_constraints")
-
+    @classmethod
+    def check_sketch_with_execution(cls, catalog: Catalog, sketch: Sketch) -> PlannerResponse:
         sketch_compilation = BasicSketchCompilation(name=sketch.sketch_name)
         flow_object = sketch_compilation.compile_to_flow(sketch, catalog)
 
@@ -79,6 +80,18 @@ class TestSketchConstraints:
 
             assert len([a for a in action_names if a.startswith("check(visa.status")]) == 0, "No visa checks"
 
-    # def test_with_complex_goals(self) -> None:
-    #     planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="08-sketch_with_complex_goals")
-    #     assert planner_response.list_of_plans, "There should be plans."
+        return planner_response
+
+    def test_with_constraints(self) -> None:
+        catalog, sketch = load_assets(catalog_name="catalog", sketch_name="07-sketch_with_constraints")
+        final_planner_response = self.check_sketch_with_execution(catalog, sketch)
+
+        for plan in final_planner_response.list_of_plans:
+            assert plan.plan[-1].name == "check(approval.status == FAILED) = False"
+
+    def test_with_complex_goals(self) -> None:
+        catalog, sketch = load_assets(catalog_name="catalog", sketch_name="08-sketch_with_complex_goals")
+        final_planner_response = self.check_sketch_with_execution(catalog, sketch)
+
+        for plan in final_planner_response.list_of_plans:
+            assert plan.plan[-1].name == "check(approval.status == SUCCESS) = True"

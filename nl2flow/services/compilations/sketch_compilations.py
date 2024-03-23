@@ -119,6 +119,44 @@ def set_condition_as_goal(
             raise ValueError(f"Unknown conditional outcome {goal_item}")
 
 
+def sketch_options_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
+    for slot_info in sketch.slots:
+        flow.add(
+            SlotProperty(
+                slot_name=slot_info.name,
+                slot_desirability=slot_info.goodness,
+            )
+        )
+
+    for map_info in sketch.mappings:
+        flow.add(
+            MappingItem(
+                source_name=map_info.source,
+                target_name=map_info.target,
+                probability=map_info.goodness,
+            )
+        )
+
+    if SketchOptions.INORDER.value in sketch.options:
+        goal_agents = [
+            component.item
+            for component in sketch.components
+            if isinstance(component, Goal) and is_this_an_agent(component.item, catalog)
+        ]
+
+        for index in range(1, len(goal_agents)):
+            flow.add(PartialOrder(antecedent=goal_agents[index - 1], consequent=goal_agents[index]))
+
+    if SketchOptions.NO_TYPING.value in sketch.options:
+        flow.mapping_options.add(MappingOptions.ignore_types)
+
+    if SketchOptions.CAREFUL.value in sketch.options:
+        flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
+        flow.variable_life_cycle.add(LifeCycleOptions.confirm_on_mapping)
+
+    flow.goal_type = GoalOptions.AND_OR
+
+
 def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> None:
     for component in sketch.components:
         if isinstance(component, Goal):
@@ -181,40 +219,31 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
             set_condition_as_goal(flow, catalog, new_constraint, component.else_outcomes, False)
 
         elif isinstance(component, Disjunction):
-            raise NotImplementedError
+            or_goals = []
 
-    for slot_info in sketch.slots:
-        flow.add(
-            SlotProperty(
-                slot_name=slot_info.name,
-                slot_desirability=slot_info.goodness,
-            )
-        )
+            for or_item in component.OR:
+                if isinstance(or_item, Goal):
+                    if is_this_an_agent(or_item.item, catalog):
+                        or_goals.append(GoalItem(goal_name=or_item.item, goal_type=GoalType.OPERATOR))
+                    else:
+                        or_goals.append(GoalItem(goal_name=or_item.item, goal_type=GoalType.OBJECT_KNOWN))
 
-    for map_info in sketch.mappings:
-        flow.add(
-            MappingItem(
-                source_name=map_info.source,
-                target_name=map_info.target,
-                probability=map_info.goodness,
-            )
-        )
+                elif isinstance(or_item, Condition):
+                    if or_item.if_outcomes or or_item.else_outcomes:
+                        raise ValueError("This should be an assignment.")
 
-    if SketchOptions.INORDER.value in sketch.options:
-        goal_agents = [
-            component.item
-            for component in sketch.components
-            if isinstance(component, Goal) and is_this_an_agent(component.item, catalog)
-        ]
+                    goal_c = Constraint(
+                        constraint_id=or_item.condition,
+                        constraint=or_item.condition,
+                        parameters=[v.name for v in or_item.variables],
+                        truth_value=ConstraintState.TRUE.value,
+                    )
 
-        for index in range(1, len(goal_agents)):
-            flow.add(PartialOrder(antecedent=goal_agents[index - 1], consequent=goal_agents[index]))
+                    or_goals.append(GoalItem(goal_name=goal_c, goal_type=GoalType.CONSTRAINT))
 
-    if SketchOptions.NO_TYPING.value in sketch.options:
-        flow.mapping_options.add(MappingOptions.ignore_types)
+                else:
+                    raise ValueError(f"Unknown disjunction: {or_item}")
 
-    if SketchOptions.CAREFUL.value in sketch.options:
-        flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
-        flow.variable_life_cycle.add(LifeCycleOptions.confirm_on_mapping)
+            flow.add(GoalItems(goals=or_goals))
 
-    flow.goal_type = GoalOptions.AND_OR
+    sketch_options_compilation(flow, sketch, catalog)
