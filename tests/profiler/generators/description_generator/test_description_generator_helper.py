@@ -14,7 +14,6 @@ from profiler.generators.description_generator.description_generator_helper impo
     get_signature_item_names,
     get_variable_name_from_sig_item,
     get_variable_type_from_sig_item,
-    get_agent_info_signature_item_description,
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
@@ -24,36 +23,13 @@ from profiler.common_helpers.hash_helper import get_hash_str
 
 
 class TestDescriptionGeneratorHelper(unittest.TestCase):
-    def test_get_agent_info_signature_item_description_positive(self) -> None:
-        item = {
-            "name": "abc",
-            "data_type": "integer",
-            "required": True,
-            "slot_fillable": True,
-        }
-        item_str = get_agent_info_signature_item_description(item)  # type: ignore
-        self.assertEqual(item_str, "Variable abc is required and can be acquired by asking the user.")
-
-    def test_get_agent_info_signature_item_description_negative(self) -> None:
-        item = {
-            "name": "abc",
-            "data_type": "integer",
-            "required": False,
-            "slot_fillable": False,
-        }
-        item_str = get_agent_info_signature_item_description(item)  # type: ignore
-        self.assertEqual(
-            item_str,
-            "Variable abc is not required and cannot be acquired by asking the user.",
-        )
-
     def test_get_variable_name_from_sig_item(self) -> None:
         sig_items = [
-            {"name": "abc", "data_type": "integer"},
-            {"name": "def", "data_type": "string"},
-            {"name": "ghi", "data_type": "date"},
+            AgentInfoSignatureItem(name="abc", data_type="integer"),
+            AgentInfoSignatureItem(name="def", data_type="string"),
+            AgentInfoSignatureItem(name="ghi", data_type="date"),
         ]
-        variable_strs = get_variable_name_from_sig_item(sig_items)  # type: ignore
+        variable_strs = get_variable_name_from_sig_item(sig_items)
         self.assertEqual(
             variable_strs,
             ["Variable abc", "Variable def", "Variable ghi"],
@@ -61,9 +37,9 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
 
     def test_get_variable_type_from_sig_item(self) -> None:
         sig_items = [
-            {"name": "abc", "data_type": "integer"},
-            {"name": "def", "data_type": "string"},
-            {"name": "ghi", "data_type": "date"},
+            AgentInfoSignatureItem(name="abc", data_type="integer"),
+            AgentInfoSignatureItem(name="def", data_type="string"),
+            AgentInfoSignatureItem(name="ghi", data_type="date"),
         ]
         variable_type_strs = get_variable_type_from_sig_item(sig_items)
         self.assertEqual(
@@ -76,13 +52,17 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         )
 
     def test_get_signature_item_names(self) -> None:
-        sig_items = [{"name": "abc"}, {"name": "def"}, {"name": "ghi"}]
-        names_str = get_signature_item_names(sig_items)  # type: ignore
+        sig_items = [
+            AgentInfoSignatureItem(name="abc"),
+            AgentInfoSignatureItem(name="def"),
+            AgentInfoSignatureItem(name="ghi"),
+        ]
+        names_str = get_signature_item_names(sig_items)
         self.assertEqual(names_str, "Variable abc, Variable def, and Variable ghi")
 
     def test_get_names_from_signature_items(self) -> None:
-        sig_items = [{"name": "abc"}, {"name": "def"}]
-        strs = get_names_from_signature_items(sig_items)  # type: ignore
+        sig_items = [AgentInfoSignatureItem(name="abc"), AgentInfoSignatureItem(name="def")]
+        strs = get_names_from_signature_items(sig_items)
         self.assertEqual(strs, ["Variable abc", "Variable def"])
 
     # def test_get_variable_type_str_none(self):
@@ -167,9 +147,8 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
                 "out_sig_full": [{"name": "c", "required": False, "slot_fillable": False}],
             },
         }
-        pre_cond, in_sig, effects = get_agent_info_description(agent_info)
+        pre_cond, effects = get_agent_info_description(agent_info)
         self.assertEqual("To execute Action a, Variable b should be known.", pre_cond)
-        self.assertEqual("Variable b is required and can be acquired by asking the user.", in_sig)
         self.assertEqual("After executing Action a, Variable c is known.", effects)
 
     def test_get_mapping_description(self) -> None:
@@ -226,7 +205,8 @@ class TestDescriptionGeneratorHelper(unittest.TestCase):
         self.assertEqual(
             get_hash_str(res),
             get_hash_str(
-                "The system has Variable b, Variable c, Variable r, and Variable s."
-                + "\nThe type of Variable c is sample_type. The type of Variable r is type_a."
+                "Variable b can be acquired by asking the user.\n"
+                + "Variable c cannot be acquired by asking the user.\n"
+                + "The type of Variable c is sample_type. The type of Variable r is type_a."
             ),
         )

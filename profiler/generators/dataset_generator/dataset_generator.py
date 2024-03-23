@@ -39,7 +39,7 @@ def generate_dataset_with_info_generator(
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
                 sample_hash=sample.get_hash(),
-                agent_info_generator_input=agent_info_generator_input.copy(deep=True),
+                agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
                 compiler_planner_lag_millisecond=compiler_planner_lag,
             )
         )

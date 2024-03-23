@@ -1,4 +1,5 @@
-from typing import List, Optional, Set, Tuple, no_type_check
+from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignature,
@@ -44,7 +45,53 @@ def get_variable_name_from_sig_item(
     return list(map(lambda sig_item: "Variable " + sig_item.get("name", ""), sig_items))
 
 
-@no_type_check
+def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
+    property_action_names_dict: Dict[bool, List[str]] = defaultdict(list)
+    for agent_info in available_agents:
+        sig = agent_info.get("actuator_signature", None)
+        if sig is not None:
+            for signature_type in ["in_sig_full", "out_sig_full"]:
+                for sig_item in sig.get(signature_type, []):
+                    slot_fillable = sig_item.get("slot_fillable", True)
+                    slot_fillable_category = True if slot_fillable else False
+                    property_action_names_dict[slot_fillable_category].append(sig_item.get("name", ""))
+
+    variable_description_str_lst: List[str] = []
+    for slot_fillable, sig_item_names in property_action_names_dict.items():
+        sentence_parts: List[str] = []
+        variable = "Variable" if len(sig_item_names) == 1 else "Variables"
+        sentence_parts.append(variable)
+        variable_names = get_names(sorted(list(set(sig_item_names))))
+        sentence_parts.append(variable_names)
+        slot_fillable_description = (
+            "can be acquired by asking the user." if slot_fillable else "cannot be acquired by asking the user."
+        )
+        sentence_parts.append(slot_fillable_description)
+        description = " ".join(sentence_parts)
+        variable_description_str_lst.append(description)
+
+    return "\n".join(variable_description_str_lst)
+
+
+def get_vartiable_type_description(
+    available_agents: List[AgentInfo], available_data: List[Tuple[str, Optional[str]]]
+) -> str:
+    variable_list: List[str] = list()
+    variable_type_strs: List[str] = list()
+    for known_data in available_data:
+        variable_list.append("Variable " + known_data[0])
+        variable_type_str = get_variable_type_str(known_data[0], known_data[1] if known_data[1] is not None else "")
+        if len(variable_type_str) > 0:
+            variable_type_strs.append(variable_type_str)
+
+    for agent_info in available_agents:
+        sig = agent_info.get("actuator_signature")
+        variable_type_strs += get_variable_type_from_sig_item(sig.get("in_sig_full", []) if sig is not None else [])
+        variable_type_strs += get_variable_type_from_sig_item(sig.get("out_sig_full", []) if sig is not None else [])
+
+    return (" ".join(sorted(list(set(variable_type_strs))))).strip() if len(variable_type_strs) > 0 else ""
+
+
 def get_variable_type_from_sig_item(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
@@ -59,29 +106,22 @@ def get_variable_type_from_sig_item(
     )
 
 
+def get_variable_description_str() -> str:
+    return ""
+
+
 def get_variables_description(
     available_agents: List[AgentInfo],
     available_data: List[Tuple[str, Optional[str]]],
 ) -> str:
-    variable_list: List[str] = list()
-    variable_type_strs: List[str] = list()
-    for known_data in available_data:
-        variable_list.append("Variable " + known_data[0])
-        variable_type_str = get_variable_type_str(known_data[0], known_data[1] if known_data[1] is not None else "")
-        if len(variable_type_str) > 0:
-            variable_type_strs.append(variable_type_str)
-    for agent_info in available_agents:
-        sig = agent_info.get("actuator_signature")
-        variable_list += get_variable_name_from_sig_item(sig.get("in_sig_full", []) if sig is not None else [])
-        variable_list += get_variable_name_from_sig_item(sig.get("out_sig_full", []) if sig is not None else [])
-        variable_type_strs += get_variable_type_from_sig_item(sig.get("in_sig_full", []) if sig is not None else [])
-        variable_type_strs += get_variable_type_from_sig_item(sig.get("out_sig_full", []) if sig is not None else [])
-
+    variable_property_description = get_variable_property_description(available_agents=available_agents)
+    variable_type_description = get_vartiable_type_description(
+        available_agents=available_agents, available_data=available_data
+    )
     return (
-        "The system has "
-        + get_names(sorted(list(set(variable_list))))
-        + ".\n"
-        + " ".join(sorted(list(set(variable_type_strs))))
+        variable_property_description
+        if len(variable_type_description) == 0
+        else (variable_property_description + "\n" + variable_type_description)
     )
 
 
@@ -95,17 +135,12 @@ def get_signature_item_names(sig_items: List[AgentInfoSignatureItem]) -> str:
     return get_names(get_names_from_signature_items(sig_items))
 
 
-def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
+def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
     agent_id = agent_info.get("agent_id")
     sig = agent_info.get("actuator_signature", AgentInfoSignature(in_sig_full=[], out_sig_full=[]))
     # in sig
     in_sig = sig.get("in_sig_full", [])
     agent_info_pre_cond_str = f"To execute Action {agent_id}, " + get_signature_item_names(in_sig) + " should be known."
-
-    in_sig_items_description: List[str] = list()
-    for in_sig_item in in_sig:
-        in_sig_items_description.append(get_agent_info_signature_item_description(in_sig_item))
-
     # out sig
     out_sig = sig.get("out_sig_full", [])
     be_out = " is " if len(out_sig) == 1 else " are "
@@ -113,18 +148,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str, str]:
         f"After executing Action {agent_id}, " + get_signature_item_names(out_sig) + be_out + "known."
     )
 
-    return (
-        agent_info_pre_cond_str,
-        " ".join(in_sig_items_description),
-        agent_info_effect_str,
-    )
-
-
-def get_agent_info_signature_item_description(sig_item: AgentInfoSignatureItem) -> str:
-    sig_name = sig_item.get("name")
-    required_str = "required" if sig_item.get("required") else "not required"
-    slot_fillable_str = "can" if sig_item.get("slot_fillable") else "cannot"
-    return f"Variable {sig_name} is " + required_str + " and " + slot_fillable_str + " be acquired by asking the user."
+    return (agent_info_pre_cond_str, agent_info_effect_str)
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
