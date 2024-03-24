@@ -37,6 +37,7 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
         cost=plan.cost,
         length=plan.length,
         metadata=plan.metadata,
+        reference=plan.reference,
     )
 
     new_start_of_plan = 0
