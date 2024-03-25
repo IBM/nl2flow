@@ -1,4 +1,3 @@
-import unittest
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.plan.planners import Kstar
@@ -9,7 +8,7 @@ from profiler.test_helpers.profiler_test_helper import write_pddl_plan
 PLANNER = Kstar()
 
 
-class TestQuadrupleGenerator(unittest.TestCase):
+class TestQuadrupleGenerator:
     def test_basic_quadruple(self) -> None:
         """
         THIS IS A TEST DESCRIPTION line 1

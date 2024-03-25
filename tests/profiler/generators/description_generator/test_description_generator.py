@@ -1,4 +1,3 @@
-import unittest
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
 )
@@ -6,7 +5,7 @@ from profiler.generators.info_generator.agent_info_generator import generate_age
 import random
 
 
-class TestDescriptionGenerator(unittest.TestCase):
+class TestDescriptionGenerator:
     def test_get_sample_description(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
@@ -20,7 +19,7 @@ class TestDescriptionGenerator(unittest.TestCase):
         )
 
         samples, _ = generate_agent_infos(agent_info_generator_input, random)
-        self.assertIsNotNone(samples[0].describe())
+        assert samples[0].describe() is not None
 
     def test_get_sample_description_small(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
@@ -36,4 +35,4 @@ class TestDescriptionGenerator(unittest.TestCase):
 
         samples, _ = generate_agent_infos(agent_info_generator_input, random)
 
-        self.assertIsNotNone(samples[0].describe())
+        assert samples[0].describe() is not None

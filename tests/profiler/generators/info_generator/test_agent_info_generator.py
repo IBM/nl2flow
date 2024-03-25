@@ -1,4 +1,4 @@
-import unittest
+import pytest
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
@@ -7,7 +7,7 @@ from profiler.data_types.generator_data_type import (
 import random
 
 
-class TestAgentInfoGenerator(unittest.TestCase):
+class TestAgentInfoGenerator:
     def test_generate_agent_infos(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
@@ -20,10 +20,10 @@ class TestAgentInfoGenerator(unittest.TestCase):
             proportion_mappable_variables=0.5,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
-        self.assertTrue(True)
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
+        assert len(samples) > 0
 
-    @unittest.skip("hakunator package has an issue")
+    @pytest.mark.skip("hakunator package has an issue")
     def test_generate_agent_infos_name_generator_haikunator(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=21,
@@ -37,7 +37,8 @@ class TestAgentInfoGenerator(unittest.TestCase):
             name_generator=NameGenerator.HAIKUNATOR,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
+        assert len(samples) > 0
 
     def test_generate_agent_infos_name_generator_dataset(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
@@ -52,4 +53,5 @@ class TestAgentInfoGenerator(unittest.TestCase):
             name_generator=NameGenerator.DATASET,
         )
 
-        samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
+        samples, _ = generate_agent_infos(agent_info_generator_input, random)
+        assert len(samples) > 0
