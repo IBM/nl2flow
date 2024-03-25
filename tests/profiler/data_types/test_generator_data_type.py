@@ -1,9 +1,7 @@
-import unittest
-
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInputCheck, NameGenerator
 
 
-class TestGeneratorDataType(unittest.TestCase):
+class TestGeneratorDataType:
     def test_hash_AgentInfoGeneratorInputCheck(self) -> None:
         setting = AgentInfoGeneratorInputCheck(
             num_agents=1,
@@ -20,4 +18,4 @@ class TestGeneratorDataType(unittest.TestCase):
             error_message=None,
         )
         hash_int = setting.__hash__()
-        self.assertTrue(isinstance(hash_int, int))
+        assert isinstance(hash_int, int)

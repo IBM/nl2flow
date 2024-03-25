@@ -1,4 +1,4 @@
-import unittest
+import pytest
 from profiler.validators.validator_executer import (
     execute_Val,
     validate_pddl,
@@ -8,8 +8,8 @@ from profiler.validators.validator_executer import (
 )
 
 
-class TestValidatorExecutor(unittest.TestCase):
-    @unittest.skip("file not found")
+class TestValidatorExecutor:
+    @pytest.mark.skip("file not found")
     def test_execute_Val(self) -> None:
         pddl_domain = ""
         pddl_problem = ""
@@ -22,11 +22,11 @@ class TestValidatorExecutor(unittest.TestCase):
         with open(f"./tests/profiler/data/pddl/{plan_file_name}", "r") as f:
             pddl_plan = f.read()
         return_code, err, out = execute_Val(pddl_domain, pddl_problem, pddl_plan)
-        self.assertIsNotNone(out)
-        self.assertEqual(0, len(err))
-        self.assertIsNotNone(return_code)
+        assert out is not None
+        assert len(err) == 0
+        assert return_code is not None
 
-    @unittest.skip("file not found")
+    @pytest.mark.skip("file not found")
     def test_validate_pddl(self) -> None:
         pddl_domain = ""
         pddl_problem = ""
@@ -39,6 +39,6 @@ class TestValidatorExecutor(unittest.TestCase):
         with open(f"./tests/profiler/data/pddl/{plan_file_name}", "r") as f:
             pddl_plan = f.read()
         validator_output = validate_pddl(pddl_domain, pddl_problem, pddl_plan)
-        self.assertTrue(validator_output.is_executable_plan)
-        self.assertTrue(validator_output.is_valid_plan)
-        self.assertEqual(7, validator_output.total_cost)
+        assert validator_output.is_executable_plan
+        assert validator_output.is_valid_plan
+        assert validator_output.total_cost == 7

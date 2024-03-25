@@ -1,4 +1,3 @@
-import unittest
 from nl2flow.plan.planners import Kstar
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInputBatch
 from profiler.generators.batch_data_generator.batch_data_generator import (
@@ -11,10 +10,10 @@ import random
 PLANNER = Kstar()
 
 
-class TestBatchDataGenerator(unittest.TestCase):
+class TestBatchDataGenerator:
     def test_get_agent_info_generator_inputs(self) -> None:
         res = list(get_agent_info_generator_inputs(AgentInfoGeneratorInputBatch(proportion_coupled_agents=[0.5, 1.0])))
-        self.assertEqual(len(res), 2)
+        assert len(res) == 2
 
     def test_get_pddl_generator_output_batch(self) -> None:
         AgentInfoGeneratorInputBatch()
@@ -23,4 +22,4 @@ class TestBatchDataGenerator(unittest.TestCase):
                 AgentInfoGeneratorInputBatch(proportion_coupled_agents=[0.5, 1.0]), planner=PLANNER, random=random
             )
         )
-        self.assertEqual(len(res), 2)
+        assert len(res) == 2

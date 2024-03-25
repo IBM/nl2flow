@@ -52,7 +52,7 @@ classifiers = [
 dependencies = ["pydantic>=2.4.2", "pyyaml", "tarski", "StrEnum", "kstar-planner", "forbiditerative", "haikunator"]
 
 [project.optional-dependencies]
-dev = ["check-manifest", "pytest", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage"]
+dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock"]
 
 [project.urls]
 "Homepage" = "https://github.com/IBM/nl2flow"
