@@ -55,6 +55,7 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
             temp_plan.append(action)
 
     new_plan.plan = [new_action] + temp_plan + plan.plan[new_start_of_plan:] if new_start_of_plan else plan.plan
+    new_plan.length = len(new_plan.plan)
     return new_plan
 
 
