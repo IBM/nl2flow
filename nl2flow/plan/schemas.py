@@ -42,6 +42,7 @@ class ClassicalPlan(BaseModel):
     cost: float = 0.0
     length: float = 0.0
     metadata: Optional[Any] = None
+    reference: List[str]
     plan: List[Action] = []
 
 

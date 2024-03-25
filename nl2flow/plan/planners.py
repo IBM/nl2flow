@@ -79,10 +79,8 @@ class Kstar(Planner):
         confirm_options: Set[ConfirmOptions] = flow.confirm_options
 
         for plan in raw_plans:
+            new_plan = ClassicalPlan(cost=plan.cost, reference=plan.actions)
             actions = plan.actions
-            length = len(actions)
-
-            new_plan = ClassicalPlan(cost=plan.cost, length=length)
 
             for action in actions:
                 action_split = action.split()
@@ -105,7 +103,7 @@ class Kstar(Planner):
             if ConfirmOptions.group_confirms in confirm_options:
                 new_plan = group_items(new_plan, ConfirmOptions.group_confirms)
 
-            if new_plan.length:
-                planner_response.list_of_plans.append(new_plan)
+            new_plan.length = len(new_plan.plan)
+            planner_response.list_of_plans.append(new_plan)
 
         return planner_response
