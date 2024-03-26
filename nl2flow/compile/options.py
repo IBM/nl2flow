@@ -39,7 +39,7 @@ class TypeOptions(enum.Enum):
 
 class CostOptions(enum.Enum):
     ZERO = 0
-    UNIT = 1
+    UNIT = 10
     VERY_LOW = 20
     LOW = 50
     MEDIUM = 250

@@ -52,7 +52,7 @@ class PlannerResponse(BaseModel):
 
 class RawPlan(BaseModel):
     actions: List[str]
-    cost: float = 0.0
+    cost: Optional[float] = 0.0
 
 
 class RawPlannerResult(BaseModel):
