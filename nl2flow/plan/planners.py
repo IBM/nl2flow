@@ -20,6 +20,10 @@ import tempfile
 
 class Planner(ABC):
     @abstractmethod
+    def raw_plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> Any:
+        pass
+
+    @abstractmethod
     def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> Any:
         pass
 
@@ -49,7 +53,7 @@ class Planner(ABC):
 
 
 class Kstar(Planner):
-    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
+    def raw_plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> RawPlannerResult:
         with (
             tempfile.NamedTemporaryFile() as domain_temp,
             tempfile.NamedTemporaryFile() as problem_temp,
@@ -68,7 +72,12 @@ class Kstar(Planner):
             )
 
             raw_planner_result = RawPlannerResult.model_validate(result)
-            return self.parse(raw_planner_result.plans, **kwargs)
+            return raw_planner_result
+
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
+        raw_planner_result = self.raw_plan(pddl, **kwargs)
+        planner_response = self.parse(raw_planner_result.plans, **kwargs)
+        return planner_response
 
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
         planner_response = PlannerResponse()
