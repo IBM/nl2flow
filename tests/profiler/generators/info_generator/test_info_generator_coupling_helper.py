@@ -14,26 +14,26 @@ from profiler.data_types.agent_info_data_types import (
 
 def test_exist_variable_name_in_signature_not_exist() -> None:
     item: AgentInfoSignatureItem = {"name": "b"}
-    agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
+    agent_info: AgentInfo = {"actuator_signature": {"out_sig_full": [item]}}
     variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
     agent_infos = [agent_info]
-    assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig")
+    assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_sig_full")
 
 
 def test_exist_variable_name_in_signature_exist() -> None:
     item: AgentInfoSignatureItem = {"name": "a"}
-    agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
+    agent_info: AgentInfo = {"actuator_signature": {"out_sig_full": [item]}}
     variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
     agent_infos = [agent_info]
-    assert exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig")
+    assert exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_sig_full")
 
 
 def test_exist_variable_name_in_signature_exist_none() -> None:
     item: AgentInfoSignatureItem = {"name": "a"}
-    agent_info: AgentInfo = {"actuator_signature": {"out_full_sig": [item]}}
+    agent_info: AgentInfo = {"actuator_signature": {"out_sig_full": [item]}}
     variable_info = None
     agent_infos = [agent_info]
-    assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_full_sig")
+    assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, "out_sig_full")
 
 
 def test_get_out_item_position_to_couple_agents_fallback(mocker: MockerFixture) -> None:

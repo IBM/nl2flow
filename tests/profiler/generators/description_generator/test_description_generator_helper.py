@@ -163,11 +163,11 @@ class TestDescriptionGeneratorHelper:
         assert res == "The goal of the system is to execute Action a and Action b."
 
     def test_get_description_available_data(self) -> None:
-        values = ["a", "b"]
-        res = get_description_available_data(values)
+        values = [("a", ""), ("b", "")]
+        res = get_description_available_data(values)  # type: ignore
         assert res == "Values are available already for Variable a and Variable b."
 
-    def test_get_variables_description(self) -> None:
+    def test_get_variables_description_single_variable(self) -> None:
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {
@@ -194,5 +194,47 @@ class TestDescriptionGeneratorHelper:
         assert get_hash_str(res) == get_hash_str(
             "Variable b can be acquired by asking the user.\n"
             + "Variable c cannot be acquired by asking the user.\n"
+            + "The type of Variable c is sample_type. The type of Variable r is type_a."
+        )
+
+    def test_get_variables_description_multiple_variables(self) -> None:
+        agent_info: AgentInfo = {
+            "agent_id": "a",
+            "actuator_signature": {
+                "in_sig_full": [
+                    {
+                        "name": "b",
+                        "required": True,
+                        "slot_fillable": True,
+                        "data_type": None,
+                    },
+                    {
+                        "name": "x",
+                        "required": True,
+                        "slot_fillable": False,
+                        "data_type": None,
+                    },
+                ],
+                "out_sig_full": [
+                    {
+                        "name": "c",
+                        "required": False,
+                        "slot_fillable": False,
+                        "data_type": "sample_type",
+                    },
+                    {
+                        "name": "k",
+                        "required": False,
+                        "slot_fillable": True,
+                        "data_type": None,
+                    },
+                ],
+            },
+        }
+
+        res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
+        assert get_hash_str(res) == get_hash_str(
+            "Variables b and k can be acquired by asking the user.\n"
+            + "Variables c and x cannot be acquired by asking the user.\n"
             + "The type of Variable c is sample_type. The type of Variable r is type_a."
         )
