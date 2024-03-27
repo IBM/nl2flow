@@ -129,7 +129,7 @@ def parse_action(
             for v in ConstraintState:
                 new_action_name = new_action_name.replace(f"_to_{string_transform(str(v.value), transforms)}", "")
 
-            new_action_name = revert_string_transform(new_action_name, transforms)
+            new_action_name = revert_string_transform(new_action_name, transforms)  # type: ignore
 
             for v in ConstraintState:
                 if action_name.endswith(f"_to_{string_transform(str(v.value), transforms)}"):

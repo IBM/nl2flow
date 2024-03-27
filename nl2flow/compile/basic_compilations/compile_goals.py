@@ -76,7 +76,7 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
             TypeError("Unrecognized goal type.")
 
     elif goal_item.goal_type == GoalType.CONSTRAINT:
-        temp = compile_constraints(compilation, goal_item.goal_name)
+        temp = compile_constraints(compilation, goal_item.goal_name)  # type: ignore
         goal_predicates.add(temp)
 
     else:
