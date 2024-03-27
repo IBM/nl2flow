@@ -34,7 +34,7 @@ class Flow:
 
     @property
     def compilation(self) -> ClassicPDDL:
-        return self._compilation
+        return self._compilation  # type: ignore
 
     @property
     def variable_life_cycle(self) -> Set[LifeCycleOptions]:
