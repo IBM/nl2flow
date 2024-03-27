@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Tuple
 from profiler.generators.description_generator.description_generator_helper import (
     get_variables_description,
     get_description_available_data,
@@ -163,8 +163,8 @@ class TestDescriptionGeneratorHelper:
         assert res == "The goal of the system is to execute Action a and Action b."
 
     def test_get_description_available_data(self) -> None:
-        values = [("a", ""), ("b", "")]
-        res = get_description_available_data(values)  # type: ignore
+        values: List[Tuple[str, Optional[str]]] = [("a", ""), ("b", "")]
+        res = get_description_available_data(values)
         assert res == "Values are available already for Variable a and Variable b."
 
     def test_get_variables_description_single_variable(self) -> None:
