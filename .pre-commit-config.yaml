@@ -24,4 +24,4 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pydantic]
-        args: [--ignore-missing-imports,--follow-import=skip,--strict-optional,--disable-error-code=attr-defined]
+        args: [--ignore-missing-imports,--follow-import=skip,--strict-optional,--disable-error-code=attr-defined,--disable-error-code=unused-ignore]

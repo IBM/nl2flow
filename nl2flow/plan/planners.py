@@ -31,8 +31,34 @@ class Planner(ABC):
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
         pass
 
+    @classmethod
+    def pretty_print_plan(cls, plan: ClassicalPlan) -> str:
+        pretty = ""
+
+        for step, action in enumerate(plan.plan):
+            inputs = ", ".join([item.item_id for item in action.inputs]) or None
+            input_string = f"({inputs})" if inputs else ""
+
+            outputs = ", ".join([item.item_id for item in action.outputs]) or None
+            output_string = f" -> {outputs}" if outputs else ""
+
+            pretty += f"[{step}] {action.name}{input_string}{output_string}\n"
+
+        return pretty
+
+    @classmethod
+    def pretty_print(cls, planner_response: PlannerResponse) -> str:
+        pretty = ""
+
+        for index, plan in enumerate(planner_response.list_of_plans):
+            pretty += f"\n\n---- Plan #{index} ----\n"
+            pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
+            pretty += cls.pretty_print_plan(plan)
+
+        return pretty
+
     @staticmethod
-    def pretty_print(planner_response: PlannerResponse) -> str:
+    def pretty_print_verbose(planner_response: PlannerResponse) -> str:
         pretty = ""
 
         for index, plan in enumerate(planner_response.list_of_plans):

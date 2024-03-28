@@ -46,7 +46,7 @@ def get_variable_name_from_sig_item(
 
 
 def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
-    property_action_names_dict: Dict[bool, List[str]] = defaultdict(list)
+    property_action_names_dict: Dict[bool, Set[str]] = defaultdict(set)
     for agent_info in available_agents:
         sig = agent_info.get("actuator_signature", None)
         if sig is not None:
@@ -54,21 +54,24 @@ def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
                 for sig_item in sig.get(signature_type, []):
                     slot_fillable = sig_item.get("slot_fillable", True)
                     slot_fillable_category = True if slot_fillable else False
-                    property_action_names_dict[slot_fillable_category].append(sig_item.get("name", ""))
+                    signature_item_name = sig_item.get("name", "")
+                    if len(signature_item_name) > 0:
+                        property_action_names_dict[slot_fillable_category].add(signature_item_name)
 
     variable_description_str_lst: List[str] = []
     for slot_fillable, sig_item_names in property_action_names_dict.items():
-        sentence_parts: List[str] = []
-        variable = "Variable" if len(sig_item_names) == 1 else "Variables"
-        sentence_parts.append(variable)
-        variable_names = get_names(sorted(list(set(sig_item_names))))
-        sentence_parts.append(variable_names)
-        slot_fillable_description = (
-            "can be acquired by asking the user." if slot_fillable else "cannot be acquired by asking the user."
-        )
-        sentence_parts.append(slot_fillable_description)
-        description = " ".join(sentence_parts)
-        variable_description_str_lst.append(description)
+        if len(sig_item_names) > 0:
+            sentence_parts: List[str] = []
+            variable = "Variable" if len(sig_item_names) == 1 else "Variables"
+            sentence_parts.append(variable)
+            variable_names = get_names(sorted(sig_item_names))
+            sentence_parts.append(variable_names)
+            slot_fillable_description = (
+                "can be acquired by asking the user." if slot_fillable else "cannot be acquired by asking the user."
+            )
+            sentence_parts.append(slot_fillable_description)
+            description = " ".join(sentence_parts)
+            variable_description_str_lst.append(description)
 
     return "\n".join(variable_description_str_lst)
 
