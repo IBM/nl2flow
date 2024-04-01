@@ -4,6 +4,7 @@ from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignature,
     AgentInfoSignatureItem,
+    AgentInfoSignatureType,
 )
 
 
@@ -50,8 +51,8 @@ def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
     for agent_info in available_agents:
         sig = agent_info.get("actuator_signature", None)
         if sig is not None:
-            for signature_type in ["in_sig_full", "out_sig_full"]:
-                for sig_item in sig.get(signature_type, []):
+            for signature_type in AgentInfoSignatureType:
+                for sig_item in sig.get_signature(signature_type):
                     slot_fillable = sig_item.slot_fillable if sig_item.slot_fillable is not None else False
                     slot_fillable_category = True if slot_fillable else False
                     signature_item_name = sig_item.name
@@ -88,9 +89,9 @@ def get_vartiable_type_description(
             variable_type_strs.append(variable_type_str)
 
     for agent_info in available_agents:
-        sig = agent_info.get("actuator_signature")
-        variable_type_strs += get_variable_type_from_sig_item(sig.get("in_sig_full", []) if sig is not None else [])
-        variable_type_strs += get_variable_type_from_sig_item(sig.get("out_sig_full", []) if sig is not None else [])
+        sig = agent_info.get("actuator_signature", AgentInfoSignature())
+        variable_type_strs += get_variable_type_from_sig_item(sig.in_sig_full)
+        variable_type_strs += get_variable_type_from_sig_item(sig.out_sig_full)
 
     return (" ".join(sorted(list(set(variable_type_strs))))).strip() if len(variable_type_strs) > 0 else ""
 
@@ -140,15 +141,15 @@ def get_signature_item_names(sig_items: List[AgentInfoSignatureItem]) -> str:
 
 def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
     agent_id = agent_info.get("agent_id")
-    sig = agent_info.get("actuator_signature", AgentInfoSignature(in_sig_full=[], out_sig_full=[]))
+    sig = agent_info.get("actuator_signature", AgentInfoSignature())
     # in sig
-    in_sig = sig.get("in_sig_full", [])
-    agent_info_pre_cond_str = f"To execute Action {agent_id}, " + get_signature_item_names(in_sig) + " should be known."
+    agent_info_pre_cond_str = (
+        f"To execute Action {agent_id}, " + get_signature_item_names(sig.in_sig_full) + " should be known."
+    )
     # out sig
-    out_sig = sig.get("out_sig_full", [])
-    be_out = " is " if len(out_sig) == 1 else " are "
+    be_out = " is " if len(sig.out_sig_full) == 1 else " are "
     agent_info_effect_str = (
-        f"After executing Action {agent_id}, " + get_signature_item_names(out_sig) + be_out + "known."
+        f"After executing Action {agent_id}, " + get_signature_item_names(sig.out_sig_full) + be_out + "known."
     )
 
     return (agent_info_pre_cond_str, agent_info_effect_str)

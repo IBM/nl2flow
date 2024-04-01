@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional
 from typing_extensions import TypedDict
 
@@ -14,16 +15,38 @@ class AgentInfoSignatureItem(BaseModel):
     slot_fillable: Optional[bool] = False
 
 
-class AgentInfoSignature(TypedDict, total=False):
-    in_sig_full: List[AgentInfoSignatureItem]
-    out_sig_full: List[AgentInfoSignatureItem]
+class AgentInfoSignatureType(str, Enum):
+    IN_SIG_FULL = "IN_SIG_FULL"
+    OUT_SIG_FULL = "OUT_SIG_FULL"
+
+
+SIGNATURE_TYPES = [AgentInfoSignatureType.IN_SIG_FULL, AgentInfoSignatureType.OUT_SIG_FULL]
+
+
+class AgentInfoSignature(BaseModel):
+    in_sig_full: List[AgentInfoSignatureItem] = []
+    out_sig_full: List[AgentInfoSignatureItem] = []
+
+    def get_signature(self, type: AgentInfoSignatureType) -> List[AgentInfoSignatureItem]:
+        if type == AgentInfoSignatureType.IN_SIG_FULL:
+            return self.in_sig_full
+        if type == AgentInfoSignatureType.OUT_SIG_FULL:
+            return self.out_sig_full
+
+    def set_signature(
+        self, agent_info_signature_items: List[AgentInfoSignatureItem], type: AgentInfoSignatureType
+    ) -> None:
+        if type == AgentInfoSignatureType.IN_SIG_FULL:
+            self.in_sig_full = agent_info_signature_items
+        if type == AgentInfoSignatureType.OUT_SIG_FULL:
+            self.out_sig_full = agent_info_signature_items
 
 
 class AgentInfo(TypedDict, total=False):
     agent_id: str
     agent_name: str
-    evaluator_signature: AgentInfoSignature
-    actuator_signature: AgentInfoSignature
+    evaluator_signature: AgentInfoSignature = AgentInfoSignature()
+    actuator_signature: AgentInfoSignature = AgentInfoSignature()
 
 
 class PlanAction(TypedDict):

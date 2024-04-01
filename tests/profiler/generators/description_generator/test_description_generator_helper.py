@@ -16,6 +16,7 @@ from profiler.generators.description_generator.description_generator_helper impo
 )
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
+    AgentInfoSignature,
     AgentInfoSignatureItem,
 )
 from profiler.common_helpers.hash_helper import get_hash_str
@@ -135,10 +136,10 @@ class TestDescriptionGeneratorHelper:
     def test_get_agent_info_description(self) -> None:
         agent_info: AgentInfo = {
             "agent_id": "a",
-            "actuator_signature": {
-                "in_sig_full": [AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
-                "out_sig_full": [AgentInfoSignatureItem(name="c", required=False, slot_fillable=False)],
-            },
+            "actuator_signature": AgentInfoSignature(
+                in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
+                out_sig_full=[AgentInfoSignatureItem(name="c", required=False, slot_fillable=False)],
+            ),
         }
         pre_cond, effects = get_agent_info_description(agent_info)
         assert pre_cond == "To execute Action a, Variable b should be known."
@@ -170,12 +171,12 @@ class TestDescriptionGeneratorHelper:
     def test_get_variables_description_single_variable(self) -> None:
         agent_info: AgentInfo = {
             "agent_id": "a",
-            "actuator_signature": {
-                "in_sig_full": [AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
-                "out_sig_full": [
+            "actuator_signature": AgentInfoSignature(
+                in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
+                out_sig_full=[
                     AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type")
                 ],
-            },
+            ),
         }
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
@@ -188,16 +189,16 @@ class TestDescriptionGeneratorHelper:
     def test_get_variables_description_multiple_variables(self) -> None:
         agent_info: AgentInfo = {
             "agent_id": "a",
-            "actuator_signature": {
-                "in_sig_full": [
+            "actuator_signature": AgentInfoSignature(
+                in_sig_full=[
                     AgentInfoSignatureItem(name="b", required=True, slot_fillable=True),
                     AgentInfoSignatureItem(name="x", required=True, slot_fillable=False),
                 ],
-                "out_sig_full": [
+                out_sig_full=[
                     AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type"),
                     AgentInfoSignatureItem(name="k", required=False, slot_fillable=True),
                 ],
-            },
+            ),
         }
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
