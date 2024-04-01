@@ -42,7 +42,7 @@ def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
 def get_variable_name_from_sig_item(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    return list(map(lambda sig_item: "Variable " + sig_item.get("name", ""), sig_items))
+    return list(map(lambda sig_item: "Variable " + sig_item.name, sig_items))
 
 
 def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
@@ -52,9 +52,9 @@ def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
         if sig is not None:
             for signature_type in ["in_sig_full", "out_sig_full"]:
                 for sig_item in sig.get(signature_type, []):
-                    slot_fillable = sig_item.get("slot_fillable", True)
+                    slot_fillable = sig_item.slot_fillable if sig_item.slot_fillable is not None else False
                     slot_fillable_category = True if slot_fillable else False
-                    signature_item_name = sig_item.get("name", "")
+                    signature_item_name = sig_item.name
                     if len(signature_item_name) > 0:
                         property_action_names_dict[slot_fillable_category].add(signature_item_name)
 
@@ -102,7 +102,7 @@ def get_variable_type_from_sig_item(
         filter(
             lambda unfiltered_str: len(unfiltered_str) > 0,
             map(
-                lambda sig_item: get_variable_type_str(sig_item.get("name", ""), sig_item.get("data_type")),
+                lambda sig_item: get_variable_type_str(sig_item.name, sig_item.data_type),
                 sig_items,
             ),
         )
@@ -131,7 +131,7 @@ def get_variables_description(
 def get_names_from_signature_items(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    return list(map(lambda sig: "Variable " + sig.get("name", ""), sig_items))
+    return list(map(lambda sig: "Variable " + sig.name, sig_items))
 
 
 def get_signature_item_names(sig_items: List[AgentInfoSignatureItem]) -> str:

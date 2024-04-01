@@ -1,6 +1,6 @@
 from typing import List, Optional, Set, Tuple
 from nl2flow.compile.flow import Flow
-from profiler.data_types.agent_info_data_types import AgentInfo, AgentInfoSignatureItem, Plan
+from profiler.data_types.agent_info_data_types import AgentInfo, Plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import (
     MemoryItem,
@@ -18,10 +18,6 @@ from profiler.converters.converter_variables import (
     SIGNATURE_TYPES,
     IN_SIGNATURE,
     OUT_SIGNATURE,
-    SEQUENCE_ALIAS,
-    SLOT_FILLABLE,
-    NAME,
-    REQUIRED,
 )
 from nl2flow.compile.options import SlotOptions
 from uuid import uuid4
@@ -29,14 +25,6 @@ from uuid import uuid4
 
 def get_uuid() -> str:
     return str(uuid4())
-
-
-def get_name(signature_item: AgentInfoSignatureItem) -> str:
-    if SEQUENCE_ALIAS not in signature_item:
-        return str(signature_item[NAME])
-    if signature_item[SEQUENCE_ALIAS] is not None:
-        return str(signature_item[SEQUENCE_ALIAS])
-    return ""
 
 
 def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
@@ -54,20 +42,20 @@ def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
                         if signature_type == OUT_SIGNATURE:
                             signature_names.append(
                                 Parameter(
-                                    item_id=get_name(signature_item),
-                                    item_type=signature_item["data_type"],
+                                    item_id=signature_item.name,
+                                    item_type=signature_item.data_type,
                                 )
                             )
                         else:
-                            if REQUIRED in signature_item and signature_item[REQUIRED]:
+                            if signature_item.required is not None:
                                 signature_names.append(
                                     Parameter(
-                                        item_id=get_name(signature_item),
-                                        item_type=signature_item["data_type"],
+                                        item_id=signature_item.name,
+                                        item_type=signature_item.data_type,
                                     )
                                 )
 
-                    if signature_type == IN_SIGNATURE and REQUIRED:
+                    if signature_type == IN_SIGNATURE:
                         operator.add_input(SignatureItem(parameters=signature_names))
                     else:
                         operator.add_output(SignatureItem(parameters=signature_names))
@@ -91,8 +79,8 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
                     and agent_info[ACTUATOR_SIGNATURE][signature_type] is not None
                 ):
                     for signature_item in agent_info[ACTUATOR_SIGNATURE][signature_type]:
-                        name = get_name(signature_item)
-                        if SLOT_FILLABLE in signature_item and signature_item[SLOT_FILLABLE]:
+                        name = signature_item.name
+                        if signature_item.slot_fillable is not None:
                             if name not in slot_names:
                                 slot_names.add(name)
                                 slot_properties.append(SlotProperty(slot_name=name, slot_desirability=1.0))

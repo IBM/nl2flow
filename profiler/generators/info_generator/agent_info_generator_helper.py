@@ -9,7 +9,6 @@ from profiler.data_types.agent_info_data_types import (
 )
 from profiler.generators.info_generator.generator_variables import (
     AGENT_INFO_SIGNATURE_TEMPLATE,
-    AGENT_INFO_SIGNATURE_ITEM_TEMPLATE,
     SIGNATURE_TYPES,
 )
 from profiler.data_types.generator_data_type import (
@@ -93,10 +92,8 @@ def get_agents(agent_names: List[str], num_input_parameters: int) -> List[AgentI
         )
 
         for i in range(num_input_parameters):
-            in_item = deepcopy(AGENT_INFO_SIGNATURE_ITEM_TEMPLATE)
-            out_item = deepcopy(AGENT_INFO_SIGNATURE_ITEM_TEMPLATE)
-            agent_info["actuator_signature"]["in_sig_full"].append(in_item)
-            agent_info["actuator_signature"]["out_sig_full"].append(out_item)
+            agent_info["actuator_signature"]["in_sig_full"].append(AgentInfoSignatureItem())
+            agent_info["actuator_signature"]["out_sig_full"].append(AgentInfoSignatureItem())
 
         agent_infos.append(agent_info)
     return agent_infos
@@ -193,11 +190,10 @@ def get_mappings(variable_infos: List[VariableInfo], random: ModuleType) -> List
 def get_new_signature_from_variable_info(
     signature_item_input: AgentInfoSignatureItem, variable_info: VariableInfo
 ) -> AgentInfoSignatureItem:
-    signature_item = deepcopy(signature_item_input)
-    signature_item["name"] = variable_info.variable_name[:]
-    signature_item["sequence_alias"] = variable_info.variable_name[:]
-    signature_item["slot_fillable"] = variable_info.slot_fillable
-    signature_item["data_type"] = variable_info.variable_type
+    signature_item: AgentInfoSignatureItem = signature_item_input.model_copy(deep=True)
+    signature_item.name = variable_info.variable_name[:]
+    signature_item.slot_fillable = variable_info.slot_fillable
+    signature_item.data_type = variable_info.variable_type
 
     return signature_item
 
@@ -209,9 +205,9 @@ def get_uncoupled_agents(agent_infos_input: List[AgentInfo], variable_infos: Lis
         parameter_counter = 0
         for signature_type in SIGNATURE_TYPES:
             for item_idx, item in enumerate(agent_info["actuator_signature"][signature_type]):  # type: ignore
-                agent_info["actuator_signature"][signature_type][  # type: ignore
-                    item_idx
-                ] = get_new_signature_from_variable_info(item, variable_infos[parameter_counter])
+                agent_info["actuator_signature"][signature_type][item_idx] = (  # type: ignore
+                    get_new_signature_from_variable_info(item, variable_infos[parameter_counter])
+                )
                 parameter_counter += 1
 
     return agent_infos
@@ -271,10 +267,10 @@ def get_agent_infos_with_coupled_agents(
                 # use an initially assigned variable if there are only two agents
                 chosen_item = agent_infos[chosen_agent_index]["actuator_signature"]["out_sig_full"][chosen_item_index]
                 variable_info = VariableInfo(
-                    variable_name=chosen_item["name"][:],
-                    mappable=chosen_item["mappable"],
-                    slot_fillable=chosen_item["slot_fillable"],
-                    variable_type=chosen_item["data_type"],
+                    variable_name=chosen_item.name[:],
+                    mappable=chosen_item.mappable if chosen_item.mappable is not None else False,
+                    slot_fillable=chosen_item.slot_fillable if chosen_item.slot_fillable is not None else True,
+                    variable_type=chosen_item.data_type,
                 )
                 previous_variable = variable_info
             elif len(variables_remaining_deque) > 0:
@@ -312,7 +308,7 @@ def get_agent_info_with_remaining_variables(
     variables_remaining_deque = deepcopy(variables_remaining_deque_input)
     out_sig_full_signature_names_first_agent = set(
         map(
-            lambda item: item["name"],
+            lambda item: item.name,
             agent_infos[0]["actuator_signature"]["out_sig_full"],
         )
     )
@@ -330,7 +326,7 @@ def get_agent_info_with_remaining_variables(
                 if ((agent_i, signature_type, item_i) in position_item_coupled) or (
                     (agent_i == len(agent_infos) - 1)
                     and (signature_type == "out_sig_full")
-                    and (item["name"] not in out_sig_full_signature_names_first_agent)
+                    and (item.name not in out_sig_full_signature_names_first_agent)
                 ):
                     # skip to avoid breaking couplings among agents
                     continue

@@ -24,11 +24,7 @@ class TestInfo2FlowConverter:
         assert "(a b c)" == res
 
     def test_get_operators_for_flow(self) -> None:
-        item: AgentInfoSignatureItem = {
-            "name": "k",
-            "sequence_alias": "j",
-            "data_type": None,
-        }
+        item = AgentInfoSignatureItem(name="k")
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {"in_sig_full": [item], "out_sig_full": [item]},
@@ -43,12 +39,8 @@ class TestInfo2FlowConverter:
         assert len(goal_items.goals) == 2
 
     def test_get_slot_fillers_for_flow(self) -> None:
-        item_0: AgentInfoSignatureItem = {
-            "name": "k",
-            "sequence_alias": "j",
-            "slot_fillable": True,
-        }
-        item_1: AgentInfoSignatureItem = {"name": "j", "sequence_alias": "j"}
+        item_0 = AgentInfoSignatureItem(name="k", slot_fillable=True)
+        item_1 = AgentInfoSignatureItem(name="j")
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {
@@ -71,18 +63,8 @@ class TestInfo2FlowConverter:
         assert len(memory_items) == 2
 
     def test_get_flow_from_agent_infos(self) -> None:
-        item_0: AgentInfoSignatureItem = {
-            "name": "a",
-            "sequence_alias": "a",
-            "slot_fillable": True,
-            "data_type": None,
-        }
-        item_1: AgentInfoSignatureItem = {
-            "name": "b",
-            "sequence_alias": "b",
-            "slot_fillable": True,
-            "data_type": None,
-        }
+        item_0 = AgentInfoSignatureItem(name="a", slot_fillable=True)
+        item_1 = AgentInfoSignatureItem(name="b", slot_fillable=True)
         agent_info: AgentInfo = {
             "agent_id": "k",
             "actuator_signature": {"in_sig_full": [item_0], "out_sig_full": [item_1]},

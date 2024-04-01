@@ -107,20 +107,15 @@ class TestAgentInfoGeneratorHelper:
         assert len(mappings) == 2
 
     def test_get_new_signature_from_variable_info(self) -> None:
-        signature_item_input: AgentInfoSignatureItem = {
-            "name": "a",
-            "sequence_alias": "b",
-            "slot_fillable": False,
-        }
+        signature_item_input = AgentInfoSignatureItem(name="a", slot_fillable=False)
         name = "k"
         variable_info = VariableInfo(variable_name=name, mappable=True, slot_fillable=True)
         res = get_new_signature_from_variable_info(signature_item_input, variable_info)
-        assert name == res["name"]
-        assert name == res["sequence_alias"]
-        assert res["slot_fillable"]
+        assert name == res.name
+        assert res.slot_fillable
 
     def test_get_uncoupled_agents(self) -> None:
-        item: AgentInfoSignatureItem = {"name": "k"}
+        item = AgentInfoSignatureItem(name="k")
         agent_info: AgentInfo = {"actuator_signature": {"in_sig_full": [item], "out_sig_full": [item]}}
         agent_infos = [deepcopy(agent_info), deepcopy(agent_info)]
         variable_infos = [
@@ -131,9 +126,9 @@ class TestAgentInfoGeneratorHelper:
         assert len(agent_infos) == len(res)
         for agent_info in res:
             assert len(agent_info["actuator_signature"]["in_sig_full"]) == 1
-            assert agent_info["actuator_signature"]["in_sig_full"][0]["name"] == "a"
+            assert agent_info["actuator_signature"]["in_sig_full"][0].name == "a"
             assert len(agent_info["actuator_signature"]["out_sig_full"]) == 1
-            assert agent_info["actuator_signature"]["out_sig_full"][0]["name"] == "b"
+            assert agent_info["actuator_signature"]["out_sig_full"][0].name == "b"
 
     def test_get_agent_infos_with_coupled_agents_two_agents_no_extra_variable_all_coupling_agents(
         self,
@@ -141,32 +136,12 @@ class TestAgentInfoGeneratorHelper:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {
-                        "name": "a",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
-                    {
-                        "name": "b",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {
-                        "name": "c",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
-                    {
-                        "name": "d",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
             }
         }
@@ -222,12 +197,12 @@ class TestAgentInfoGeneratorHelper:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "a", "mappable": False, "slot_fillable": False},
-                    {"name": "b", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {"name": "c", "mappable": False, "slot_fillable": False},
-                    {"name": "d", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
             }
         }
@@ -264,12 +239,12 @@ class TestAgentInfoGeneratorHelper:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "a", "mappable": False, "slot_fillable": False},
-                    {"name": "b", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {"name": "c", "mappable": False, "slot_fillable": False},
-                    {"name": "d", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
             }
         }
@@ -306,12 +281,12 @@ class TestAgentInfoGeneratorHelper:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "a", "mappable": False, "slot_fillable": False},
-                    {"name": "b", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {"name": "c", "mappable": False, "slot_fillable": False},
-                    {"name": "d", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
             }
         }
@@ -326,19 +301,19 @@ class TestAgentInfoGeneratorHelper:
             agent_infos_res,
             _,
         ) = get_agent_info_with_remaining_variables(agent_infos, position_item_coupled, variables_remaining_deque_input)
-        assert agent_infos_res[1]["actuator_signature"]["in_sig_full"][1]["name"] == "k"
-        assert agent_infos_res[1]["actuator_signature"]["in_sig_full"][0]["name"] == "a"
+        assert agent_infos_res[1]["actuator_signature"]["in_sig_full"][1].name == "k"
+        assert agent_infos_res[1]["actuator_signature"]["in_sig_full"][0].name == "a"
 
     def test_get_agents_with_variables_no_available_agents(self) -> None:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {"name": "x", "mappable": False, "slot_fillable": False},
-                    {"name": "x", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {"name": "x", "mappable": False, "slot_fillable": False},
-                    {"name": "x", "mappable": False, "slot_fillable": False},
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
             }
         }
@@ -365,32 +340,12 @@ class TestAgentInfoGeneratorHelper:
         agent_info: AgentInfo = {
             "actuator_signature": {
                 "in_sig_full": [
-                    {
-                        "name": "x",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
-                    {
-                        "name": "x",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {
-                        "name": "x",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
-                    {
-                        "name": "x",
-                        "mappable": False,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
+                    AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
             }
         }

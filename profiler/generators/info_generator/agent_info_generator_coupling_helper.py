@@ -13,7 +13,7 @@ def exist_variable_name_in_signature(
     if variable_info is None:
         return False
     sig_names = map(
-        lambda item: item["name"],
+        lambda item: item.name,
         agent_infos[agent_index]["actuator_signature"][signature_type],  # type: ignore
     )
     return True if variable_info.variable_name in sig_names else False

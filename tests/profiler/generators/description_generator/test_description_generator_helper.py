@@ -113,22 +113,22 @@ class TestDescriptionGeneratorHelper:
 
     def test_get_signature_item_names_single(self) -> None:
         items: List[AgentInfoSignatureItem] = list()
-        items.append({"name": "a"})
+        items.append(AgentInfoSignatureItem(name="a"))
         res = get_signature_item_names(items)
         assert res == "Variable a"
 
     def test_get_signature_item_names_double(self) -> None:
         items: List[AgentInfoSignatureItem] = list()
-        items.append({"name": "a"})
-        items.append({"name": "b"})
+        items.append(AgentInfoSignatureItem(name="a"))
+        items.append(AgentInfoSignatureItem(name="b"))
         res = get_signature_item_names(items)
         assert res == "Variable a and Variable b"
 
     def test_get_signature_item_names_triple(self) -> None:
         items: List[AgentInfoSignatureItem] = list()
-        items.append({"name": "a"})
-        items.append({"name": "b"})
-        items.append({"name": "c"})
+        items.append(AgentInfoSignatureItem(name="a"))
+        items.append(AgentInfoSignatureItem(name="b"))
+        items.append(AgentInfoSignatureItem(name="c"))
         res = get_signature_item_names(items)
         assert res == "Variable a, Variable b, and Variable c"
 
@@ -136,8 +136,8 @@ class TestDescriptionGeneratorHelper:
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {
-                "in_sig_full": [{"name": "b", "required": True, "slot_fillable": True}],
-                "out_sig_full": [{"name": "c", "required": False, "slot_fillable": False}],
+                "in_sig_full": [AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
+                "out_sig_full": [AgentInfoSignatureItem(name="c", required=False, slot_fillable=False)],
             },
         }
         pre_cond, effects = get_agent_info_description(agent_info)
@@ -171,21 +171,9 @@ class TestDescriptionGeneratorHelper:
         agent_info: AgentInfo = {
             "agent_id": "a",
             "actuator_signature": {
-                "in_sig_full": [
-                    {
-                        "name": "b",
-                        "required": True,
-                        "slot_fillable": True,
-                        "data_type": None,
-                    }
-                ],
+                "in_sig_full": [AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
                 "out_sig_full": [
-                    {
-                        "name": "c",
-                        "required": False,
-                        "slot_fillable": False,
-                        "data_type": "sample_type",
-                    }
+                    AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type")
                 ],
             },
         }
@@ -202,32 +190,12 @@ class TestDescriptionGeneratorHelper:
             "agent_id": "a",
             "actuator_signature": {
                 "in_sig_full": [
-                    {
-                        "name": "b",
-                        "required": True,
-                        "slot_fillable": True,
-                        "data_type": None,
-                    },
-                    {
-                        "name": "x",
-                        "required": True,
-                        "slot_fillable": False,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="b", required=True, slot_fillable=True),
+                    AgentInfoSignatureItem(name="x", required=True, slot_fillable=False),
                 ],
                 "out_sig_full": [
-                    {
-                        "name": "c",
-                        "required": False,
-                        "slot_fillable": False,
-                        "data_type": "sample_type",
-                    },
-                    {
-                        "name": "k",
-                        "required": False,
-                        "slot_fillable": True,
-                        "data_type": None,
-                    },
+                    AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type"),
+                    AgentInfoSignatureItem(name="k", required=False, slot_fillable=True),
                 ],
             },
         }

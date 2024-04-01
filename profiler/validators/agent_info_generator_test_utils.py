@@ -16,13 +16,13 @@ def get_stats_coupled_agents(
         for signature in SIGNATURE_TYPES:
             for item in agent_info["actuator_signature"][signature]:  # type: ignore
                 if signature == "in_sig_full":
-                    if item["name"] not in variable_agent_dict_ins:
-                        variable_agent_dict_ins[item["name"]] = set()
-                    variable_agent_dict_ins[item["name"]].add(agent_info["agent_id"])
+                    if item.name not in variable_agent_dict_ins:
+                        variable_agent_dict_ins[item.name] = set()
+                    variable_agent_dict_ins[item.name].add(agent_info["agent_id"])
                 if signature == "out_sig_full":
-                    if item["name"] not in variable_agent_dict_outs:
-                        variable_agent_dict_outs[item["name"]] = set()
-                    variable_agent_dict_outs[item["name"]].add(agent_info["agent_id"])
+                    if item.name not in variable_agent_dict_outs:
+                        variable_agent_dict_outs[item.name] = set()
+                    variable_agent_dict_outs[item.name].add(agent_info["agent_id"])
     connections: Set[Tuple[str, str]] = set()
     # go through out signature
     for var in variable_agent_dict_outs:
@@ -48,8 +48,8 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
             for item in agent_info["actuator_signature"][signature]:  # type: ignore
-                if item["slot_fillable"]:
-                    slot_fillable_var.add(item["name"])
+                if item.slot_fillable:
+                    slot_fillable_var.add(item.name)
 
     return len(slot_fillable_var)
 
@@ -59,7 +59,7 @@ def get_num_variables(agent_infos: List[AgentInfo], available_data: List[Tuple[s
     for agent_info in agent_infos:
         for signature in SIGNATURE_TYPES:
             for item in agent_info["actuator_signature"][signature]:  # type: ignore
-                vars.add(item["name"][:])
+                vars.add(item.name[:])
     for datum in available_data:
         vars.add(datum[0][:])  # add variable name
 

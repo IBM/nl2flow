@@ -1,16 +1,17 @@
 from typing import List, Optional
 from typing_extensions import TypedDict
 
+from pydantic import BaseModel
 
-class AgentInfoSignatureItem(TypedDict, total=False):
-    name: str
-    providence: Optional[str]
-    required: Optional[bool]
-    sequence_alias: Optional[str]
-    data_type: Optional[str]
-    ont: Optional[str]
-    mappable: Optional[bool]
-    slot_fillable: Optional[bool]
+
+class AgentInfoSignatureItem(BaseModel):
+    name: str = ""
+    providence: Optional[str] = None
+    required: Optional[bool] = False
+    data_type: Optional[str] = None
+    ont: Optional[str] = None
+    mappable: Optional[bool] = False
+    slot_fillable: Optional[bool] = False
 
 
 class AgentInfoSignature(TypedDict, total=False):
