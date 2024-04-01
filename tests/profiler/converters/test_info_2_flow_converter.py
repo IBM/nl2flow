@@ -9,7 +9,7 @@ from profiler.converters.info_2_flow_converter import (
     get_available_data_for_flow,
     get_flow_from_agent_infos,
 )
-from profiler.data_types.agent_info_data_types import AgentInfoSignature, Plan
+from profiler.data_types.agent_info_data_types import AgentInfoSignature, Plan, PlanAction
 from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignatureItem,
@@ -19,7 +19,7 @@ from nl2flow.compile.operators import ClassicalOperator as Operator
 
 class TestInfo2FlowConverter:
     def test_get_pddl_plan_str(self) -> None:
-        plan: Plan = {"metric": 0, "plan": [{"action_name": "a", "parameters": ["b", "c"]}]}
+        plan = Plan(plan=[PlanAction(action_name="a", parameters=["b", "c"])], metric=0.0)
         res = get_pddl_plan_str(plan)
         assert "(a b c)" == res
 

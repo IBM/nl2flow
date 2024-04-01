@@ -111,8 +111,8 @@ def get_flow_from_agent_infos(
 
 def get_pddl_plan_str(plan: Plan) -> str:
     plan_strs: List[str] = list()
-    for plan_action in plan["plan"]:
-        action_name = plan_action["action_name"]
-        parameters = " ".join(plan_action["parameters"])
+    for plan_action in plan.plan:
+        action_name = plan_action.action_name
+        parameters = " ".join(plan_action.parameters)
         plan_strs.append(f"({action_name} {parameters})")
     return "\n".join(plan_strs)

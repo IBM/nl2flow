@@ -1,7 +1,5 @@
 from enum import Enum
 from typing import List, Optional
-from typing_extensions import TypedDict
-
 from pydantic import BaseModel
 
 
@@ -47,21 +45,11 @@ class AgentInfo(BaseModel):
     actuator_signature: AgentInfoSignature = AgentInfoSignature()
 
 
-class PlanAction(TypedDict):
-    action_name: str
-    parameters: List[str]
+class PlanAction(BaseModel):
+    action_name: str = ""
+    parameters: List[str] = []
 
 
-class Plan(TypedDict):
-    plan: List[PlanAction]
-    metric: float
-
-
-class PlannerErrorInfo(TypedDict):
-    exception: Optional[Exception]
-    message: str
-
-
-class PlanInfo(TypedDict):
-    plans: List[Plan]
-    error_info: Optional[PlannerErrorInfo]
+class Plan(BaseModel):
+    plan: List[PlanAction] = []
+    metric: float = -1.0
