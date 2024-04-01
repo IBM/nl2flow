@@ -12,10 +12,6 @@ from nl2flow.compile.schemas import (
     SlotProperty,
     Parameter,
 )
-from profiler.converters.converter_variables import (
-    AGENT_ID,
-    ACTUATOR_SIGNATURE,
-)
 from nl2flow.compile.options import SlotOptions
 from uuid import uuid4
 
@@ -27,22 +23,21 @@ def get_uuid() -> str:
 def get_operators_for_flow(available_agents: List[AgentInfo]) -> List[Operator]:
     operators: List[Operator] = list()
     for agent_info in available_agents:
-        operator = Operator(agent_info[AGENT_ID])
-        if ACTUATOR_SIGNATURE in agent_info:
-            for signature_type in SIGNATURE_TYPES:
-                signature_names: List[Parameter] = list()
-                for signature_item in agent_info[ACTUATOR_SIGNATURE].get_signature(signature_type):
-                    signature_names.append(
-                        Parameter(
-                            item_id=signature_item.name,
-                            item_type=signature_item.data_type,
-                        )
+        operator = Operator(agent_info.agent_id)
+        for signature_type in SIGNATURE_TYPES:
+            signature_names: List[Parameter] = list()
+            for signature_item in agent_info.actuator_signature.get_signature(signature_type):
+                signature_names.append(
+                    Parameter(
+                        item_id=signature_item.name,
+                        item_type=signature_item.data_type,
                     )
+                )
 
-                if signature_type == AgentInfoSignatureType.IN_SIG_FULL:
-                    operator.add_input(SignatureItem(parameters=signature_names))
-                else:
-                    operator.add_output(SignatureItem(parameters=signature_names))
+            if signature_type == AgentInfoSignatureType.IN_SIG_FULL:
+                operator.add_input(SignatureItem(parameters=signature_names))
+            else:
+                operator.add_output(SignatureItem(parameters=signature_names))
         operators.append(operator)
     return operators
 
@@ -56,18 +51,17 @@ def get_slot_fillers_for_flow(available_agents: List[AgentInfo]) -> List[SlotPro
     none_slot_fillable_names: set[str] = set()
     slot_properties: List[SlotProperty] = list()
     for agent_info in available_agents:
-        if ACTUATOR_SIGNATURE in agent_info:
-            for signature_type in SIGNATURE_TYPES:
-                for signature_item in agent_info[ACTUATOR_SIGNATURE].get_signature(signature_type):
-                    name = signature_item.name
-                    if signature_item.slot_fillable:
-                        if name not in slot_names:
-                            slot_names.add(name)
-                            slot_properties.append(SlotProperty(slot_name=name, slot_desirability=1.0))
-                    else:
-                        if name not in none_slot_fillable_names:
-                            none_slot_fillable_names.add(name)
-                            slot_properties.append(SlotProperty(slot_name=name, slot_desirability=0.0))
+        for signature_type in SIGNATURE_TYPES:
+            for signature_item in agent_info.actuator_signature.get_signature(signature_type):
+                name = signature_item.name
+                if signature_item.slot_fillable:
+                    if name not in slot_names:
+                        slot_names.add(name)
+                        slot_properties.append(SlotProperty(slot_name=name, slot_desirability=1.0))
+                else:
+                    if name not in none_slot_fillable_names:
+                        none_slot_fillable_names.add(name)
+                        slot_properties.append(SlotProperty(slot_name=name, slot_desirability=0.0))
 
     return slot_properties
 

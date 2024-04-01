@@ -16,7 +16,7 @@ from profiler.data_types.agent_info_data_types import (
 
 def test_exist_variable_name_in_signature_not_exist() -> None:
     item = AgentInfoSignatureItem(name="b")
-    agent_info: AgentInfo = {"actuator_signature": AgentInfoSignature(out_sig_full=[item])}
+    agent_info = AgentInfo(agent_id="", actuator_signature=AgentInfoSignature(out_sig_full=[item]))
     variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
     agent_infos = [agent_info]
     assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, AgentInfoSignatureType.OUT_SIG_FULL)
@@ -24,7 +24,7 @@ def test_exist_variable_name_in_signature_not_exist() -> None:
 
 def test_exist_variable_name_in_signature_exist() -> None:
     item = AgentInfoSignatureItem(name="a")
-    agent_info: AgentInfo = {"actuator_signature": AgentInfoSignature(out_sig_full=[item])}
+    agent_info = AgentInfo(agent_id="", actuator_signature=AgentInfoSignature(out_sig_full=[item]))
     variable_info = VariableInfo(variable_name="a", mappable=False, slot_fillable=False)
     agent_infos = [agent_info]
     assert exist_variable_name_in_signature(agent_infos, variable_info, 0, AgentInfoSignatureType.OUT_SIG_FULL)
@@ -32,7 +32,7 @@ def test_exist_variable_name_in_signature_exist() -> None:
 
 def test_exist_variable_name_in_signature_exist_none() -> None:
     item = AgentInfoSignatureItem(name="a")
-    agent_info: AgentInfo = {"actuator_signature": AgentInfoSignature(out_sig_full=[item])}
+    agent_info = AgentInfo(agent_id="", actuator_signature=AgentInfoSignature(out_sig_full=[item]))
     variable_info = None
     agent_infos = [agent_info]
     assert not exist_variable_name_in_signature(agent_infos, variable_info, 0, AgentInfoSignatureType.OUT_SIG_FULL)

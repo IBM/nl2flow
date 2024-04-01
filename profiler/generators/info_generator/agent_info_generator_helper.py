@@ -85,14 +85,12 @@ def get_agents(agent_names: List[str], num_input_parameters: int) -> List[AgentI
         agent_id = agent_names[i][:]
         agent_info = AgentInfo(
             agent_id=agent_id,
-            agent_name=agent_id,
-            evaluator_signature=AgentInfoSignature(),
             actuator_signature=AgentInfoSignature(),
         )
 
         for i in range(num_input_parameters):
-            agent_info["actuator_signature"].in_sig_full.append(AgentInfoSignatureItem())
-            agent_info["actuator_signature"].out_sig_full.append(AgentInfoSignatureItem())
+            agent_info.actuator_signature.in_sig_full.append(AgentInfoSignatureItem())
+            agent_info.actuator_signature.out_sig_full.append(AgentInfoSignatureItem())
 
         agent_infos.append(agent_info)
     return agent_infos
@@ -160,7 +158,7 @@ def get_variables(
 
 
 def get_goals(num_goals: int, agent_infos: List[AgentInfo], random: ModuleType) -> Set[str]:
-    return set(random.sample(list(map(lambda info: info["agent_id"][:], agent_infos)), num_goals))
+    return set(random.sample(list(map(lambda info: info.agent_id[:], agent_infos)), num_goals))
 
 
 def get_mappings(variable_infos: List[VariableInfo], random: ModuleType) -> List[Tuple[str, str, float]]:
@@ -203,14 +201,14 @@ def get_uncoupled_agents(agent_infos_input: List[AgentInfo], variable_infos: Lis
     for agent_info in agent_infos:
         parameter_counter = 0
         for signature_type in SIGNATURE_TYPES:
-            tmp_signature_items = agent_info["actuator_signature"].get_signature(signature_type)
+            tmp_signature_items = agent_info.actuator_signature.get_signature(signature_type)
             tmp_signature_items_cpy = list(map(lambda tmp_item: tmp_item.model_copy(deep=True), tmp_signature_items))
             for item_idx, item in enumerate(tmp_signature_items):
                 tmp_signature_items_cpy[item_idx] = get_new_signature_from_variable_info(
                     item, variable_infos[parameter_counter]
                 )
                 parameter_counter += 1
-            agent_info["actuator_signature"].set_signature(
+            agent_info.actuator_signature.set_signature(
                 agent_info_signature_items=tmp_signature_items_cpy, type=signature_type
             )
 
@@ -269,7 +267,7 @@ def get_agent_infos_with_coupled_agents(
             if is_variable_used_for_coupling or previous_variable is None:
                 # use a variable already used for coupling agents
                 # use an initially assigned variable if there are only two agents
-                chosen_item = agent_infos[chosen_agent_index]["actuator_signature"].out_sig_full[chosen_item_index]
+                chosen_item = agent_infos[chosen_agent_index].actuator_signature.out_sig_full[chosen_item_index]
                 variable_info = VariableInfo(
                     variable_name=chosen_item.name[:],
                     mappable=chosen_item.mappable if chosen_item.mappable is not None else False,
@@ -285,8 +283,8 @@ def get_agent_infos_with_coupled_agents(
 
             if variable_info is not None:
                 source = agent_infos[chosen_agent_index]
-                source["actuator_signature"].out_sig_full[chosen_item_index] = get_new_signature_from_variable_info(
-                    source["actuator_signature"].out_sig_full[chosen_item_index],
+                source.actuator_signature.out_sig_full[chosen_item_index] = get_new_signature_from_variable_info(
+                    source.actuator_signature.out_sig_full[chosen_item_index],
                     variable_info,
                 )
                 # add a position used for coupling agents
@@ -294,8 +292,8 @@ def get_agent_infos_with_coupled_agents(
 
                 # in
                 destination = agent_infos[agent_i + 1]
-                destination["actuator_signature"].in_sig_full[0] = get_new_signature_from_variable_info(
-                    destination["actuator_signature"].in_sig_full[0], variable_info
+                destination.actuator_signature.in_sig_full[0] = get_new_signature_from_variable_info(
+                    destination.actuator_signature.in_sig_full[0], variable_info
                 )
                 # add a position used for coupling agents
                 position_item_coupled.add((agent_i + 1, AgentInfoSignatureType.IN_SIG_FULL, 0))
@@ -313,7 +311,7 @@ def get_agent_info_with_remaining_variables(
     out_sig_full_signature_names_first_agent = set(
         map(
             lambda item: item.name,
-            agent_infos[0]["actuator_signature"].out_sig_full,
+            agent_infos[0].actuator_signature.out_sig_full,
         )
     )
     # assign remaining variables to agents
@@ -323,7 +321,7 @@ def get_agent_info_with_remaining_variables(
             # The first agent should keep all initially assigned
             continue
         for signature_type in SIGNATURE_TYPES:
-            tmp_signature_items = agent_info["actuator_signature"].get_signature(signature_type)
+            tmp_signature_items = agent_info.actuator_signature.get_signature(signature_type)
             tmp_signature_items_cpy = list(map(lambda tmp_item: tmp_item.model_copy(deep=True), tmp_signature_items))
             for item_i, item in enumerate(tmp_signature_items):  # type: ignore
                 if len(variables_remaining_deque) == 0:
@@ -340,7 +338,7 @@ def get_agent_info_with_remaining_variables(
                 tmp_signature_items_cpy[item_i] = get_new_signature_from_variable_info(
                     item, variables_remaining_deque.popleft()
                 )
-            agent_info["actuator_signature"].set_signature(
+            agent_info.actuator_signature.set_signature(
                 agent_info_signature_items=tmp_signature_items_cpy, type=signature_type
             )
 
@@ -353,9 +351,9 @@ def get_shuffled_agent_infos(agent_infos_input: List[AgentInfo], random: Any) ->
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
             if signature_type == AgentInfoSignatureType.IN_SIG_FULL:
-                random.shuffle(agent_info["actuator_signature"].in_sig_full)
+                random.shuffle(agent_info.actuator_signature.in_sig_full)
             if signature_type == AgentInfoSignatureType.OUT_SIG_FULL:
-                random.shuffle(agent_info["actuator_signature"].out_sig_full)
+                random.shuffle(agent_info.actuator_signature.out_sig_full)
 
     return agent_infos
 
@@ -370,7 +368,7 @@ def get_agents_with_variables(
     agent_infos = deepcopy(agent_infos_input)
     variable_infos = deepcopy(variable_infos_input)
     available_data: List[Tuple[str, Optional[str]]] = list()
-    num_input_parameters = len(agent_infos[0]["actuator_signature"].in_sig_full)
+    num_input_parameters = len(agent_infos[0].actuator_signature.in_sig_full)
 
     slot_fillable_variable_infos = list(filter(lambda var: var.slot_fillable, variable_infos))
     none_slot_fillable_variable_infos = list(filter(lambda var: not var.slot_fillable, variable_infos))

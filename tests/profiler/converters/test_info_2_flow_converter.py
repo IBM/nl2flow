@@ -25,10 +25,9 @@ class TestInfo2FlowConverter:
 
     def test_get_operators_for_flow(self) -> None:
         item = AgentInfoSignatureItem(name="k")
-        agent_info: AgentInfo = {
-            "agent_id": "a",
-            "actuator_signature": AgentInfoSignature(in_sig_full=[item], out_sig_full=[item]),
-        }
+        agent_info = AgentInfo(
+            agent_id="a", actuator_signature=AgentInfoSignature(in_sig_full=[item], out_sig_full=[item])
+        )
 
         agent_infos = [deepcopy(agent_info), deepcopy(agent_info)]
         operators: List[Operator] = get_operators_for_flow(agent_infos)
@@ -42,10 +41,9 @@ class TestInfo2FlowConverter:
     def test_get_slot_fillers_for_flow(self) -> None:
         item_0 = AgentInfoSignatureItem(name="k", slot_fillable=True)
         item_1 = AgentInfoSignatureItem(name="j")
-        agent_info: AgentInfo = {
-            "agent_id": "a",
-            "actuator_signature": AgentInfoSignature(in_sig_full=[item_0, item_1], out_sig_full=[item_0]),
-        }
+        agent_info = AgentInfo(
+            agent_id="a", actuator_signature=AgentInfoSignature(in_sig_full=[item_0, item_1], out_sig_full=[item_0])
+        )
         agent_infos = [agent_info]
         slot_properties = get_slot_fillers_for_flow(agent_infos)
         assert len(slot_properties) == 2
@@ -63,10 +61,9 @@ class TestInfo2FlowConverter:
     def test_get_flow_from_agent_infos(self) -> None:
         item_0 = AgentInfoSignatureItem(name="a", slot_fillable=True)
         item_1 = AgentInfoSignatureItem(name="b", slot_fillable=True)
-        agent_info: AgentInfo = {
-            "agent_id": "k",
-            "actuator_signature": AgentInfoSignature(in_sig_full=[item_0], out_sig_full=[item_1]),
-        }
+        agent_info = AgentInfo(
+            agent_id="k", actuator_signature=AgentInfoSignature(in_sig_full=[item_0], out_sig_full=[item_1])
+        )
         mappings = [("a", "b", 1.0)]
         available_data: List[Tuple[str, Optional[str]]] = [("a", None), ("b", None)]
         goals = {"k"}

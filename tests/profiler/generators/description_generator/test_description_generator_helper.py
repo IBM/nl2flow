@@ -87,28 +87,28 @@ class TestDescriptionGeneratorHelper:
 
     def test_get_available_action_names(self) -> None:
         available_agents: List[AgentInfo] = list()
-        available_agents.extend([{"agent_id": "a"}, {"agent_id": "c"}, {"agent_id": "c"}])
+        available_agents.extend([AgentInfo(agent_id="a"), AgentInfo(agent_id="c"), AgentInfo(agent_id="c")])
         name_str = get_available_action_names(available_agents)
         assert name_str == "Action a, Action c, and Action c"
 
     def test_get_available_agents_description_single(self) -> None:
         available_agents: List[AgentInfo] = list()
-        available_agents.append({"agent_id": "a"})
+        available_agents.append(AgentInfo(agent_id="a"))
         res = get_available_agents_description(available_agents)
         assert res == "The system has Action a."
 
     def test_get_available_agents_description_double(self) -> None:
         available_agents: List[AgentInfo] = list()
-        available_agents.append({"agent_id": "a"})
-        available_agents.append({"agent_id": "b"})
+        available_agents.append(AgentInfo(agent_id="a"))
+        available_agents.append(AgentInfo(agent_id="b"))
         res = get_available_agents_description(available_agents)
         assert res == "The system has Action a and Action b."
 
     def test_get_available_agents_description_triple(self) -> None:
         available_agents: List[AgentInfo] = list()
-        available_agents.append({"agent_id": "a"})
-        available_agents.append({"agent_id": "b"})
-        available_agents.append({"agent_id": "c"})
+        available_agents.append(AgentInfo(agent_id="a"))
+        available_agents.append(AgentInfo(agent_id="b"))
+        available_agents.append(AgentInfo(agent_id="c"))
         res = get_available_agents_description(available_agents)
         assert res == "The system has Action a, Action b, and Action c."
 
@@ -134,13 +134,13 @@ class TestDescriptionGeneratorHelper:
         assert res == "Variable a, Variable b, and Variable c"
 
     def test_get_agent_info_description(self) -> None:
-        agent_info: AgentInfo = {
-            "agent_id": "a",
-            "actuator_signature": AgentInfoSignature(
+        agent_info: AgentInfo = AgentInfo(
+            agent_id="a",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
                 out_sig_full=[AgentInfoSignatureItem(name="c", required=False, slot_fillable=False)],
             ),
-        }
+        )
         pre_cond, effects = get_agent_info_description(agent_info)
         assert pre_cond == "To execute Action a, Variable b should be known."
         assert effects == "After executing Action a, Variable c is known."
@@ -169,15 +169,15 @@ class TestDescriptionGeneratorHelper:
         assert res == "Values are available already for Variable a and Variable b."
 
     def test_get_variables_description_single_variable(self) -> None:
-        agent_info: AgentInfo = {
-            "agent_id": "a",
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="a",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
                 out_sig_full=[
                     AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type")
                 ],
             ),
-        }
+        )
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         assert get_hash_str(res) == get_hash_str(
@@ -187,9 +187,9 @@ class TestDescriptionGeneratorHelper:
         )
 
     def test_get_variables_description_multiple_variables(self) -> None:
-        agent_info: AgentInfo = {
-            "agent_id": "a",
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="a",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="b", required=True, slot_fillable=True),
                     AgentInfoSignatureItem(name="x", required=True, slot_fillable=False),
@@ -199,7 +199,7 @@ class TestDescriptionGeneratorHelper:
                     AgentInfoSignatureItem(name="k", required=False, slot_fillable=True),
                 ],
             ),
-        }
+        )
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         assert get_hash_str(res) == get_hash_str(

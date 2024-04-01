@@ -37,10 +37,8 @@ class TestAgentInfoGeneratorHelper:
         agent_infos = get_agents(agent_names, num_input_sig)
         assert len(agent_names) == len(agent_infos)
         for agent_info in agent_infos:
-            assert len(agent_info["evaluator_signature"].in_sig_full) == 0
-            assert len(agent_info["evaluator_signature"].out_sig_full) == 0
-            assert num_input_sig == len(agent_info["actuator_signature"].in_sig_full)
-            assert num_input_sig == len(agent_info["actuator_signature"].out_sig_full)
+            assert num_input_sig == len(agent_info.actuator_signature.in_sig_full)
+            assert num_input_sig == len(agent_info.actuator_signature.out_sig_full)
 
     def test_get_variable_types_many_types(self) -> None:
         num_variables = 100
@@ -90,10 +88,9 @@ class TestAgentInfoGeneratorHelper:
         num_goals = 5
         agent_infos: List[AgentInfo] = list()
         for i in range(num_agents):
-            agent_info: AgentInfo = AgentInfo()
-            agent_info["agent_id"] = str(i)
+            agent_info: AgentInfo = AgentInfo(agent_id=str(i))
             agent_infos.append(agent_info)
-        agent_ids = set(map(lambda info: info["agent_id"][:], agent_infos))
+        agent_ids = set(map(lambda info: info.agent_id[:], agent_infos))
         goals = get_goals(num_goals, agent_infos, random)
         assert num_goals == len(goals)
         for goal in goals:
@@ -116,7 +113,9 @@ class TestAgentInfoGeneratorHelper:
 
     def test_get_uncoupled_agents(self) -> None:
         item = AgentInfoSignatureItem(name="k")
-        agent_info: AgentInfo = {"actuator_signature": AgentInfoSignature(in_sig_full=[item], out_sig_full=[item])}
+        agent_info = AgentInfo(
+            agent_id="", actuator_signature=AgentInfoSignature(in_sig_full=[item], out_sig_full=[item])
+        )
         agent_infos = [deepcopy(agent_info), deepcopy(agent_info)]
         variable_infos = [
             VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
@@ -125,16 +124,17 @@ class TestAgentInfoGeneratorHelper:
         res = get_uncoupled_agents(agent_infos, variable_infos)
         assert len(agent_infos) == len(res)
         for agent_info in res:
-            assert len(agent_info["actuator_signature"].in_sig_full) == 1
-            assert agent_info["actuator_signature"].in_sig_full[0].name == "a"
-            assert len(agent_info["actuator_signature"].out_sig_full) == 1
-            assert agent_info["actuator_signature"].out_sig_full[0].name == "b"
+            assert len(agent_info.actuator_signature.in_sig_full) == 1
+            assert agent_info.actuator_signature.in_sig_full[0].name == "a"
+            assert len(agent_info.actuator_signature.out_sig_full) == 1
+            assert agent_info.actuator_signature.out_sig_full[0].name == "b"
 
     def test_get_agent_infos_with_coupled_agents_two_agents_no_extra_variable_all_coupling_agents(
         self,
     ) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
@@ -143,12 +143,12 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos = [
             VariableInfo(
@@ -194,8 +194,9 @@ class TestAgentInfoGeneratorHelper:
     def test_get_agent_infos_with_coupled_agents_two_agents_extra_variable_all_coupling_agents(
         self,
     ) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
@@ -204,12 +205,12 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos = [
             VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
@@ -236,8 +237,9 @@ class TestAgentInfoGeneratorHelper:
     def test_get_agent_infos_with_coupled_agents_three_agents_extra_variable_all_coupling_agents(
         self,
     ) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
@@ -246,14 +248,14 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_2 = deepcopy(agent_info)
-        agent_2["agent_id"] = "C"
+        agent_2.agent_id = "C"
         agent_infos = [agent_0, agent_1, agent_2]
         variable_infos = [
             VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
@@ -278,8 +280,9 @@ class TestAgentInfoGeneratorHelper:
         assert num_coupled_agents == 3
 
     def test_get_agent_info_with_remaining_variables(self) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="a", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="b", mappable=False, slot_fillable=False),
@@ -288,12 +291,12 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="c", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="d", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_infos = [agent_0, agent_1]
         position_item_coupled = {(1, AgentInfoSignatureType.IN_SIG_FULL, 0)}
         variables_remaining_deque_input = deque([VariableInfo(variable_name="k", mappable=False, slot_fillable=False)])
@@ -301,12 +304,13 @@ class TestAgentInfoGeneratorHelper:
             agent_infos_res,
             _,
         ) = get_agent_info_with_remaining_variables(agent_infos, position_item_coupled, variables_remaining_deque_input)
-        assert agent_infos_res[1]["actuator_signature"].in_sig_full[1].name == "k"
-        assert agent_infos_res[1]["actuator_signature"].in_sig_full[0].name == "a"
+        assert agent_infos_res[1].actuator_signature.in_sig_full[1].name == "k"
+        assert agent_infos_res[1].actuator_signature.in_sig_full[0].name == "a"
 
     def test_get_agents_with_variables_no_available_agents(self) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
@@ -315,12 +319,12 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos_input = [
             VariableInfo(variable_name="a", mappable=False, slot_fillable=False),
@@ -337,8 +341,9 @@ class TestAgentInfoGeneratorHelper:
         assert num_coupled_agents == 2
 
     def test_get_agents_with_variables_two_available_agents(self) -> None:
-        agent_info: AgentInfo = {
-            "actuator_signature": AgentInfoSignature(
+        agent_info = AgentInfo(
+            agent_id="",
+            actuator_signature=AgentInfoSignature(
                 in_sig_full=[
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
@@ -347,12 +352,12 @@ class TestAgentInfoGeneratorHelper:
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                     AgentInfoSignatureItem(name="x", mappable=False, slot_fillable=False),
                 ],
-            )
-        }
+            ),
+        )
         agent_0 = deepcopy(agent_info)
-        agent_0["agent_id"] = "A"
+        agent_0.agent_id = "A"
         agent_1 = deepcopy(agent_info)
-        agent_1["agent_id"] = "B"
+        agent_1.agent_id = "B"
         agent_infos = [agent_0, agent_1]
         variable_infos_input = [
             VariableInfo(

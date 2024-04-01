@@ -1,10 +1,9 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import (
+    SIGNATURE_TYPES,
     AgentInfo,
-    AgentInfoSignature,
     AgentInfoSignatureItem,
-    AgentInfoSignatureType,
 )
 
 
@@ -22,7 +21,7 @@ def get_available_action_names(available_agents: List[AgentInfo]) -> str:
         sorted(
             list(
                 map(
-                    lambda agent_info: "Action " + agent_info.get("agent_id", ""),
+                    lambda agent_info: "Action " + agent_info.agent_id,
                     available_agents,
                 )
             )
@@ -49,15 +48,14 @@ def get_variable_name_from_sig_item(
 def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
     property_action_names_dict: Dict[bool, Set[str]] = defaultdict(set)
     for agent_info in available_agents:
-        sig = agent_info.get("actuator_signature", None)
-        if sig is not None:
-            for signature_type in AgentInfoSignatureType:
-                for sig_item in sig.get_signature(signature_type):
-                    slot_fillable = sig_item.slot_fillable if sig_item.slot_fillable is not None else False
-                    slot_fillable_category = True if slot_fillable else False
-                    signature_item_name = sig_item.name
-                    if len(signature_item_name) > 0:
-                        property_action_names_dict[slot_fillable_category].add(signature_item_name)
+        sig = agent_info.actuator_signature
+        for signature_type in SIGNATURE_TYPES:
+            for sig_item in sig.get_signature(signature_type):
+                slot_fillable = sig_item.slot_fillable if sig_item.slot_fillable is not None else False
+                slot_fillable_category = True if slot_fillable else False
+                signature_item_name = sig_item.name
+                if len(signature_item_name) > 0:
+                    property_action_names_dict[slot_fillable_category].add(signature_item_name)
 
     variable_description_str_lst: List[str] = []
     for slot_fillable, sig_item_names in property_action_names_dict.items():
@@ -89,7 +87,7 @@ def get_vartiable_type_description(
             variable_type_strs.append(variable_type_str)
 
     for agent_info in available_agents:
-        sig = agent_info.get("actuator_signature", AgentInfoSignature())
+        sig = agent_info.actuator_signature
         variable_type_strs += get_variable_type_from_sig_item(sig.in_sig_full)
         variable_type_strs += get_variable_type_from_sig_item(sig.out_sig_full)
 
@@ -140,8 +138,8 @@ def get_signature_item_names(sig_items: List[AgentInfoSignatureItem]) -> str:
 
 
 def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
-    agent_id = agent_info.get("agent_id")
-    sig = agent_info.get("actuator_signature", AgentInfoSignature())
+    agent_id = agent_info.agent_id
+    sig = agent_info.actuator_signature
     # in sig
     agent_info_pre_cond_str = (
         f"To execute Action {agent_id}, " + get_signature_item_names(sig.in_sig_full) + " should be known."

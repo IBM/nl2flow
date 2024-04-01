@@ -42,10 +42,8 @@ class AgentInfoSignature(BaseModel):
             self.out_sig_full = agent_info_signature_items
 
 
-class AgentInfo(TypedDict, total=False):
+class AgentInfo(BaseModel):
     agent_id: str
-    agent_name: str
-    evaluator_signature: AgentInfoSignature = AgentInfoSignature()
     actuator_signature: AgentInfoSignature = AgentInfoSignature()
 
 

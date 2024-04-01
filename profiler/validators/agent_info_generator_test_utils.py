@@ -13,15 +13,15 @@ def get_stats_coupled_agents(
     variable_agent_dict_outs: Dict[str, Set[str]] = dict()
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"].get_signature(signature_type):  # type: ignore
+            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
                 if signature_type == AgentInfoSignatureType.IN_SIG_FULL:
                     if item.name not in variable_agent_dict_ins:
                         variable_agent_dict_ins[item.name] = set()
-                    variable_agent_dict_ins[item.name].add(agent_info["agent_id"])
+                    variable_agent_dict_ins[item.name].add(agent_info.agent_id)
                 if signature_type == AgentInfoSignatureType.OUT_SIG_FULL:
                     if item.name not in variable_agent_dict_outs:
                         variable_agent_dict_outs[item.name] = set()
-                    variable_agent_dict_outs[item.name].add(agent_info["agent_id"])
+                    variable_agent_dict_outs[item.name].add(agent_info.agent_id)
     connections: Set[Tuple[str, str]] = set()
     # go through out signature
     for var in variable_agent_dict_outs:
@@ -46,7 +46,7 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     slot_fillable_var: Set[str] = set()
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"].get_signature(signature_type):  # type: ignore
+            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
                 if item.slot_fillable:
                     slot_fillable_var.add(item.name)
 
@@ -57,7 +57,7 @@ def get_num_variables(agent_infos: List[AgentInfo], available_data: List[Tuple[s
     vars: Set[str] = set()
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"].get_signature(signature_type):  # type: ignore
+            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
                 vars.add(item.name[:])
     for datum in available_data:
         vars.add(datum[0][:])  # add variable name
@@ -77,7 +77,7 @@ def get_num_variables_used_for_data_mapping(mappings: List[Tuple[(str, str, floa
 def check_num_input_parameters(agent_infos: List[AgentInfo], num_input_parameters: int) -> bool:
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            if num_input_parameters != len(agent_info["actuator_signature"].get_signature(signature_type)):
+            if num_input_parameters != len(agent_info.actuator_signature.get_signature(signature_type)):
                 return False
 
     return True
