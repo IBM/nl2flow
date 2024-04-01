@@ -323,7 +323,7 @@ def get_agent_info_with_remaining_variables(
         for signature_type in SIGNATURE_TYPES:
             tmp_signature_items = agent_info.actuator_signature.get_signature(signature_type)
             tmp_signature_items_cpy = list(map(lambda tmp_item: tmp_item.model_copy(deep=True), tmp_signature_items))
-            for item_i, item in enumerate(tmp_signature_items):  # type: ignore
+            for item_i, item in enumerate(tmp_signature_items):
                 if len(variables_remaining_deque) == 0:
                     # no more remaining variables
                     break

@@ -46,7 +46,7 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     slot_fillable_var: Set[str] = set()
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
+            for item in agent_info.actuator_signature.get_signature(signature_type):
                 if item.slot_fillable:
                     slot_fillable_var.add(item.name)
 
@@ -57,7 +57,7 @@ def get_num_variables(agent_infos: List[AgentInfo], available_data: List[Tuple[s
     vars: Set[str] = set()
     for agent_info in agent_infos:
         for signature_type in SIGNATURE_TYPES:
-            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
+            for item in agent_info.actuator_signature.get_signature(signature_type):
                 vars.add(item.name[:])
     for datum in available_data:
         vars.add(datum[0][:])  # add variable name
