@@ -26,7 +26,8 @@ def get_sample_description(
     descriptions: list[str] = list()
     # system
     descriptions.append(get_available_agents_description(available_agents))
-    descriptions.append(get_variables_description(available_agents, available_data))
+    if len(available_agents) > 0 or len(available_data) > 0:
+        descriptions.append(get_variables_description(available_agents, available_data))
     # slot-fillers
     if slot_option is not None and slot_option == SlotOptions.last_resort:
         descriptions.append(ask_last_resort_description[:])
