@@ -133,7 +133,9 @@ def get_variables_description(
 def get_names_from_signature_items(
     sig_items: List[AgentInfoSignatureItem],
 ) -> List[str]:
-    return list(map(lambda sig: "Variable " + sig.name, sig_items))
+    return list(
+        map(lambda sig: "Variable " + sig.name.strip(), filter(lambda item: len(item.name.strip()) > 0, sig_items))
+    )
 
 
 def get_signature_item_names(sig_items: List[AgentInfoSignatureItem]) -> str:
@@ -144,14 +146,20 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
     agent_id = agent_info.agent_id
     sig = agent_info.actuator_signature
     # in sig
-    agent_info_pre_cond_str = (
-        f"To execute Action {agent_id}, " + get_signature_item_names(sig.in_sig_full) + " should be known."
-    )
+    agent_info_pre_cond_str = f"Action {agent_id} can be executed without knowing any variable"
+    in_name_len = len(get_names_from_signature_items(sig.in_sig_full))
+    if in_name_len > 0:
+        agent_info_pre_cond_str = (
+            f"To execute Action {agent_id}, " + get_signature_item_names(sig.in_sig_full) + " should be known."
+        )
     # out sig
-    be_out = " is " if len(sig.out_sig_full) == 1 else " are "
-    agent_info_effect_str = (
-        f"After executing Action {agent_id}, " + get_signature_item_names(sig.out_sig_full) + be_out + "known."
-    )
+    agent_info_effect_str = ""
+    out_name_len = len(get_names_from_signature_items(sig.out_sig_full))
+    if out_name_len > 0:
+        be_out = " is " if out_name_len == 1 else " are "
+        agent_info_effect_str = (
+            f"After executing Action {agent_id}, " + get_signature_item_names(sig.out_sig_full) + be_out + "known."
+        )
 
     return (agent_info_pre_cond_str, agent_info_effect_str)
 
