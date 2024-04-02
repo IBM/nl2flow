@@ -8,14 +8,15 @@ from profiler.data_types.agent_info_data_types import (
 
 
 def get_names(names: List[str]) -> str:
-    if len(names) == 0:
+    names_filtered = list(filter(lambda name: len(name) > 0, map(lambda name: name.strip(), names)))
+    if len(names_filtered) == 0:
         return ""
-    if len(names) == 1:
-        return names[0]
-    if len(names) == 2:
-        return names[0] + " and " + names[1]
+    if len(names_filtered) == 1:
+        return names_filtered[0]
+    if len(names_filtered) == 2:
+        return names_filtered[0] + " and " + names_filtered[1]
 
-    return ", ".join(names[:-1]) + ", and " + names[-1]
+    return ", ".join(names_filtered[:-1]) + ", and " + names_filtered[-1]
 
 
 def get_available_action_names(available_agents: List[AgentInfo]) -> str:
