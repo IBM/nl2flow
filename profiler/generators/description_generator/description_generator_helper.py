@@ -8,6 +8,8 @@ from profiler.data_types.agent_info_data_types import (
 
 
 def get_names(names: List[str]) -> str:
+    if len(names) == 0:
+        return ""
     if len(names) == 1:
         return names[0]
     if len(names) == 2:
