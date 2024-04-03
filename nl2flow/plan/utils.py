@@ -124,7 +124,7 @@ def parse_action(
                 parameters = temp[1:]
 
         elif action_name.startswith(BasicOperations.CONSTRAINT.value):
-            new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "")
+            new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
 
             for v in ConstraintState:
                 new_action_name = new_action_name.replace(f"_to_{string_transform(str(v.value), transforms)}", "")

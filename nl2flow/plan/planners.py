@@ -56,33 +56,29 @@ class Planner(ABC):
         return pretty
 
     @classmethod
-    def pretty_print(cls, planner_response: PlannerResponse) -> str:
+    def pretty_print_plan_verbose(cls, plan: Plan) -> str:
         pretty = ""
 
-        for index, plan in enumerate(planner_response.list_of_plans):
-            pretty += f"\n\n---- Plan #{index} ----\n"
-            pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
-            pretty += cls.pretty_print_plan(plan)
+        for step, action in enumerate(plan.plan):
+            inputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.inputs])
+            outputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.outputs])
+
+            pretty += (
+                f"Step {step}: {action.name}, "
+                f"Inputs: {inputs if action.inputs else None}, "
+                f"Outputs: {outputs if action.outputs else None}\n"
+            )
 
         return pretty
 
-    @staticmethod
-    def pretty_print_verbose(planner_response: PlannerResponse) -> str:
+    @classmethod
+    def pretty_print(cls, planner_response: PlannerResponse, verbose: bool = False) -> str:
         pretty = ""
 
         for index, plan in enumerate(planner_response.list_of_plans):
             pretty += f"\n\n---- Plan #{index} ----\n"
             pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
-
-            for step, action in enumerate(plan.plan):
-                inputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.inputs])
-                outputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.outputs])
-
-                pretty += (
-                    f"Step {step}: {action.name}, "
-                    f"Inputs: {inputs if action.inputs else None}, "
-                    f"Outputs: {outputs if action.outputs else None}\n"
-                )
+            pretty += cls.pretty_print_plan(plan) if not verbose else cls.pretty_print_plan_verbose(plan)
 
         return pretty
 
