@@ -84,8 +84,6 @@ include = ["nl2flow*", "profiler*"]
 requires = ["setuptools>=43.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-addopts = "--ignore=profiler"
 
 [tool.black]
 line-length = 120

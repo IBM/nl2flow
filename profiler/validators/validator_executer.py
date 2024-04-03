@@ -12,9 +12,9 @@ VAL = "validate"
 
 def get_plan_str(plan: Plan) -> str:
     action_strs: List[str] = list()
-    for plan_action in plan["plan"]:
-        action_name = plan_action["action_name"]
-        parameters_str = ",".join(plan_action["parameters"])
+    for plan_action in plan.plan:
+        action_name = plan_action.action_name
+        parameters_str = ",".join(plan_action.parameters)
         action_strs.append(f"{action_name}: [{parameters_str}]")
 
     return "\n".join(action_strs)
