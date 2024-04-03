@@ -7,7 +7,7 @@ from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_m
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
 
-from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem
+from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem, Constraint
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
     TypeOptions,
@@ -75,8 +75,8 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
         else:
             TypeError("Unrecognized goal type.")
 
-    elif goal_item.goal_type == GoalType.CONSTRAINT:
-        temp = compile_constraints(compilation, goal_item.goal_name)  # type: ignore
+    elif goal_item.goal_type == GoalType.CONSTRAINT and isinstance(goal_item.goal_name, Constraint):
+        temp = compile_constraints(compilation, goal_item.goal_name)
         goal_predicates.add(temp)
 
     else:
@@ -179,7 +179,8 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
             new_goal = getattr(compilation, new_goal_predicate_name)()
             goal_predicates.add(new_goal)
 
-            for goal_item_index, goal_item in enumerate(goal_items.goals):
+            goals = goal_items.goals if isinstance(goal_items.goals, List) else [goal_items.goals]
+            for goal_item_index, goal_item in enumerate(goals):
                 precondition_set: Set[Any] = set()
 
                 compile_goal_item(compilation, goal_item, precondition_set)
