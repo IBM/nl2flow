@@ -114,16 +114,18 @@ class Kstar(Planner):
             raw_planner_result: RawPlannerResult = cc.result()
             return raw_planner_result
 
-        except TimeoutError:
-            raw_planner_result = RawPlannerResult()
-            raw_planner_result.is_timeout = True
-            return raw_planner_result
+        except TimeoutError as error:
+            return RawPlannerResult(
+                is_timeout=True,
+                stderr=error,
+            )
 
         except Exception as error:
-            raw_planner_result = RawPlannerResult()
-            raw_planner_result.error_running_planner = True
-            raw_planner_result.stderr = error
-            return raw_planner_result
+            return RawPlannerResult(
+                error_running_planner=True,
+                is_timeout=False,
+                stderr=error,
+            )
 
     def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         raw_planner_result = self.raw_plan(pddl)
@@ -132,7 +134,7 @@ class Kstar(Planner):
         try:
             planner_response.list_of_plans = self.parse(raw_planner_result.list_of_plans, **kwargs)
             planner_response.is_parse_error = (
-                len(planner_response.list_of_plans) == 0 and not planner_response.is_no_solution
+                len(planner_response.list_of_plans) == 0 and planner_response.is_no_solution is False
             )
 
             return planner_response
