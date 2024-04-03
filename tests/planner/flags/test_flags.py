@@ -20,6 +20,7 @@ class TestFlags:
 
     def test_error_running_planner(self) -> None:
         raw_plans = self.PLANNER.raw_plan(None)  # type: ignore
+
         assert len(raw_plans.list_of_plans) == 0
         assert raw_plans.error_running_planner is True
         assert raw_plans.is_no_solution is None
@@ -40,7 +41,7 @@ class TestFlags:
         assert planner_response.error_running_planner is False
         assert planner_response.stderr is None
 
-    def test_timeout(self) -> None:
+    def test_happy_situation(self) -> None:
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent A")))
         planner_response = self.flow.plan_it(self.PLANNER)
         print(self.PLANNER.pretty_print(planner_response))
@@ -58,8 +59,12 @@ class TestFlags:
         slot_order = [step.inputs[0].item_id for step in plan.plan[:-1]]
         assert slot_order == ["a_0", "a_1", "a_2", "a_3", "a_4"]
 
+    def test_timeout(self) -> None:
         self.PLANNER.timeout = 0.1
+
+        self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent A")))
         planner_response = self.flow.plan_it(self.PLANNER)
+
         assert len(planner_response.list_of_plans) == 0
         assert planner_response.is_timeout is True
         assert planner_response.is_no_solution is None
