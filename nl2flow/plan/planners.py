@@ -1,38 +1,47 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
-from nl2flow.plan.schemas import RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan
-from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS
+from nl2flow.plan.schemas import RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
+from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS, TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items
+from nl2flow.compile.schemas import PDDL
 from nl2flow.compile.options import (
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
 )
-from nl2flow.compile.schemas import PDDL
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, Dict
 from pathlib import Path
 from kstar_planner import planners
+from concurrent.futures import TimeoutError
+from pebble import ProcessPool
 
 import tempfile
 
 
 class Planner(ABC):
+    def __init__(self) -> None:
+        self._timeout: float = TIMEOUT
+
+    @property
+    def timeout(self) -> float:
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, set_timeout: float) -> None:
+        self._timeout = set_timeout
+
     @abstractmethod
-    def raw_plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> Any:
+    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
         pass
 
     @abstractmethod
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> Any:
-        pass
-
-    @abstractmethod
-    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
+    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
         pass
 
     @classmethod
-    def pretty_print_plan(cls, plan: ClassicalPlan) -> str:
+    def pretty_print_plan(cls, plan: Plan) -> str:
         pretty = ""
 
         for step, action in enumerate(plan.plan):
@@ -79,34 +88,66 @@ class Planner(ABC):
 
 
 class Kstar(Planner):
-    def raw_plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> RawPlannerResult:
-        with (
-            tempfile.NamedTemporaryFile() as domain_temp,
-            tempfile.NamedTemporaryFile() as problem_temp,
-        ):
+    @staticmethod
+    def call_to_planner(pddl: PDDL) -> RawPlannerResult:
+        with tempfile.NamedTemporaryFile() as domain_temp, tempfile.NamedTemporaryFile() as problem_temp:
             domain_file = Path(tempfile.gettempdir()) / domain_temp.name
             problem_file = Path(tempfile.gettempdir()) / problem_temp.name
 
             domain_file.write_text(pddl.domain)
             problem_file.write_text(pddl.problem)
 
-            result = planners.plan_unordered_topq(
+            planner_result = planners.plan_unordered_topq(
                 domain_file=domain_file,
                 problem_file=problem_file,
                 quality_bound=QUALITY_BOUND,
                 number_of_plans_bound=NUM_PLANS,
             )
+            result = RawPlannerResult(list_of_plans=planner_result.get("plans", []))
+            result.error_running_planner = False
+            result.is_no_solution = len(result.list_of_plans) == 0
+            result.is_timeout = False
+            return result
 
-            raw_planner_result = RawPlannerResult.model_validate(result)
+    def raw_plan(self, pddl: PDDL) -> RawPlannerResult:
+        pool = ProcessPool()
+        cc = pool.schedule(self.call_to_planner, args=[pddl], timeout=self.timeout)
+
+        # noinspection PyBroadException
+        try:
+            raw_planner_result: RawPlannerResult = cc.result()
+            return raw_planner_result
+
+        except TimeoutError:
+            raw_planner_result = RawPlannerResult()
+            raw_planner_result.is_timeout = True
+            return raw_planner_result
+
+        except Exception as error:
+            raw_planner_result = RawPlannerResult()
+            raw_planner_result.error_running_planner = True
+            raw_planner_result.stderr = error
             return raw_planner_result
 
     def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
-        raw_planner_result = self.raw_plan(pddl, **kwargs)
-        planner_response = self.parse(raw_planner_result.plans, **kwargs)
-        return planner_response
+        raw_planner_result = self.raw_plan(pddl)
+        planner_response = PlannerResponse.initialize_from_raw_plans(raw_planner_result)
+        # noinspection PyBroadException
+        try:
+            planner_response.list_of_plans = self.parse(raw_planner_result.list_of_plans, **kwargs)
+            planner_response.is_parse_error = (
+                len(planner_response.list_of_plans) == 0 and not planner_response.is_no_solution
+            )
 
-    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> PlannerResponse:
-        planner_response = PlannerResponse()
+            return planner_response
+
+        except Exception as error:
+            planner_response.is_parse_error = True
+            planner_response.stderr = error
+            return planner_response
+
+    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
+        list_of_plans = list()
 
         flow: Flow = kwargs["flow"]
         slot_options: Set[SlotOptions] = flow.slot_options
@@ -114,7 +155,7 @@ class Kstar(Planner):
         confirm_options: Set[ConfirmOptions] = flow.confirm_options
 
         for plan in raw_plans:
-            new_plan = ClassicalPlan(cost=plan.cost, reference=plan.actions)
+            new_plan = Plan(cost=plan.cost, reference=plan.actions)
             actions = plan.actions
 
             for action in actions:
@@ -139,6 +180,6 @@ class Kstar(Planner):
                 new_plan = group_items(new_plan, ConfirmOptions.group_confirms)
 
             new_plan.length = len(new_plan.plan)
-            planner_response.list_of_plans.append(new_plan)
+            list_of_plans.append(new_plan)
 
-        return planner_response
+        return list_of_plans

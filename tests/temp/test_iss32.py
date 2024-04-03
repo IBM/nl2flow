@@ -77,7 +77,7 @@ class TestISS23:
         problem = "(define (problem default_name-problem)\n    (:domain default_name-domain)\n\n    (:objects\n        \n    )\n\n    (:init\n        (= (slot_goodness v__2) 100000.0)\n        (= (slot_goodness v__0) 100000.0)\n        (= (slot_goodness v__3) 200000.0)\n        (= (slot_goodness v__4) 200000.0)\n        (= (slot_goodness v__1) 200000.0)\n        (= (slot_goodness new_object_generic_0) 150000.0)\n        (= (total-cost ) 0.0)\n        (been_used v__2)\n        (been_used v__0)\n        (been_used v__4)\n        (connected a__1 try_level_0 try_level_1)\n        (connected a__0 try_level_0 try_level_1)\n        (connected a__3 try_level_0 try_level_1)\n        (connected a__2 try_level_0 try_level_1)\n        (new_item new_object_generic_0)\n        (not_slotfillable v__1)\n        (not_slotfillable v__3)\n        (not_slotfillable v__4)\n        (not_mappable new_object_generic_0 v__4)\n        (not_mappable new_object_generic_0 v__1)\n        (not_mappable new_object_generic_0 v__3)\n        (mapped_to v__2 v__2)\n        (mapped_to v__1 v__1)\n        (mapped_to v__3 v__3)\n        (mapped_to v__0 v__0)\n        (mapped_to new_object_generic_0 new_object_generic_0)\n        (mapped_to v__4 v__4)\n    )\n\n    (:goal\n        (has_done a__2 present)\n    )\n\n    \n    \n    (:metric minimize (total-cost ))\n)\n\n"
 
         raw_planner_response = PLANNER.raw_plan(PDDL(domain=domain, problem=problem))
-        assert len(raw_planner_response.plans) > 0
+        assert len(raw_planner_response.list_of_plans) > 0
 
     #   "sample_hash": "907ea3bd3088a26cee5e610b9ea5bd88",
     #   "agent_info_generator_input": {
