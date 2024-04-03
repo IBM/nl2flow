@@ -42,7 +42,7 @@ def get_agent_info_generator_inputs(
 
 
 def get_pddl_generator_output_batch(
-    batch_input: AgentInfoGeneratorInputBatch, planner: Planner, random: ModuleType
+    batch_input: AgentInfoGeneratorInputBatch, planner: Planner, random: ModuleType, should_plan: bool = True
 ) -> Generator[List[PddlGeneratorOutput], None, None]:
     used_settings: Set[int] = set()
     for agent_info_generator_input in get_agent_info_generator_inputs(batch_input):
@@ -71,7 +71,10 @@ def get_pddl_generator_output_batch(
         used_settings.add(generator_input_setting_hash)
         try:
             pddl_generator_outputs = generate_dataset_with_info_generator(
-                agent_info_generator_input=agent_info_generator_input, planner=planner, random=random
+                agent_info_generator_input=agent_info_generator_input,
+                planner=planner,
+                random=random,
+                should_plan=should_plan,
             )
             if pddl_generator_outputs is not None:
                 yield pddl_generator_outputs
