@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List
-from nl2flow.plan.schemas import ClassicalPlan
+from nl2flow.plan.schemas import ClassicalPlan, PlannerResponse
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 
 
@@ -13,3 +13,4 @@ class PddlGeneratorOutput(BaseModel):
     sample_hash: str  # hash for PDDL domain and problem
     agent_info_generator_input: AgentInfoGeneratorInput  # input to generator
     compiler_planner_lag_millisecond: float  # lag in millisecond
+    planner_response: PlannerResponse  # planner response
