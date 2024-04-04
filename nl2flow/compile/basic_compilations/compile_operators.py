@@ -47,7 +47,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         type_list = list()
 
         for index_of_input, o_input in enumerate(operator.inputs):
-            for param in o_input.parameters:
+            for index_of_nested_input, param in enumerate(o_input.parameters):
                 add_to_condition_list_pre_check(compilation, param)
                 index_of_param = index_of_input + list(o_input.parameters).index(param)
 
@@ -57,7 +57,9 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                 else:
                     type_of_param = get_type_of_constant(compilation, param)
 
-                x = compilation.lang.variable(f"x{index_of_param}", compilation.type_map[type_of_param])
+                x = compilation.lang.variable(
+                    f"x{index_of_param}{index_of_nested_input}", compilation.type_map[type_of_param]
+                )
 
                 parameter_list.append(x)
                 type_list.append(type_of_param)

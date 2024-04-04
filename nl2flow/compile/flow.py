@@ -30,11 +30,11 @@ class Flow:
             SlotOptions.relaxed,
         }
 
-        self._compilation: Any = None
+        self._compilation: ClassicPDDL = ClassicPDDL(self.flow_definition)
 
     @property
     def compilation(self) -> ClassicPDDL:
-        return self._compilation  # type: ignore
+        return self._compilation
 
     @property
     def variable_life_cycle(self) -> Set[LifeCycleOptions]:
