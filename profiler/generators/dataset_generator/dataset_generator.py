@@ -1,5 +1,6 @@
 from types import ModuleType
 from typing import List, Optional
+from nl2flow.plan.schemas import PlannerResponse
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.data_types.pddl_generator_datatypes import PddlGeneratorOutput
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos
@@ -13,7 +14,7 @@ from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 
 
 def generate_dataset_with_info_generator(
-    agent_info_generator_input: AgentInfoGeneratorInput, planner: Planner, random: ModuleType
+    agent_info_generator_input: AgentInfoGeneratorInput, planner: Planner, random: ModuleType, should_plan: bool = True
 ) -> Optional[List[PddlGeneratorOutput]]:
     samples, is_all_samples_collected = generate_agent_infos(agent_info_generator_input, random)
     if not is_all_samples_collected:
@@ -30,7 +31,7 @@ def generate_dataset_with_info_generator(
         pddl, _ = flow.compile_to_pddl()
 
         planner_time_start = get_current_time_in_millisecond()
-        planner_response = flow.plan_it(planner)
+        planner_response = flow.plan_it(planner) if should_plan else PlannerResponse()
         compiler_planner_lag = get_current_time_in_millisecond() - planner_time_start
         pddl_generator_outputs.append(
             PddlGeneratorOutput(
@@ -38,9 +39,11 @@ def generate_dataset_with_info_generator(
                 pddl_domain=trim_pddl_str(pddl.domain, pddl_start_key),
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
+                prettified_plans=planner.pretty_print(planner_response) if should_plan else "",
                 sample_hash=sample.get_hash(),
                 agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
                 compiler_planner_lag_millisecond=compiler_planner_lag,
+                planner_response=planner_response,
             )
         )
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from copy import deepcopy
 from typing import List, Optional, Set, Tuple
 from pydantic import BaseModel, model_validator
@@ -27,7 +28,7 @@ class AgentInfoGeneratorOutputItem(BaseModel):
     agent_info_generator_input: AgentInfoGeneratorInput
 
     @model_validator(mode="after")
-    def check_data_integrity(self):  # type: ignore
+    def check_data_integrity(self) -> AgentInfoGeneratorOutputItem:
         check_sample(
             self.agent_info_generator_input,
             self.available_agents,
@@ -38,7 +39,7 @@ class AgentInfoGeneratorOutputItem(BaseModel):
         return self
 
     def describe(self) -> str:
-        return get_sample_description(
+        return get_sample_description(  # type: ignore
             self.available_agents,
             self.goal_agent_ids,
             self.mappings,
@@ -60,4 +61,4 @@ class AgentInfoGeneratorOutputItem(BaseModel):
             mappings=deepcopy(self.mappings),
             available_data=deepcopy(self.available_data),
         )
-        return get_hash(core_info.model_dump_json())
+        return get_hash(core_info.model_dump_json())  # type: ignore

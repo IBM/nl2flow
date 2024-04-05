@@ -1,10 +1,9 @@
 from math import ceil
 from typing import Dict, List, Optional, Set, Tuple
-from profiler.data_types.agent_info_data_types import AgentInfo
+from profiler.data_types.agent_info_data_types import AgentInfo, SIGNATURE_TYPES, AgentInfoSignatureType
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
 )
-from profiler.generators.info_generator.generator_variables import SIGNATURE_TYPES
 
 
 def get_stats_coupled_agents(
@@ -13,18 +12,18 @@ def get_stats_coupled_agents(
     variable_agent_dict_ins: Dict[str, Set[str]] = dict()
     variable_agent_dict_outs: Dict[str, Set[str]] = dict()
     for agent_info in agent_infos:
-        for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
-                if signature == "in_sig_full":
-                    if item["name"] not in variable_agent_dict_ins:
-                        variable_agent_dict_ins[item["name"]] = set()
-                    variable_agent_dict_ins[item["name"]].add(agent_info["agent_id"])
-                if signature == "out_sig_full":
-                    if item["name"] not in variable_agent_dict_outs:
-                        variable_agent_dict_outs[item["name"]] = set()
-                    variable_agent_dict_outs[item["name"]].add(agent_info["agent_id"])
+        for signature_type in SIGNATURE_TYPES:
+            for item in agent_info.actuator_signature.get_signature(signature_type):  # type: ignore
+                if signature_type == AgentInfoSignatureType.IN_SIG_FULL:
+                    if item.name not in variable_agent_dict_ins:
+                        variable_agent_dict_ins[item.name] = set()
+                    variable_agent_dict_ins[item.name].add(agent_info.agent_id)
+                if signature_type == AgentInfoSignatureType.OUT_SIG_FULL:
+                    if item.name not in variable_agent_dict_outs:
+                        variable_agent_dict_outs[item.name] = set()
+                    variable_agent_dict_outs[item.name].add(agent_info.agent_id)
     connections: Set[Tuple[str, str]] = set()
-    # go throught out signature
+    # go through out signature
     for var in variable_agent_dict_outs:
         if var in variable_agent_dict_ins:
             # connections
@@ -46,10 +45,10 @@ def get_stats_coupled_agents(
 def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
     slot_fillable_var: Set[str] = set()
     for agent_info in agent_infos:
-        for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
-                if item["slot_fillable"]:
-                    slot_fillable_var.add(item["name"])
+        for signature_type in SIGNATURE_TYPES:
+            for item in agent_info.actuator_signature.get_signature(signature_type):
+                if item.slot_fillable:
+                    slot_fillable_var.add(item.name)
 
     return len(slot_fillable_var)
 
@@ -57,9 +56,9 @@ def get_num_slot_fillable_variables(agent_infos: List[AgentInfo]) -> int:
 def get_num_variables(agent_infos: List[AgentInfo], available_data: List[Tuple[str, Optional[str]]]) -> int:
     vars: Set[str] = set()
     for agent_info in agent_infos:
-        for signature in SIGNATURE_TYPES:
-            for item in agent_info["actuator_signature"][signature]:
-                vars.add(item["name"][:])
+        for signature_type in SIGNATURE_TYPES:
+            for item in agent_info.actuator_signature.get_signature(signature_type):
+                vars.add(item.name[:])
     for datum in available_data:
         vars.add(datum[0][:])  # add variable name
 
@@ -77,8 +76,8 @@ def get_num_variables_used_for_data_mapping(mappings: List[Tuple[(str, str, floa
 
 def check_num_input_parameters(agent_infos: List[AgentInfo], num_input_parameters: int) -> bool:
     for agent_info in agent_infos:
-        for signature in SIGNATURE_TYPES:
-            if num_input_parameters != len(agent_info["actuator_signature"][signature]):
+        for signature_type in SIGNATURE_TYPES:
+            if num_input_parameters != len(agent_info.actuator_signature.get_signature(signature_type)):
                 return False
 
     return True

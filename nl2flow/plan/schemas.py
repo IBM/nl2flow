@@ -46,14 +46,28 @@ class ClassicalPlan(BaseModel):
     plan: List[Action] = []
 
 
-class PlannerResponse(BaseModel):
+class RawPlannerResult(BaseModel):
+    list_of_plans: List[RawPlan] = []
+    error_running_planner: Optional[bool] = None
+    is_no_solution: Optional[bool] = None
+    is_timeout: Optional[bool] = None
+    stderr: Optional[Any] = None
+
+
+class PlannerResponse(RawPlannerResult):
     list_of_plans: List[ClassicalPlan] = []
+    is_parse_error: Optional[bool] = None
+
+    @classmethod
+    def initialize_from_raw_plans(cls, raw_planner_result: RawPlannerResult) -> PlannerResponse:
+        return PlannerResponse(
+            error_running_planner=raw_planner_result.error_running_planner,
+            is_no_solution=raw_planner_result.is_no_solution,
+            is_timeout=raw_planner_result.is_timeout,
+            stderr=raw_planner_result.stderr,
+        )
 
 
 class RawPlan(BaseModel):
     actions: List[str]
-    cost: Optional[float] = 0.0
-
-
-class RawPlannerResult(BaseModel):
-    plans: List[RawPlan]
+    cost: float = 0.0

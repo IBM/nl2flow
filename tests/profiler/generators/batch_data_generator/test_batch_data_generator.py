@@ -1,5 +1,5 @@
 from nl2flow.plan.planners import Kstar
-from profiler.data_types.generator_data_type import AgentInfoGeneratorInputBatch
+from profiler.data_types.generator_data_type import AgentInfoGeneratorInputBatch, NameGenerator
 from profiler.generators.batch_data_generator.batch_data_generator import (
     get_agent_info_generator_inputs,
     get_pddl_generator_output_batch,
@@ -16,10 +16,19 @@ class TestBatchDataGenerator:
         assert len(res) == 2
 
     def test_get_pddl_generator_output_batch(self) -> None:
-        AgentInfoGeneratorInputBatch()
-        res = list(
-            get_pddl_generator_output_batch(
-                AgentInfoGeneratorInputBatch(proportion_coupled_agents=[0.5, 1.0]), planner=PLANNER, random=random
-            )
+        agent_info_generator_input_batch = AgentInfoGeneratorInputBatch(
+            num_agents=[4],
+            num_var=[5],
+            num_input_parameters=[2],
+            num_samples=[1],
+            num_goal_agents=[1, 2],
+            proportion_coupled_agents=[0.75],
+            proportion_slot_fillable_variables=[0.1, 0.25],
+            proportion_mappable_variables=[0.0],
+            num_var_types=[0],
+            slot_filler_option=[None],
+            name_generator=[NameGenerator.NUMBER],
+            error_message=[None],
         )
-        assert len(res) == 2
+        res = list(get_pddl_generator_output_batch(agent_info_generator_input_batch, planner=PLANNER, random=random))
+        assert len(res) == 4

@@ -49,10 +49,10 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = ["pydantic>=2.4.2", "pyyaml", "tarski", "StrEnum", "kstar-planner", "forbiditerative", "haikunator"]
+dependencies = ["pydantic>=2.4.2", "pyyaml", "tarski", "StrEnum", "kstar-planner", "forbiditerative", "haikunator", "Pebble"]
 
 [project.optional-dependencies]
-dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock"]
+dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock", "types-PyYAML"]
 
 [project.urls]
 "Homepage" = "https://github.com/IBM/nl2flow"
@@ -84,8 +84,6 @@ include = ["nl2flow*", "profiler*"]
 requires = ["setuptools>=43.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-addopts = "--ignore=profiler"
 
 [tool.black]
 line-length = 120
@@ -142,7 +140,7 @@ py-version=3.9
 max-line-length = 120
 
 [tool.flake8]
-extend-ignore = ["E203"]
+extend-ignore = ["E203", "E501"]
 count = true
 max-line-length = 120
 max-complexity = 18
