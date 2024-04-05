@@ -52,6 +52,8 @@ class RawPlannerResult(BaseModel):
     is_no_solution: Optional[bool] = None
     is_timeout: Optional[bool] = None
     stderr: Optional[Any] = None
+    planner_output: Optional[str] = None
+    planner_error: Optional[str] = None
 
 
 class PlannerResponse(RawPlannerResult):
