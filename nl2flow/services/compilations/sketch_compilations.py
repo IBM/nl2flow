@@ -86,13 +86,7 @@ def set_condition_as_goal(
             temp_c = deepcopy(new_constraint)
             temp_c.truth_value = truth_value
 
-            goal_c = Constraint(
-                constraint_id=goal_item.condition,
-                constraint=goal_item.condition,
-                parameters=[v.name for v in goal_item.variables],
-                truth_value=ConstraintState.TRUE.value,
-            )
-
+            goal_c = Constraint(constraint=goal_item.condition, truth_value=ConstraintState.TRUE.value)
             flow.add(
                 ManifestConstraint(
                     manifest=goal_c,
@@ -209,11 +203,7 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
                 raise ValueError(f"Unable to parse ordering in: {component.order}")
 
         elif isinstance(component, Condition):
-            new_constraint = Constraint(
-                constraint_id=component.condition,
-                constraint=component.condition,
-                parameters=[v.name for v in component.variables],
-            )
+            new_constraint = Constraint(constraint=component.condition)
 
             set_condition_as_goal(flow, catalog, new_constraint, component.if_outcomes)
             set_condition_as_goal(flow, catalog, new_constraint, component.else_outcomes, False)
@@ -232,13 +222,7 @@ def basic_sketch_compilation(flow: Flow, sketch: Sketch, catalog: Catalog) -> No
                     if or_item.if_outcomes or or_item.else_outcomes:
                         raise ValueError("This should be an assignment.")
 
-                    goal_c = Constraint(
-                        constraint_id=or_item.condition,
-                        constraint=or_item.condition,
-                        parameters=[v.name for v in or_item.variables],
-                        truth_value=ConstraintState.TRUE.value,
-                    )
-
+                    goal_c = Constraint(constraint=or_item.condition, truth_value=ConstraintState.TRUE.value)
                     or_goals.append(GoalItem(goal_name=goal_c, goal_type=GoalType.CONSTRAINT))
 
                 else:

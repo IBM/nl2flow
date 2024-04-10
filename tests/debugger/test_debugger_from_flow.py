@@ -26,9 +26,7 @@ class TestBasic:
             SignatureItem(
                 constraints=[
                     Constraint(
-                        constraint_id="check value of a",
-                        constraint="a > 10",
-                        parameters=["a"],
+                        constraint="$a > 10",
                     )
                 ]
             )
@@ -55,11 +53,11 @@ class TestBasic:
 
     def test_token_production(self) -> None:
         tokens = [
-            "Agent A -> a_star",
+            "a_star = Agent A",
             "map(a_star, a)",
             "confirm(a)",
-            "check(check value of a) = True",
-            "Agent B(a) -> y",
+            "assert $a > 10",
+            "y = Agent B(a)",
             "Agent D(y)",
         ]
 
@@ -70,16 +68,15 @@ class TestBasic:
 
     def test_token_parsing(self) -> None:
         tokens = [
-            "Agent A -> a_star",
+            "a_star = Agent A",
             "map(a_star, a)",
             "confirm(a)",
-            "check(check value of a) = True",
-            "Agent B(a) -> y",
+            "assert $a > 10",
+            "y = Agent B(a)",
             "Agent D(y)",
         ]
 
         reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(tokens)
-
         assert reference_plan.plan == [
             Step(
                 name="Agent A",

@@ -63,9 +63,10 @@ class TestSketchBasic:
                 a.startswith(BasicOperations.CONSTRAINT.value) and "business trip" in a for a in action_names
             ].index(True) < action_names.index("Concur"), "Constraint check for business trip before Concur."
 
-            assert [
-                a.startswith(BasicOperations.CONSTRAINT.value) and "travel policy" in a for a in action_names
-            ].index(True) > action_names.index("Concur"), "Constraint check for travel policy after Concur."
+            travel_policy = "$hotel_booking.price + $flight_ticket.price < 150"
+            assert [a.startswith(BasicOperations.CONSTRAINT.value) and travel_policy in a for a in action_names].index(
+                True
+            ) > action_names.index("Concur"), "Constraint check for travel policy after Concur."
 
             action_names = [
                 a

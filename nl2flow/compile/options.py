@@ -16,7 +16,7 @@ class BasicOperations(enum.Enum):
     SLOT_FILLER = "ask"
     MAPPER = "map"
     CONFIRM = "confirm"
-    CONSTRAINT = "check"
+    CONSTRAINT = "assert"
 
 
 class CompileOptions(enum.Enum):

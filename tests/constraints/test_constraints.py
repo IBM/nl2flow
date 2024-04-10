@@ -25,13 +25,7 @@ class TestConstraints(BaseTestAgents):
         twitter_agent.add_input(
             SignatureItem(
                 parameters=[Parameter(item_id="tweet", item_type="Text")],
-                constraints=[
-                    Constraint(
-                        constraint_id="Char limit for a tweet",
-                        constraint="len(tweet) <= 240",
-                        parameters=["tweet"],
-                    )
-                ],
+                constraints=[Constraint(constraint="len($tweet) <= 240")],
             )
         )
 
@@ -61,9 +55,7 @@ class TestConstraints(BaseTestAgents):
             [
                 MemoryItem(item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN),
                 Constraint(
-                    constraint_id="Char limit for a tweet",
-                    constraint="len(tweet) <= 240",
-                    parameters=["tweet"],
+                    constraint="len($tweet) <= 240",
                     truth_value=ConstraintState.FALSE.value,
                 ),
             ]
@@ -85,9 +77,7 @@ class TestConstraints(BaseTestAgents):
                 parameters=[Parameter(item_id="tweet", item_type="Text")],
                 constraints=[
                     Constraint(
-                        constraint_id="Char limit for a tweet",
-                        constraint="len(tweet) <= 240",
-                        parameters=["tweet"],
+                        constraint="len($tweet) <= 240",
                     )
                 ],
             )
@@ -107,9 +97,7 @@ class TestConstraints(BaseTestAgents):
         goal = GoalItems(
             goals=GoalItem(
                 goal_name=Constraint(
-                    constraint_id="Char limit for a tweet",
-                    constraint="len(tweet) <= 240",
-                    parameters=["tweet"],
+                    constraint="len($tweet) <= 240",
                 ),
                 goal_type=GoalType.CONSTRAINT,
             )
@@ -128,9 +116,7 @@ class TestConstraints(BaseTestAgents):
             [
                 MemoryItem(item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN),
                 Constraint(
-                    constraint_id="Char limit for a tweet",
-                    constraint="len(tweet) <= 240",
-                    parameters=["tweet"],
+                    constraint="len($tweet) <= 240",
                     truth_value=ConstraintState.FALSE.value,
                 ),
             ]
@@ -150,15 +136,11 @@ class TestConstraints(BaseTestAgents):
         self.flow.add(
             ManifestConstraint(
                 manifest=Constraint(
-                    constraint_id="Char limit for a tweet",
-                    constraint="len(tweet) <= 240",
-                    parameters=["tweet"],
+                    constraint="len($tweet) <= 240",
                     truth_value=ConstraintState.TRUE.value,
                 ),
                 constraint=Constraint(
-                    constraint_id="Proper tweet",
-                    constraint="eval(state)",
-                    parameters=["tweet"],
+                    constraint="is_tweet_proper($tweet)",
                     truth_value=ConstraintState.TRUE.value,
                 ),
             )
@@ -169,9 +151,7 @@ class TestConstraints(BaseTestAgents):
                 MemoryItem(item_id="tweet", item_type="Text", item_state=MemoryState.KNOWN),
                 GoalItems(goals=GoalItem(goal_name="Twitter")),
                 Constraint(
-                    constraint_id="Proper tweet",
-                    constraint="eval(state)",
-                    parameters=["tweet"],
+                    constraint="is_tweet_proper($tweet)",
                     truth_value=ConstraintState.TRUE.value,
                 ),
             ]

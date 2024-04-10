@@ -127,8 +127,8 @@ def parse_action(
             new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
             action_split_for_id = new_action_name.split("_to_")
 
-            constraint_id = revert_string_transform(action_split_for_id[0], transforms)
-            assert constraint_id, ValueError(f"Failed to parse constraint id from {action_name}")
+            constraint = revert_string_transform(action_split_for_id[0], transforms)
+            assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
 
             action_split_for_truth_value = action_split_for_id[1].split("_with_")
 
@@ -137,16 +137,7 @@ def parse_action(
                 if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
                     truth_value = v.value
 
-            if action_split_for_truth_value[1]:
-                parameters = action_split_for_truth_value[1].split("_")
-            else:
-                parameters = []
-
-            # new_action.name = (
-            #     f"assert {'' if truth_value == str(ConstraintState.TRUE.value) else 'not'} {constraint_id} "
-            # )
-
-            new_action.name = f"{BasicOperations.CONSTRAINT.value}({constraint_id}) = {truth_value} "
+            new_action.name = f"assert {'' if truth_value else 'not '}{constraint}"
 
         new_action.inputs = [
             Parameter(

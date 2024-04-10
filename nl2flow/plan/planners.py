@@ -49,9 +49,9 @@ class Planner(ABC):
             input_string = f"({inputs})" if inputs else ""
 
             outputs = ", ".join([item.item_id for item in action.outputs]) or None
-            output_string = f" -> {outputs}" if outputs else ""
+            output_string = f"{outputs} = " if outputs else ""
 
-            pretty += f"[{step}] {action.name}{input_string}{output_string}\n"
+            pretty += f"[{step}] {output_string}{action.name}{input_string}\n"
 
         return pretty.strip()
 
