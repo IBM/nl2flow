@@ -45,7 +45,7 @@ def get_orphaned_items(compilation: Any, goal_items: List[str]) -> List[str]:
     return list_of_orphans
 
 
-def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]) -> None:
+def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
@@ -76,7 +76,7 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
             TypeError("Unrecognized goal type.")
 
     elif goal_item.goal_type == GoalType.CONSTRAINT and isinstance(goal_item.goal_name, Constraint):
-        temp = compile_constraints(compilation, goal_item.goal_name)
+        temp = compile_constraints(compilation, goal_item.goal_name, **kwargs)
         goal_predicates.add(temp)
 
     else:

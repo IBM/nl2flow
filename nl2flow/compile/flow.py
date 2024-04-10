@@ -2,7 +2,8 @@ from typing import Set, List, Union, Any, Tuple, Dict, Optional
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
-from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, Transform
+from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, ClassicalPlanReference, Transform
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
     CompileOptions,
     SlotOptions,
@@ -151,6 +152,9 @@ class Flow:
 
                         for child in children:
                             self.add(TypeItem(name=child, parent=item.name, children=[]))
+
+                elif isinstance(item, ClassicalPlanReference):
+                    setattr(self.flow_definition, key_name, item)
             else:
                 raise TypeError("Attempted to add unknown type of object to flow.")
 
@@ -163,7 +167,7 @@ class Flow:
     def plan_it(
         self,
         planner: Any,
-        debug_flag: bool = False,
+        debug_flag: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
         pddl, transforms = self.compile_to_pddl(debug_flag, compilation_type)
@@ -172,7 +176,7 @@ class Flow:
 
     def compile_to_pddl(
         self,
-        debug_flag: bool = False,
+        debug_flag: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
         if compilation_type.value != CompileOptions.CLASSICAL.value:

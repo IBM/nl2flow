@@ -50,9 +50,7 @@ class TestBasic:
         )
 
         self.debugger = BasicDebugger(self.flow)
-
-    def test_token_production(self) -> None:
-        tokens = [
+        self.tokens = [
             "a_star = Agent A",
             "map(a_star, a)",
             "confirm(a)",
@@ -61,22 +59,14 @@ class TestBasic:
             "Agent D(y)",
         ]
 
-        stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(tokens)])
+    def test_token_production(self) -> None:
+        stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(self.tokens)])
         planner_response = self.flow.plan_it(PLANNER)
 
         assert any([stringify_tokens == PLANNER.pretty_print_plan(plan) for plan in planner_response.list_of_plans])
 
     def test_token_parsing(self) -> None:
-        tokens = [
-            "a_star = Agent A",
-            "map(a_star, a)",
-            "confirm(a)",
-            "assert $a > 10",
-            "y = Agent B(a)",
-            "Agent D(y)",
-        ]
-
-        reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(tokens)
+        reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(self.tokens)
         assert reference_plan.plan == [
             Step(
                 name="Agent A",
@@ -105,44 +95,32 @@ class TestBasic:
         ]
 
     def test_unsound_plan(self) -> None:
-        # ask(z)
-        # xx = A(z)
-        # x = map(x)
-        # confirm(x)
-        # y = B(x)
-        # D(y, z)
-        pass
+        incomplete_unsound_tokens = deepcopy(self.tokens)
+        incomplete_unsound_tokens.remove("assert $a > 10")
+        incomplete_unsound_tokens.remove("y = Agent B(a)")
 
-    def test_sound_but_invalid_plan(self) -> None:
-        # xx = A(z)
-        # x = map(x)
-        # confirm(x)
-        # assert check_x(x)
-        # y = B(x, z)
-        pass
+        reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(incomplete_unsound_tokens)
+        self.debugger.flow.add(reference_plan)
 
-    def test_valid_but_not_optimal_plan(self) -> None:
-        # ask(y)
-        # y = B(x, z)
-        pass
+        report = self.debugger.check_soundness(reference_plan)
 
-    def test_optimal_plan(self) -> None:
-        # xx = A(z)
-        # x = map(x)
-        # confirm(x)
-        # assert x > 10
-        # y = B(x, z)
-        # D(y)
-        pass
+        assert report
 
-    def test_equivalent_optimal_plan(self) -> None:
-        # xx = A(z)
-        # x = map(x)
-        # confirm(x)
-        # assert check_x(x)
-        # y = C(x, z)
-        # D(y)
-        pass
-
-    def test_invalid_tokens(self) -> None:
-        pass
+    # def test_sound_but_invalid_plan(self) -> None:
+    #     incomplete_sound_tokens = deepcopy(self.tokens)
+    #     incomplete_sound_tokens.remove("Agent D(y)")
+    #
+    # def test_valid_but_not_optimal_plan(self) -> None:
+    #     valid_suboptimal_tokens = [
+    #         "ask(y)",
+    #         "Agent D(y)",
+    #     ]
+    #
+    # def test_optimal_plan(self) -> None:
+    #     pass
+    #
+    # def test_equivalent_optimal_plan(self) -> None:
+    #     pass
+    #
+    # def test_invalid_tokens(self) -> None:
+    #     pass

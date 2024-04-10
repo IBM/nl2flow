@@ -211,6 +211,14 @@ class PDDL(BaseModel):
     problem: str
 
 
+class ClassicalPlanReference(BaseModel):
+    plan: List[Union[Step, Constraint]] = []
+
+    @classmethod
+    def transform(cls, reference: ClassicalPlanReference, transforms: List[Transform]) -> ClassicalPlanReference:
+        return ClassicalPlanReference(plan=[item.transform(item, transforms) for item in reference.plan])
+
+
 class FlowDefinition(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
@@ -227,15 +235,17 @@ class FlowDefinition(BaseModel):
     manifest_constraints: List[ManifestConstraint] = []
     starts_with: Optional[str] = None
     ends_with: Optional[str] = None
+    reference: Optional[ClassicalPlanReference] = None
 
     @classmethod
     def transform(cls, flow: FlowDefinition, transforms: List[Transform]) -> FlowDefinition:
         new_flow = FlowDefinition(
             name=string_transform(flow.name, transforms),
+            reference=flow.reference.transform(flow.reference, transforms) if flow.reference else None,
         )
 
         for defn in cls.model_fields.items():
-            if defn[0] not in ["name", "starts_with", "ends_with"]:
+            if defn[0] not in ["name", "starts_with", "ends_with", "reference"]:
                 setattr(
                     new_flow,
                     defn[0],

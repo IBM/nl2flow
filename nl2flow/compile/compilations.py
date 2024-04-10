@@ -16,6 +16,7 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
+from nl2flow.compile.basic_compilations.compile_reference import compile_reference
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
@@ -96,12 +97,13 @@ class ClassicPDDL(Compilation):
         self.connected: Any = None
         self.done_goal_pre: Any = None
         self.done_goal_post: Any = None
+        self.ready_for_token: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
-        # debug_flag = kwargs.get("debug_flag", False)
+        debug_flag = kwargs.get("debug_flag", False)
 
         reserved_types = [
             TypeOptions.ROOT,
@@ -130,6 +132,9 @@ class ClassicPDDL(Compilation):
                         item_type=reserved_type_map[item].value,
                     ),
                 )
+
+        if debug_flag:
+            self.ready_for_token = self.lang.predicate("ready_for_token")
 
         self.has_done = self.lang.predicate(
             "has_done",
@@ -250,6 +255,9 @@ class ClassicPDDL(Compilation):
         compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
+
+        if debug_flag:
+            compile_reference(self, **kwargs)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
