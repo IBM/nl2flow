@@ -137,8 +137,8 @@ class TestDescriptionGeneratorHelper:
         agent_info: AgentInfo = AgentInfo(
             agent_id="a",
             actuator_signature=AgentInfoSignature(
-                in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
-                out_sig_full=[AgentInfoSignatureItem(name="c", required=False, slot_fillable=False)],
+                in_sig_full=[AgentInfoSignatureItem(name="b", slot_fillable=True)],
+                out_sig_full=[AgentInfoSignatureItem(name="c", slot_fillable=False)],
             ),
         )
         pre_cond, effects = get_agent_info_description(agent_info)
@@ -172,10 +172,8 @@ class TestDescriptionGeneratorHelper:
         agent_info = AgentInfo(
             agent_id="a",
             actuator_signature=AgentInfoSignature(
-                in_sig_full=[AgentInfoSignatureItem(name="b", required=True, slot_fillable=True)],
-                out_sig_full=[
-                    AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type")
-                ],
+                in_sig_full=[AgentInfoSignatureItem(name="b", slot_fillable=True)],
+                out_sig_full=[AgentInfoSignatureItem(name="c", slot_fillable=False, data_type="sample_type")],
             ),
         )
 
@@ -191,12 +189,12 @@ class TestDescriptionGeneratorHelper:
             agent_id="a",
             actuator_signature=AgentInfoSignature(
                 in_sig_full=[
-                    AgentInfoSignatureItem(name="b", required=True, slot_fillable=True),
-                    AgentInfoSignatureItem(name="x", required=True, slot_fillable=False),
+                    AgentInfoSignatureItem(name="b", slot_fillable=True),
+                    AgentInfoSignatureItem(name="x", slot_fillable=False),
                 ],
                 out_sig_full=[
-                    AgentInfoSignatureItem(name="c", required=False, slot_fillable=False, data_type="sample_type"),
-                    AgentInfoSignatureItem(name="k", required=False, slot_fillable=True),
+                    AgentInfoSignatureItem(name="c", slot_fillable=False, data_type="sample_type"),
+                    AgentInfoSignatureItem(name="k", slot_fillable=True),
                 ],
             ),
         )
