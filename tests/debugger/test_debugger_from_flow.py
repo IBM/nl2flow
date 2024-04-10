@@ -90,9 +90,9 @@ class TestBasic:
                 name=BasicOperations.CONFIRM.value,
                 parameters=["a"],
             ),
-            Step(
-                name=BasicOperations.CONSTRAINT.value,
-                parameters=["a", "True"],
+            Constraint(
+                constraint="$a > 10",
+                truth_value=True,
             ),
             Step(
                 name="Agent B",

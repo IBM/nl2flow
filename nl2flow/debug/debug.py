@@ -5,7 +5,7 @@ from typing import Union, List
 from nl2flow.plan.schemas import RawPlan
 
 # from nl2flow.plan.options import TIMEOUT
-from nl2flow.compile.schemas import PDDL, Step
+from nl2flow.compile.schemas import PDDL, Step, Constraint
 from nl2flow.compile.options import BasicOperations
 from nl2flow.compile.flow import Flow
 from nl2flow.debug.schemas import ClassicalPlanReference
@@ -41,20 +41,20 @@ class BasicDebugger(Debugger):
 
     @staticmethod
     def parse_tokens(list_of_tokens: List[str]) -> ClassicalPlanReference:
-        def parse_parameters() -> List[str]:
-            m = re.match(rf"{action_name}\((?P<parameters>.*)\)", token)
+        def parse_parameters(prefix: str, signature: str) -> List[str]:
+            m = re.match(rf"{prefix}\((?P<parameters>.*)\)", signature)
 
             if m is not None:
                 re_found = m.groupdict()
                 p = re_found.get("parameters", None)
 
                 if not p:
-                    raise ValueError(f"Could not parse parameter of {action_name} operation: {token}")
+                    raise ValueError(f"Could not parse parameter of {prefix} operation: {signature}")
                 else:
                     p_list = p.split(",")
                     return [p.strip() for p in p_list]
             else:
-                raise ValueError(f"Could not parse {action_name} operation: {token}")
+                raise ValueError(f"Could not parse {prefix} operation: {signature}")
 
         parsed_plan = ClassicalPlanReference()
 
@@ -68,20 +68,29 @@ class BasicDebugger(Debugger):
 
                 if token.startswith(action_name):
                     if token.startswith(BasicOperations.CONSTRAINT.value):
-                        new_action = Step(
-                            name=action_name,
-                            parameters=[],
+                        new_action = Constraint(
+                            constraint=token.replace(f"{BasicOperations.CONSTRAINT.value} ", "")
+                            .replace("not ", "")
+                            .strip(),
+                            truth_value=not token.startswith(f"{BasicOperations.CONSTRAINT.value} not"),
                         )
                     else:
                         new_action = Step(
                             name=action_name,
-                            parameters=parse_parameters(),
+                            parameters=parse_parameters(action_name, token),
                         )
 
             if new_action is None:
+                action_split = token.split(" = ")
+                agent_signature = action_split[0] if len(action_split) == 1 else action_split[1]
+
+                agent_signature_split = agent_signature.split("(")
+                action_name = agent_signature_split[0]
+                parameters = [] if len(agent_signature_split) == 1 else parse_parameters(action_name, agent_signature)
+
                 new_action = Step(
-                    name="action_name",
-                    parameters=[],
+                    name=action_name,
+                    parameters=parameters,
                 )
 
             if new_action:

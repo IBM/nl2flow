@@ -1,5 +1,6 @@
 from nl2flow.plan.schemas import Step
-from typing import List, Optional
+from nl2flow.compile.schemas import Constraint
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from enum import Enum
 
@@ -16,7 +17,7 @@ class SolutionQuality(Enum):
 
 
 class ClassicalPlanReference(BaseModel):
-    plan: List[Step] = []
+    plan: List[Union[Step, Constraint]] = []
 
 
 class StepDiff(BaseModel):
