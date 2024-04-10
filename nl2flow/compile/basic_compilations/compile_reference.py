@@ -3,6 +3,9 @@
 # from tarski.syntax import land
 from typing import Any
 
+# from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
+
+
 # from nl2flow.compile.schemas import Step, Constraint
 #
 # from nl2flow.compile.options import (

@@ -145,15 +145,6 @@ def compile_constraints(compilation: Any, constraint: Constraint, **kwargs: Any)
                     ),
                 )
 
-    for known_constraint in compilation.flow_definition.constraints:
-        if known_constraint.constraint == constraint.constraint:
-            compilation.init.add(
-                getattr(compilation, new_constraint_variable)(
-                    *set_variables,
-                    compilation.constant_map[str(known_constraint.truth_value)],
-                )
-            )
-
     return getattr(compilation, new_constraint_variable)(
         *set_variables, compilation.constant_map[str(constraint.truth_value)]
     )

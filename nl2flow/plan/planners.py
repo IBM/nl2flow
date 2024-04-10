@@ -11,7 +11,7 @@ from nl2flow.compile.options import (
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, Dict
+from typing import Any, List, Set
 from pathlib import Path
 from kstar_planner import planners
 from concurrent.futures import TimeoutError
@@ -33,7 +33,7 @@ class Planner(ABC):
         self._timeout = set_timeout
 
     @abstractmethod
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         pass
 
     @abstractmethod

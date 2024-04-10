@@ -54,7 +54,7 @@ class Compilation(ABC):
         self.flow_definition = flow_definition
 
     @abstractmethod
-    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
         pass
 
 
@@ -252,9 +252,9 @@ class ClassicPDDL(Compilation):
         if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
             compile_typed_mappings(self, **kwargs)
 
-        compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
+        compile_history(self, **kwargs)
 
         if debug_flag:
             compile_reference(self, **kwargs)

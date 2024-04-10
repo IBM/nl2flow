@@ -92,7 +92,7 @@ def generate_new_objects(type_name: str, num_lookahead: int) -> List[str]:
     return [f"new_object_{type_name}_{index}" for index in range(num_lookahead)]
 
 
-def add_extra_objects(compilation: Any, **kwargs: Dict[str, Any]) -> None:
+def add_extra_objects(compilation: Any, **kwargs: Any) -> None:
     num_lookahead: int = kwargs.get("lookahead", LOOKAHEAD)  # type: ignore
 
     for type_name in compilation.type_map:
