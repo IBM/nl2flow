@@ -53,7 +53,7 @@ class Planner(ABC):
 
             pretty += f"[{step}] {action.name}{input_string}{output_string}\n"
 
-        return pretty
+        return pretty.strip()
 
     @classmethod
     def pretty_print_plan_verbose(cls, plan: Plan) -> str:
@@ -69,7 +69,7 @@ class Planner(ABC):
                 f"Outputs: {outputs if action.outputs else None}\n"
             )
 
-        return pretty
+        return pretty.strip()
 
     @classmethod
     def pretty_print(cls, planner_response: PlannerResponse, verbose: bool = False) -> str:

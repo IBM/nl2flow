@@ -15,7 +15,6 @@ class RestrictedOperations(enum.Enum):
 class BasicOperations(enum.Enum):
     SLOT_FILLER = "ask"
     MAPPER = "map"
-    TRANSFORM = "transform"
     CONFIRM = "confirm"
     CONSTRAINT = "check"
 

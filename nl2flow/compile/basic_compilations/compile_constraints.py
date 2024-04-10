@@ -16,6 +16,10 @@ from nl2flow.compile.options import (
 )
 
 
+def make_operator_name_for_constraint(constraint: Constraint, truth_value: bool) -> str:
+    return f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint_id}_to_{truth_value}_with_{'_'.join(constraint.parameters)}"
+
+
 def compile_manifest_constraints(compilation: Any) -> None:
     for manifest_constraint in compilation.flow_definition.manifest_constraints:
         manifest_predicate = compile_constraints(compilation, manifest_constraint.manifest)
@@ -62,8 +66,7 @@ def compile_constraints(
         setattr(compilation, new_constraint_variable, new_constraint_predicate)
 
         for truth_value in ConstraintState:
-            operator_name = f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint_id}_to_{truth_value.value}"
-
+            operator_name = make_operator_name_for_constraint(constraint, truth_value.value)
             precondition_list = list()
             add_effect_list = list()
             del_effect_list = list()
@@ -87,7 +90,6 @@ def compile_constraints(
                 )
 
                 enabler_name = f"{RestrictedOperations.ENABLER.value}__{constraint.constraint_id}_{parameter}"
-
                 if enabler_name not in compilation.problem.actions:
                     compilation.problem.action(
                         enabler_name,

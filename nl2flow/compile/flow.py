@@ -163,14 +163,16 @@ class Flow:
     def plan_it(
         self,
         planner: Any,
+        debug_flag: bool = False,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
-        pddl, transforms = self.compile_to_pddl(compilation_type)
+        pddl, transforms = self.compile_to_pddl(debug_flag, compilation_type)
         parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms)
         return parsed_plans
 
     def compile_to_pddl(
         self,
+        debug_flag: bool = False,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
@@ -184,6 +186,7 @@ class Flow:
             variable_life_cycle=self.variable_life_cycle,
             goal_type=self.goal_type,
             lookahead=self.lookahead,
+            debug_flag=debug_flag,
         )
 
         return pddl, transforms

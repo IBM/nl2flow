@@ -101,6 +101,8 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
+        # debug_flag = kwargs.get("debug_flag", False)
+
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
