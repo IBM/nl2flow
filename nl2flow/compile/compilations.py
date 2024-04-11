@@ -96,6 +96,7 @@ class ClassicPDDL(Compilation):
         self.connected: Any = None
         self.done_goal_pre: Any = None
         self.done_goal_post: Any = None
+        self.has_asked: Any = None
         self.ready_for_token: Any = None
 
         self.type_map: Dict[str, Any] = dict()
@@ -134,6 +135,15 @@ class ClassicPDDL(Compilation):
 
         if debug_flag:
             self.ready_for_token = self.lang.predicate("ready_for_token")
+            self.has_asked = self.lang.predicate(
+                "has_asked",
+                self.type_map[TypeOptions.ROOT.value],
+            )
+
+            for index in range(len(self.flow_definition.reference.plan) + 1):
+                token_predicate_name = f"token_{index}"
+                token_predicate = self.lang.predicate(token_predicate_name)
+                setattr(self, token_predicate_name, token_predicate)
 
         self.has_done = self.lang.predicate(
             "has_done",

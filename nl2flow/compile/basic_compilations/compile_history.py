@@ -31,12 +31,7 @@ def get_predicate_from_step(
     compilation: Any, step: Step, variable_life_cycle: Set[LifeCycleOptions], num_try: int = 0
 ) -> Any:
     if step.name.startswith(BasicOperations.SLOT_FILLER.value):
-        step_predicate = compilation.known(
-            compilation.constant_map[step.parameters[0].item_id],
-            compilation.constant_map[MemoryState.UNCERTAIN.value]
-            if LifeCycleOptions.confirm_on_slot in variable_life_cycle
-            else compilation.constant_map[MemoryState.KNOWN.value],
-        )
+        step_predicate = compilation.has_asked(compilation.constant_map[step.parameters[0].item_id])
 
     elif step.name.startswith(BasicOperations.MAPPER.value):
         step_predicate = compilation.mapped_to(

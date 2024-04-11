@@ -38,7 +38,7 @@ class TestBasic:
         agent_d = Operator(name="agent_d")
         agent_d.add_input(SignatureItem(parameters="y"))
 
-        goal = GoalItems(goals=[GoalItem(goal_name="agent_b"), GoalItem(goal_name="agent_d")])
+        goal = GoalItems(goals=GoalItem(goal_name="agent_d"))
         self.flow.add(
             [
                 agent_a,
@@ -99,7 +99,6 @@ class TestBasic:
         incomplete_unsound_tokens.remove("y = agent_b(a)")
 
         report = self.debugger.debug(incomplete_unsound_tokens, debug=SolutionQuality.SOUND)
-
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
@@ -124,17 +123,50 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type == DiffAction.DELETE]) == 0, "No deletes"
         assert report.determination is False, "Reference plan is invalid"
 
-    # def test_valid_but_not_optimal_plan(self) -> None:
-    #     valid_suboptimal_tokens = [
-    #         "ask(y)",
-    #         "Agent D(y)",
-    #     ]
-    #
-    # def test_optimal_plan(self) -> None:
-    #     pass
-    #
-    # def test_equivalent_optimal_plan(self) -> None:
-    #     pass
-    #
+    def test_valid_but_not_optimal_plan(self) -> None:
+        valid_suboptimal_tokens = [
+            "ask(y)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.SOUND)
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "No edits"
+        assert report.determination, "Reference plan is sound"
+
+        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.VALID)
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "No edits"
+        assert report.determination, "Reference plan is valid"
+
+        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.OPTIMAL)
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 6, "6 edits"
+        assert len([d for d in report.plan_diff_obj if d.diff_type == DiffAction.ADD]) == 5, "5 additions"
+        assert len([d for d in report.plan_diff_obj if d.diff_type == DiffAction.DELETE]) == 1, "1 delete"
+        assert report.determination is False, "Reference plan is not optimal"
+
+    def test_optimal_plan(self) -> None:
+        report = self.debugger.debug(self.tokens, debug=SolutionQuality.OPTIMAL)
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
+    def test_equivalent_optimal_plan(self) -> None:
+        alternative_tokens = [
+            "a* = agent_a()",
+            "map(a*, a)",
+            "confirm(a)",
+            "assert $a > 10",
+            "y = agent_c(a)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL)
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
     # def test_invalid_tokens(self) -> None:
     #     pass

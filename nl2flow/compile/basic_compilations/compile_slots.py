@@ -167,6 +167,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
 
                     if debug_flag:
                         precondition_list.append(compilation.ready_for_token())
+                        add_effect_list.append(compilation.has_asked(compilation.constant_map[slot]))
                         del_effect_list.append(compilation.ready_for_token())
 
                     compilation.problem.action(
@@ -203,6 +204,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
 
         if debug_flag:
             precondition_list.append(compilation.ready_for_token())
+            add_effect_list.append(compilation.has_asked(x))
             del_effect_list.append(compilation.ready_for_token())
 
         compilation.problem.action(
@@ -282,6 +284,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
 
                     if debug_flag:
                         precondition_list.append(compilation.ready_for_token())
+                        add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
                         del_effect_list.append(compilation.ready_for_token())
 
                     compilation.problem.action(
@@ -300,6 +303,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
             else:
                 if debug_flag:
                     precondition_list.append(compilation.ready_for_token())
+                    add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
                     del_effect_list.append(compilation.ready_for_token())
 
                 compilation.problem.action(
@@ -372,6 +376,9 @@ def compile_all_together(compilation: Any, **kwargs: Any) -> None:
                             ),
                         ]
                     )
+
+                    if debug_flag:
+                        add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
 
                     if SlotOptions.last_resort in slot_options and constant not in not_slots_as_last_resort:
                         for reference_operator in source_map[constant]:
