@@ -7,6 +7,7 @@ SLOT_GOODNESS: float = 0.5
 
 
 class RestrictedOperations(enum.Enum):
+    TOKENIZE = "tokenize"
     MANIFEST = "manifest"
     ENABLER = "enabler_operator"
     GOAL = "goal_operator"
@@ -38,6 +39,7 @@ class TypeOptions(enum.Enum):
 
 class CostOptions(enum.Enum):
     ZERO = 0
+    EDIT = 1
     UNIT = 10
     VERY_LOW = 20
     LOW = 50

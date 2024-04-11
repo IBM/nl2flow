@@ -2,10 +2,9 @@ import tarski
 import tarski.fstrips as fs
 from tarski.theories import Theory
 from tarski.io import FstripsWriter
-
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Any, Tuple
-
+from typing import List, Set, Dict, Any, Tuple, Optional
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.schemas import (
     FlowDefinition,
     PDDL,
@@ -103,7 +102,7 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
-        debug_flag = kwargs.get("debug_flag", False)
+        debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
         reserved_types = [
             TypeOptions.ROOT,
