@@ -17,7 +17,7 @@ class TestBasic:
         self.flow.variable_life_cycle.add(LifeCycleOptions.confirm_on_mapping)
 
         agent_a = Operator(name="agent_a")
-        agent_a.add_output(SignatureItem(parameters=Parameter(item_id="a*", item_type="type_a")))
+        agent_a.add_output(SignatureItem(parameters=Parameter(item_id="a_1", item_type="type_a")))
 
         agent_b = Operator(name="agent_b")
         agent_b.add_output(SignatureItem(parameters="y"))
@@ -51,8 +51,8 @@ class TestBasic:
 
         self.debugger = BasicDebugger(self.flow)
         self.tokens = [
-            "a* = agent_a()",
-            "map(a*, a)",
+            "a_1 = agent_a()",
+            "map(a_1, a)",
             "confirm(a)",
             "assert $a > 10",
             "y = agent_b(a)",
@@ -73,7 +73,7 @@ class TestBasic:
             ),
             Step(
                 name=BasicOperations.MAPPER.value,
-                parameters=["a*", "a"],
+                parameters=["a_1", "a"],
             ),
             Step(
                 name=BasicOperations.CONFIRM.value,
@@ -156,8 +156,8 @@ class TestBasic:
 
     def test_equivalent_optimal_plan(self) -> None:
         alternative_tokens = [
-            "a* = agent_a()",
-            "map(a*, a)",
+            "a_1 = agent_a()",
+            "map(a_1, a)",
             "confirm(a)",
             "assert $a > 10",
             "y = agent_c(a)",
@@ -168,5 +168,23 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
-    # def test_invalid_tokens(self) -> None:
-    #     pass
+    def test_invalid_tokens(self) -> None:
+        messed_up_tokens = [
+            "a_1 = agent_aa()",  # unknown agent
+            "adsfaerafea",  # random garbage
+            "amap(a_1, a)",  # unknown operation
+            "map(a_1, a)",
+            "a = confirm(a)",  # extra output
+            "assert $aa > 10",  # typo in string
+            "y = agent_c(a, a)",  # wrong number of inputs
+            "a, y = agent_c(a, a)",  # wrong number of outputs
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(messed_up_tokens, debug=SolutionQuality.SOUND)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 11, "1 edits"
+        assert report.determination is False, "Reference plan is not sound"

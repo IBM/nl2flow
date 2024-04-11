@@ -1,16 +1,15 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from tarski.syntax import land, neg, Atom
-from typing import Any, Set, Optional
+from tarski.syntax import land, Atom
+from typing import Any, Optional
 
 from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
-from nl2flow.compile.options import LifeCycleOptions, RestrictedOperations, CostOptions
+from nl2flow.compile.options import RestrictedOperations, CostOptions
 from nl2flow.debug.schemas import SolutionQuality
 
 
 def compile_reference(compilation: Any, **kwargs: Any) -> None:
-    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
     cached_predicates = []
@@ -27,7 +26,7 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
                         indices_of_interest.append(i)
 
                 index_of_operation = indices_of_interest.index(index) + 1
-                step_predicate = get_predicate_from_step(compilation, item, variable_life_cycle, index_of_operation)
+                step_predicate = get_predicate_from_step(compilation, item, index_of_operation)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)
@@ -35,14 +34,15 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             else:
                 raise ValueError(f"Invalid reference object: {item}")
 
-            cached_predicates.append(step_predicate)
+            if step_predicate:
+                cached_predicates.append(step_predicate)
 
         token_predicate_name = f"token_{index}"
         token_predicate = getattr(compilation, token_predicate_name)()
         token_predicates.append(token_predicate)
 
         precondition_list = [p for p in cached_predicates[:index]]
-        precondition_list.append(neg(compilation.ready_for_token()))
+        # precondition_list.append(neg(compilation.ready_for_token()))
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
 
         compilation.problem.action(

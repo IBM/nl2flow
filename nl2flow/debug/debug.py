@@ -1,7 +1,8 @@
-import re
 from abc import ABC, abstractmethod
 from typing import Union, List
 from difflib import Differ
+from re import match
+from warnings import warn
 
 from nl2flow.plan.schemas import RawPlan
 from nl2flow.plan.planners import Kstar
@@ -39,7 +40,7 @@ class BasicDebugger(Debugger):
 
     @staticmethod
     def parse_parameters(prefix: str, signature: str) -> List[str]:
-        m = re.match(rf"{prefix}\((?P<parameters>.*)\)", signature)
+        m = match(rf"{prefix}\((?P<parameters>.*)\)", signature)
 
         if m is not None:
             re_found = m.groupdict()
@@ -53,43 +54,52 @@ class BasicDebugger(Debugger):
         else:
             raise ValueError(f"Could not parse {prefix} operation: {signature}")
 
-    def parse_token(self, token: str) -> Union[Step, Constraint]:
-        new_action = None
+    def parse_token(self, token: str) -> Union[Step, Constraint, None]:
+        # noinspection PyBroadException
+        try:
+            new_action = None
 
-        for operation in BasicOperations:
-            action_name = operation.value
+            for operation in BasicOperations:
+                action_name = operation.value
 
-            if token.startswith(action_name):
-                if token.startswith(BasicOperations.CONSTRAINT.value):
-                    new_action = Constraint(
-                        constraint=token.replace(f"{BasicOperations.CONSTRAINT.value} ", "")
-                        .replace("not ", "")
-                        .strip(),
-                        truth_value=not token.startswith(f"{BasicOperations.CONSTRAINT.value} not"),
-                    )
-                else:
-                    new_action = Step(
-                        name=action_name,
-                        parameters=self.parse_parameters(action_name, token),
-                    )
+                if token.startswith(action_name):
+                    if token.startswith(BasicOperations.CONSTRAINT.value):
+                        new_action = Constraint(
+                            constraint=token.replace(f"{BasicOperations.CONSTRAINT.value} ", "")
+                            .replace("not ", "")
+                            .strip(),
+                            truth_value=not token.startswith(f"{BasicOperations.CONSTRAINT.value} not"),
+                        )
+                    else:
+                        new_action = Step(
+                            name=action_name,
+                            parameters=self.parse_parameters(action_name, token),
+                        )
 
-        if new_action is None:
-            action_split = token.split(" = ")
-            agent_signature = action_split[0] if len(action_split) == 1 else action_split[1]
+            if new_action is None:
+                action_split = token.split(" = ")
+                agent_signature = action_split[0] if len(action_split) == 1 else action_split[1]
 
-            agent_signature_split = agent_signature.split("(")
-            action_name = agent_signature_split[0]
-            parameters = [] if agent_signature_split[1] == ")" else self.parse_parameters(action_name, agent_signature)
+                agent_signature_split = agent_signature.split("(")
+                action_name = agent_signature_split[0]
+                parameters = (
+                    [] if agent_signature_split[1] == ")" else self.parse_parameters(action_name, agent_signature)
+                )
 
-            new_action = Step(
-                name=action_name,
-                parameters=parameters,
-            )
+                new_action = Step(
+                    name=action_name,
+                    parameters=parameters,
+                )
 
-        if new_action:
-            return new_action
-        else:
-            raise ValueError(f"Unrecognized token: {token}")
+            if new_action:
+                return new_action
+            else:
+                warn(f"Unrecognized token: {token}", SyntaxWarning)
+                return None
+
+        except Exception as e:
+            warn(f"Unrecognized token: {token}, {e}")
+            return None
 
     def parse_tokens(self, list_of_tokens: List[str]) -> ClassicalPlanReference:
         parsed_plan = ClassicalPlanReference()
@@ -99,7 +109,11 @@ class BasicDebugger(Debugger):
             token = token.strip()
 
             new_action = self.parse_token(token)
-            parsed_plan.plan.append(new_action)
+
+            if new_action:
+                parsed_plan.plan.append(new_action)
+            else:
+                continue
 
         return parsed_plan
 
@@ -111,14 +125,16 @@ class BasicDebugger(Debugger):
             for diff_action in DiffAction:
                 if item.startswith(diff_action.value):
                     item = item.replace(f"{diff_action.value} ", "")
+                    parsed_token = self.parse_token(item) or item
                     new_action = StepDiff(
                         diff_type=diff_action,
-                        step=self.parse_token(item),
+                        step=parsed_token,
                     )
 
             if not new_action:
+                parsed_token = self.parse_token(item) or item
                 new_action = StepDiff(
-                    step=self.parse_token(item),
+                    step=parsed_token,
                 )
 
             diff_obj.append(new_action)

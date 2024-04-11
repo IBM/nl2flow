@@ -18,7 +18,7 @@ class SolutionQuality(Enum):
 
 class StepDiff(BaseModel):
     diff_type: Optional[DiffAction] = None
-    step: Union[Step, Constraint]
+    step: Union[Step, Constraint, str]
 
 
 class Report(BaseModel):
