@@ -9,7 +9,7 @@ from nl2flow.plan.planners import Kstar
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.options import BasicOperations
-from nl2flow.compile.schemas import ClassicalPlanReference, PDDL, Step, Constraint
+from nl2flow.compile.schemas import ClassicalPlanReference, Step, Constraint
 from nl2flow.debug.schemas import Report, SolutionQuality, StepDiff, DiffAction
 
 PLANNER = Kstar()
@@ -17,13 +17,8 @@ DIFFER = Differ()
 
 
 class Debugger(ABC):
-    def __init__(self, instance: Union[Flow, PDDL]) -> None:
-        if isinstance(instance, Flow):
-            self.flow = instance
-        elif isinstance(instance, PDDL):
-            self.pddl = instance
-        else:
-            raise ValueError(f"Debugger must initiated with a Flow or PDDL object, found {type(instance)} instead.")
+    def __init__(self, instance: Flow) -> None:
+        self.flow = instance
 
     @abstractmethod
     def debug_raw_plan(self, raw_plan: RawPlan) -> None:
