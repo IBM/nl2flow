@@ -5,10 +5,7 @@ from pydantic import BaseModel
 
 class AgentInfoSignatureItem(BaseModel):
     name: str = ""
-    providence: Optional[str] = None
-    required: Optional[bool] = False
     data_type: Optional[str] = None
-    ont: Optional[str] = None
     mappable: Optional[bool] = False
     slot_fillable: Optional[bool] = False
 
