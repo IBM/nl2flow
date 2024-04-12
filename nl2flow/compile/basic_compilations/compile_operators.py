@@ -2,7 +2,7 @@ import copy
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
-from typing import List, Set, Any
+from typing import List, Set, Any, Optional
 
 from nl2flow.compile.basic_compilations.utils import (
     add_to_condition_list_pre_check,
@@ -11,7 +11,7 @@ from nl2flow.compile.basic_compilations.utils import (
 
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
 from nl2flow.compile.schemas import FlowDefinition, OperatorDefinition, Parameter
-
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
     TypeOptions,
     LifeCycleOptions,
@@ -26,7 +26,7 @@ from nl2flow.compile.options import (
 def compile_operators(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     list_of_actions: List[OperatorDefinition] = flow_definition.operators
-
+    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
     multi_instance: bool = kwargs.get("multi_instance", True)
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
@@ -45,6 +45,10 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         ]
         del_effect_list = list()
         type_list = list()
+
+        if debug_flag:
+            precondition_list.append(compilation.ready_for_token())
+            del_effect_list.append(compilation.ready_for_token())
 
         for index_of_input, o_input in enumerate(operator.inputs):
             for index_of_nested_input, param in enumerate(o_input.parameters):
@@ -102,7 +106,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                     )
 
             for constraint in o_input.constraints:
-                constraint_predicate = compile_constraints(compilation, constraint)
+                constraint_predicate = compile_constraints(compilation, constraint, **kwargs)
                 precondition_list.append(constraint_predicate)
 
         if multi_instance:
@@ -174,7 +178,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                 )
 
             for constraint in o_output.constraints:
-                constraint_predicate = compile_constraints(compilation, constraint)
+                constraint_predicate = compile_constraints(compilation, constraint, **kwargs)
                 add_effect_list.append(constraint_predicate)
 
         add_partial_orders(compilation, operator, precondition_list)

@@ -22,7 +22,7 @@ class TestSketchConstraints:
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:
             action_names = [step.name for step in plan.plan]
-            index_of_visa_status_check_failure = action_names.index("check(visa.status == SUCCESS) = False")
+            index_of_visa_status_check_failure = action_names.index("assert not $visa.status == SUCCESS")
 
             assert index_of_visa_status_check_failure > -1
             assert action_names.index("Visa Application") < index_of_visa_status_check_failure
@@ -34,9 +34,7 @@ class TestSketchConstraints:
             [
                 MemoryItem(item_id="visa", item_state=MemoryState.KNOWN),
                 Constraint(
-                    constraint_id="visa.status == SUCCESS",
-                    constraint="visa.status == SUCCESS",
-                    parameters=["visa"],
+                    constraint="$visa.status == SUCCESS",
                     truth_value=ConstraintState.FALSE.value,
                 ),
             ],
@@ -49,7 +47,7 @@ class TestSketchConstraints:
         for plan in planner_response.list_of_plans:
             action_names = [step.name for step in plan.plan]
 
-            assert "check(visa.status == SUCCESS) = False" not in action_names, "No fresh visa check."
+            assert "assert not $visa.status == SUCCESS" not in action_names, "No fresh visa check."
             assert "Trip Approval" not in action_names, "No approval step, manifest not approved."
             assert action_names.index("Vacation Bot") > -1, "Direct to vacation."
             assert action_names.index("Email Agent") > -1, "Direct to email."
@@ -60,9 +58,7 @@ class TestSketchConstraints:
                 Step(name="Visa Application", parameters=["Passport", "address", "Employer Letter"]),
                 MemoryItem(item_id="visa", item_state=MemoryState.KNOWN),
                 Constraint(
-                    constraint_id="visa.status == SUCCESS",
-                    constraint="visa.status == SUCCESS",
-                    parameters=["visa"],
+                    constraint="$visa.status == SUCCESS",
                     truth_value=ConstraintState.TRUE.value,
                 ),
             ],
@@ -87,11 +83,11 @@ class TestSketchConstraints:
         final_planner_response = self.check_sketch_with_execution(catalog, sketch)
 
         for plan in final_planner_response.list_of_plans:
-            assert plan.plan[-1].name == "check(approval.status == FAILED) = False"
+            assert plan.plan[-1].name == "assert not $approval.status == FAILED"
 
     def test_with_complex_goals(self) -> None:
         catalog, sketch = load_assets(catalog_name="catalog", sketch_name="08-sketch_with_complex_goals")
         final_planner_response = self.check_sketch_with_execution(catalog, sketch)
 
         for plan in final_planner_response.list_of_plans:
-            assert plan.plan[-1].name == "check(approval.status == SUCCESS) = True"
+            assert plan.plan[-1].name == "assert $approval.status == SUCCESS"

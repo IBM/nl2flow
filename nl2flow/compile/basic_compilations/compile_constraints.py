@@ -1,10 +1,9 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
-from typing import Any
-
+from typing import Any, Optional
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map, get_type_of_constant
-
 from nl2flow.compile.schemas import Constraint, MemoryItem
 from nl2flow.compile.options import (
     TypeOptions,
@@ -16,13 +15,20 @@ from nl2flow.compile.options import (
 )
 
 
+def make_operator_name_for_constraint(constraint: Constraint, truth_value: bool, compilation: Any) -> str:
+    parameters = constraint.get_variable_references_from_constraint(
+        constraint.constraint, compilation.cached_transforms
+    )
+    return f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint}_to_{truth_value}_with_{'_'.join(parameters)}"
+
+
 def compile_manifest_constraints(compilation: Any) -> None:
     for manifest_constraint in compilation.flow_definition.manifest_constraints:
         manifest_predicate = compile_constraints(compilation, manifest_constraint.manifest)
         reference_predicate = compile_constraints(compilation, manifest_constraint.constraint)
 
         compilation.problem.action(
-            f"{RestrictedOperations.MANIFEST.value}_{manifest_constraint.manifest.constraint_id}",
+            f"{RestrictedOperations.MANIFEST.value}_{manifest_constraint.manifest.constraint}",
             parameters=list(),
             precondition=land(reference_predicate),
             effects=[fs.AddEffect(manifest_predicate)],
@@ -35,13 +41,16 @@ def compile_manifest_constraints(compilation: Any) -> None:
         )
 
 
-def compile_constraints(
-    compilation: Any,
-    constraint: Constraint,
-) -> Any:
-    new_constraint_variable = f"status_{constraint.constraint_id}"
+def compile_constraints(compilation: Any, constraint: Constraint, **kwargs: Any) -> Any:
+    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+
+    new_constraint_variable = f"status_{constraint.constraint}"
+    constraint_parameters = constraint.get_variable_references_from_constraint(
+        constraint.constraint, compilation.cached_transforms
+    )
+
     set_variables = list()
-    for item in constraint.parameters:
+    for item in constraint_parameters:
         if item not in compilation.constant_map:
             add_memory_item_to_constant_map(
                 compilation,
@@ -50,7 +59,7 @@ def compile_constraints(
         set_variables.append(compilation.constant_map[item])
 
     closed_variables = [
-        compilation.type_map[get_type_of_constant(compilation, item)] for item in constraint.parameters
+        compilation.type_map[get_type_of_constant(compilation, item)] for item in constraint_parameters
     ] + [compilation.type_map[TypeOptions.STATUS.value]]
 
     if new_constraint_variable not in [item.symbol for item in compilation.lang.predicates]:
@@ -62,13 +71,12 @@ def compile_constraints(
         setattr(compilation, new_constraint_variable, new_constraint_predicate)
 
         for truth_value in ConstraintState:
-            operator_name = f"{BasicOperations.CONSTRAINT.value}_{constraint.constraint_id}_to_{truth_value.value}"
-
+            operator_name = make_operator_name_for_constraint(constraint, truth_value.value, compilation)
             precondition_list = list()
             add_effect_list = list()
             del_effect_list = list()
 
-            for index, parameter in enumerate(constraint.parameters):
+            for index, parameter in enumerate(constraint_parameters):
                 del_effect_list.append(compilation.free(compilation.constant_map[parameter]))
                 precondition_list.extend(
                     [
@@ -86,8 +94,7 @@ def compile_constraints(
                     *set_variables, compilation.constant_map[str(not truth_value.value)]
                 )
 
-                enabler_name = f"{RestrictedOperations.ENABLER.value}__{constraint.constraint_id}_{parameter}"
-
+                enabler_name = f"{RestrictedOperations.ENABLER.value}__{constraint.constraint}_{parameter}"
                 if enabler_name not in compilation.problem.actions:
                     compilation.problem.action(
                         enabler_name,
@@ -120,6 +127,10 @@ def compile_constraints(
             )
 
             if operator_name not in compilation.problem.actions:
+                if debug_flag:
+                    precondition_list.append(compilation.ready_for_token())
+                    del_effect_list.append(compilation.ready_for_token())
+
                 compilation.problem.action(
                     operator_name,
                     parameters=list(),
@@ -133,15 +144,6 @@ def compile_constraints(
                         )
                     ),
                 )
-
-    for known_constraint in compilation.flow_definition.constraints:
-        if known_constraint.constraint_id == constraint.constraint_id:
-            compilation.init.add(
-                getattr(compilation, new_constraint_variable)(
-                    *set_variables,
-                    compilation.constant_map[str(known_constraint.truth_value)],
-                )
-            )
 
     return getattr(compilation, new_constraint_variable)(
         *set_variables, compilation.constant_map[str(constraint.truth_value)]

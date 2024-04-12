@@ -8,21 +8,15 @@ options:
   - NO_TYPING
 components:
   - OR:
-    - condition: approval.status == SUCCESS
-      variables:
-        - name: approval
+    - condition: $approval.status == SUCCESS
     - item: Email Agent
-  - condition: visa.status == SUCCESS
-    variables:
-      - name: visa
+  - condition: $visa.status == SUCCESS
     if_outcomes:
       - item: Registration Bot
       - item: Trip Approval
     else_outcomes:
       - item: Vacation Bot
-      - condition: approval.status == FAILED
-        variables:
-          - name: approval
+      - condition: $approval.status == FAILED
   - order: Trip Approval > Registration Bot
 
 ## The following is likely not derived from user

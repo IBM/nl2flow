@@ -78,9 +78,7 @@ class TestSketchAdvanced:
         flow_object.add(
             [
                 Constraint(
-                    constraint_id="is a business trip",
-                    constraint="eval.state",
-                    parameters=[],
+                    constraint="eval(is a business trip)",
                     truth_value=ConstraintState.FALSE.value,
                 ),
             ]
@@ -95,7 +93,7 @@ class TestSketchAdvanced:
             action_names = [step.name for step in plan.plan]
             assert "Kayak" in action_names and "Concur" not in action_names
 
-            assert "check(is not a business trip) = True" in action_names
+            assert "assert eval(is not a business trip)" in action_names
             assert (
                 len([step.name for step in plan.plan if step.name.startswith(BasicOperations.CONSTRAINT.value)]) == 4
             ), "Extra checks for travel policy due to Kayak."

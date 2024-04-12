@@ -7,6 +7,8 @@ SLOT_GOODNESS: float = 0.5
 
 
 class RestrictedOperations(enum.Enum):
+    UNTOKENIZE = "untokenize"
+    TOKENIZE = "tokenize"
     MANIFEST = "manifest"
     ENABLER = "enabler_operator"
     GOAL = "goal_operator"
@@ -15,9 +17,8 @@ class RestrictedOperations(enum.Enum):
 class BasicOperations(enum.Enum):
     SLOT_FILLER = "ask"
     MAPPER = "map"
-    TRANSFORM = "transform"
     CONFIRM = "confirm"
-    CONSTRAINT = "check"
+    CONSTRAINT = "assert"
 
 
 class CompileOptions(enum.Enum):
@@ -39,7 +40,8 @@ class TypeOptions(enum.Enum):
 
 class CostOptions(enum.Enum):
     ZERO = 0
-    UNIT = 1
+    EDIT = 1
+    UNIT = 10
     VERY_LOW = 20
     LOW = 50
     MEDIUM = 250

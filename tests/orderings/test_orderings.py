@@ -23,7 +23,7 @@ class TestOrderings(BaseTestAgents):
             new_agent = Operator(f"Agent {item}")
             new_agent.add_output(
                 SignatureItem(
-                    parameters=[MemoryItem(item_id=item.lower())],
+                    parameters=item.lower(),
                 )
             )
             self.flow.add(new_agent)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Optional, Union
 from pydantic import BaseModel
+from nl2flow.compile.schemas import Constraint
 
 
 class Parameter(BaseModel):
@@ -24,7 +25,6 @@ class Ordering(BaseModel):
 
 class Condition(BaseModel):
     condition: str
-    variables: List[Parameter]
     if_outcomes: List[Union[Goal, Condition]] = []
     else_outcomes: List[Union[Goal, Condition]] = []
 
@@ -53,12 +53,6 @@ class Sketch(BaseModel):
 class Signature(BaseModel):
     name: str
     type: Optional[str] = None
-
-
-class Constraint(BaseModel):
-    constraint: str
-    variables: List[Signature] = []
-    evaluate: str
 
 
 class Agent(BaseModel):

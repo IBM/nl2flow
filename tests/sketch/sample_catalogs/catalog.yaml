@@ -35,19 +35,9 @@ agents:
 
   - id: Trip Approval
     inputs:
-      - constraint: hotel policy
-        variables:
-          - name: hotel_booking
-        evaluate: hotel_booking.price < 100
-      - constraint: flight policy
-        variables:
-          - name: flight_ticket
-        evaluate: flight_ticket.price < 100
-      - constraint: travel policy
-        variables:
-          - name: hotel_booking
-          - name: flight_ticket
-        evaluate: hotel_booking.price + flight_ticket.price < 150
+      - constraint: $hotel_booking.price < 100
+      - constraint: $flight_ticket.price < 100
+      - constraint: $hotel_booking.price + $flight_ticket.price < 150
     outputs:
       - name: approval
 
@@ -65,8 +55,7 @@ agents:
 
   - id: Kayak
     inputs:
-      - constraint: is not a business trip
-        evaluate: eval.state
+      - constraint: eval(is not a business trip)
       - name: start date
         type: Datetime
       - name: end date
@@ -82,8 +71,7 @@ agents:
 
   - id: Concur
     inputs:
-      - constraint: is a business trip
-        evaluate: eval.state
+      - constraint: eval(is a business trip)
       - name: start date
         type: Datetime
       - name: end date
@@ -95,14 +83,8 @@ agents:
     outputs:
       - name: flight_ticket
       - name: hotel_booking
-      - constraint: hotel policy
-        variables:
-          - name: hotel_booking
-        evaluate: hotel_booking.price < 100
-      - constraint: flight policy
-        variables:
-          - name: flight_ticket
-        evaluate: flight_ticket.price < 100
+      - constraint: $hotel_booking.price < 100
+      - constraint: $flight_ticket.price < 100
 
 
   - id: Hotel.com

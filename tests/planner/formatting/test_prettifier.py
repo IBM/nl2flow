@@ -22,9 +22,7 @@ class TestPrettifier:
             SignatureItem(
                 constraints=[
                     Constraint(
-                        constraint_id="check if Agent 0 is done",
-                        constraint="eval.state",
-                        parameters=["a", "b"],
+                        constraint="check_if_agent_0_is_done($a, $b)",
                     )
                 ]
             )
@@ -45,21 +43,21 @@ class TestPrettifier:
         print(pretty)
 
         if "Agent 1" in pretty:
-            assert pretty.strip().split("\n") == [
+            assert pretty.split("\n") == [
                 "[0] ask(b)",
-                "[1] Agent 1(b) -> a",
-                "[2] check(check if Agent 0 is done) = True",
-                "[3] Agent A(a, b) -> c",
+                "[1] a = Agent 1(b)",
+                "[2] assert check_if_agent_0_is_done($a, $b)",
+                "[3] c = Agent A(a, b)",
                 "[4] map(c, x)",
                 "[5] Agent B(a, b, x)",
             ]
 
         elif "Agent 0" in pretty:
-            assert pretty.strip().split("\n") == [
+            assert pretty.split("\n") == [
                 "[0] ask(b)",
-                "[1] Agent 0(b) -> a",
-                "[2] check(check if Agent 0 is done) = True",
-                "[3] Agent A(a, b) -> c",
+                "[1] a = Agent 0(b)",
+                "[2] assert check_if_agent_0_is_done($a, $b)",
+                "[3] c = Agent A(a, b)",
                 "[4] map(c, x)",
                 "[5] Agent B(a, b, x)",
             ]
@@ -76,24 +74,24 @@ class TestPrettifier:
         if "Agent 1" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165073.0, Length: 6",
+                "Cost: 165100.0, Length: 6",
                 "",
                 "[0] ask(b)",
-                "[1] Agent 1(b) -> a",
-                "[2] check(check if Agent 0 is done) = True",
-                "[3] Agent A(a, b) -> c",
+                "[1] a = Agent 1(b)",
+                "[2] assert check_if_agent_0_is_done($a, $b)",
+                "[3] c = Agent A(a, b)",
                 "[4] map(c, x)",
                 "[5] Agent B(a, b, x)",
             ]
         elif "Agent 0" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165073.0, Length: 6",
+                "Cost: 165100.0, Length: 6",
                 "",
                 "[0] ask(b)",
-                "[1] Agent 0(b) -> a",
-                "[2] check(check if Agent 0 is done) = True",
-                "[3] Agent A(a, b) -> c",
+                "[1] a = Agent 0(b)",
+                "[2] assert check_if_agent_0_is_done($a, $b)",
+                "[3] c = Agent A(a, b)",
                 "[4] map(c, x)",
                 "[5] Agent B(a, b, x)",
             ]
@@ -107,19 +105,19 @@ class TestPrettifier:
         print(pretty)
 
         if "Agent 1" in pretty:
-            assert pretty.strip().split("\n") == [
+            assert pretty.split("\n") == [
                 "Step 0: ask, Inputs: b (generic), Outputs: None",
                 "Step 1: Agent 1, Inputs: b (generic), Outputs: a (generic)",
-                "Step 2: check(check if Agent 0 is done) = True, Inputs: None, Outputs: None",
+                "Step 2: assert check_if_agent_0_is_done($a, $b), Inputs: None, Outputs: None",
                 "Step 3: Agent A, Inputs: a (generic), b (generic), Outputs: c (type_c)",
                 "Step 4: map, Inputs: c (generic), x (generic), Outputs: None",
                 "Step 5: Agent B, Inputs: a (generic), b (generic), x (type_c), Outputs: None",
             ]
         elif "Agent 0" in pretty:
-            assert pretty.strip().split("\n") == [
+            assert pretty.split("\n") == [
                 "Step 0: ask, Inputs: b (generic), Outputs: None",
                 "Step 1: Agent 0, Inputs: b (generic), Outputs: a (generic)",
-                "Step 2: check(check if Agent 0 is done) = True, Inputs: None, Outputs: None",
+                "Step 2: assert check_if_agent_0_is_done($a, $b), Inputs: None, Outputs: None",
                 "Step 3: Agent A, Inputs: a (generic), b (generic), Outputs: c (type_c)",
                 "Step 4: map, Inputs: c (generic), x (generic), Outputs: None",
                 "Step 5: Agent B, Inputs: a (generic), b (generic), x (type_c), Outputs: None",
@@ -137,11 +135,11 @@ class TestPrettifier:
         if "Agent 1" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165073.0, Length: 6",
+                "Cost: 165100.0, Length: 6",
                 "",
                 "Step 0: ask, Inputs: b (generic), Outputs: None",
                 "Step 1: Agent 1, Inputs: b (generic), Outputs: a (generic)",
-                "Step 2: check(check if Agent 0 is done) = True, Inputs: None, Outputs: None",
+                "Step 2: assert check_if_agent_0_is_done($a, $b), Inputs: None, Outputs: None",
                 "Step 3: Agent A, Inputs: a (generic), b (generic), Outputs: c (type_c)",
                 "Step 4: map, Inputs: c (generic), x (generic), Outputs: None",
                 "Step 5: Agent B, Inputs: a (generic), b (generic), x (type_c), Outputs: None",
@@ -149,11 +147,11 @@ class TestPrettifier:
         elif "Agent 0" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165073.0, Length: 6",
+                "Cost: 165100.0, Length: 6",
                 "",
                 "Step 0: ask, Inputs: b (generic), Outputs: None",
                 "Step 1: Agent 0, Inputs: b (generic), Outputs: a (generic)",
-                "Step 2: check(check if Agent 0 is done) = True, Inputs: None, Outputs: None",
+                "Step 2: assert check_if_agent_0_is_done($a, $b), Inputs: None, Outputs: None",
                 "Step 3: Agent A, Inputs: a (generic), b (generic), Outputs: c (type_c)",
                 "Step 4: map, Inputs: c (generic), x (generic), Outputs: None",
                 "Step 5: Agent B, Inputs: a (generic), b (generic), x (type_c), Outputs: None",

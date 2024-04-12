@@ -9,18 +9,23 @@ class Transform(BaseModel):
     target: str
 
 
-def string_transform(item: Optional[str], reference: List[Transform]) -> Optional[str]:
-    transform = re.sub(r"\s+", "_", item.lower()) if item is not None else item
+def string_transform(item: Optional[str], reference: List[Transform], hashit: bool = False) -> Optional[str]:
+    if item is not None:
+        if hashit:
+            transform = f"hash_{str(abs(hash(item)))}"
+        else:
+            transform = re.sub(r"\s+", "_", item.lower())
 
-    if transform and transform == revert_string_transform(transform, reference) and transform != item:
-        reference.append(
-            Transform(
-                source=item,
-                target=transform,
+        if transform and transform == revert_string_transform(transform, reference) and transform != item:
+            reference.append(
+                Transform(
+                    source=item,
+                    target=transform,
+                )
             )
-        )
-
-    return transform
+        return transform
+    else:
+        return item
 
 
 def revert_string_transform(item: str, reference: List[Transform]) -> Optional[str]:

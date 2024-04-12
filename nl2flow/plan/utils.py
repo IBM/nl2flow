@@ -125,19 +125,19 @@ def parse_action(
 
         elif action_name.startswith(BasicOperations.CONSTRAINT.value):
             new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
+            action_split_for_id = new_action_name.split("_to_")
 
+            constraint = revert_string_transform(action_split_for_id[0], transforms)
+            assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
+
+            action_split_for_truth_value = action_split_for_id[1].split("_with_")
+
+            truth_value = None
             for v in ConstraintState:
-                new_action_name = new_action_name.replace(f"_to_{string_transform(str(v.value), transforms)}", "")
+                if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
+                    truth_value = v.value
 
-            reverted_new_action_name = revert_string_transform(new_action_name, transforms) or ""
-
-            for v in ConstraintState:
-                if action_name.endswith(f"_to_{string_transform(str(v.value), transforms)}"):
-                    reverted_new_action_name = (
-                        f"{BasicOperations.CONSTRAINT.value}({reverted_new_action_name}) = {v.value}"
-                    )
-
-            new_action.name = reverted_new_action_name
+            new_action.name = f"assert {'' if truth_value else 'not '}{constraint}"
 
         new_action.inputs = [
             Parameter(

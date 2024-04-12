@@ -8,10 +8,11 @@ from nl2flow.compile.options import (
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
+    BasicOperations,
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, Dict
+from typing import Any, List, Set
 from pathlib import Path
 from kstar_planner import planners
 from concurrent.futures import TimeoutError
@@ -33,7 +34,7 @@ class Planner(ABC):
         self._timeout = set_timeout
 
     @abstractmethod
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         pass
 
     @abstractmethod
@@ -41,19 +42,19 @@ class Planner(ABC):
         pass
 
     @classmethod
-    def pretty_print_plan(cls, plan: Plan) -> str:
+    def pretty_print_plan(cls, plan: Plan, line_numbers: bool = True) -> str:
         pretty = ""
 
         for step, action in enumerate(plan.plan):
             inputs = ", ".join([item.item_id for item in action.inputs]) or None
-            input_string = f"({inputs})" if inputs else ""
+            input_string = f"({inputs or ''})" if not action.name.startswith(BasicOperations.CONSTRAINT.value) else ""
 
             outputs = ", ".join([item.item_id for item in action.outputs]) or None
-            output_string = f" -> {outputs}" if outputs else ""
+            output_string = f"{outputs} = " if outputs else ""
 
-            pretty += f"[{step}] {action.name}{input_string}{output_string}\n"
+            pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string}{action.name}{input_string}\n"
 
-        return pretty
+        return pretty.strip()
 
     @classmethod
     def pretty_print_plan_verbose(cls, plan: Plan) -> str:
@@ -69,7 +70,7 @@ class Planner(ABC):
                 f"Outputs: {outputs if action.outputs else None}\n"
             )
 
-        return pretty
+        return pretty.strip()
 
     @classmethod
     def pretty_print(cls, planner_response: PlannerResponse, verbose: bool = False) -> str:

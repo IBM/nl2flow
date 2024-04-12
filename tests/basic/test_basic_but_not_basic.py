@@ -11,6 +11,7 @@ from nl2flow.compile.schemas import (
 from nl2flow.compile.options import (
     BasicOperations,
     LifeCycleOptions,
+    CostOptions,
     MappingOptions,
     SlotOptions,
     GoalType,
@@ -78,7 +79,7 @@ class TestBasicButNotBasic(BaseTestAgents):
 
         alternative_agent = Operator("Alternative Agent")
         alternative_agent.add_output(SignatureItem(parameters=["target item"]))
-        alternative_agent.cost = 5
+        alternative_agent.cost = CostOptions.UNIT.value + 5
 
         goal = GoalItems(goals=GoalItem(goal_name="target item", goal_type=GoalType.OBJECT_KNOWN))
         self.flow.add([basic_agent, alternative_agent, goal])

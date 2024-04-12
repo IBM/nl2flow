@@ -1,12 +1,11 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land
-from typing import List, Set, Any
-
+from typing import List, Set, Any, Optional
 from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_memory_item_to_constant_map
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
-
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem, Constraint
 from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.options import (
@@ -45,7 +44,7 @@ def get_orphaned_items(compilation: Any, goal_items: List[str]) -> List[str]:
     return list_of_orphans
 
 
-def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any]) -> None:
+def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
@@ -76,7 +75,7 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
             TypeError("Unrecognized goal type.")
 
     elif goal_item.goal_type == GoalType.CONSTRAINT and isinstance(goal_item.goal_name, Constraint):
-        temp = compile_constraints(compilation, goal_item.goal_name)
+        temp = compile_constraints(compilation, goal_item.goal_name, **kwargs)
         goal_predicates.add(temp)
 
     else:
@@ -121,8 +120,9 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
 
 def compile_goals(compilation: Any, **kwargs: Any) -> None:
     goal_type: GoalOptions = kwargs["goal_type"]
-    list_of_goal_items: List[GoalItems] = compilation.flow_definition.goal_items
+    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
+    list_of_goal_items: List[GoalItems] = compilation.flow_definition.goal_items
     goal_predicates: Set[Any]
 
     if goal_type == GoalOptions.AND_AND:
@@ -132,7 +132,8 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
             for goal_item in goal_items.goals:
                 compile_goal_item(compilation, goal_item, goal_predicates)
 
-        compilation.problem.goal = land(*goal_predicates, flat=True)
+        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+            compilation.problem.goal = land(*goal_predicates, flat=True)
 
     elif goal_type == GoalOptions.OR_AND:
         for goal_index, goal_items in enumerate(list_of_goal_items):
@@ -153,19 +154,20 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
                 ),
             )
 
-        compilation.problem.goal = compilation.done_goal_post()
-        compilation.problem.action(
-            f"{RestrictedOperations.GOAL.value}",
-            parameters=[],
-            precondition=compilation.done_goal_pre(),
-            effects=[fs.AddEffect(compilation.done_goal_post())],
-            cost=iofs.AdditiveActionCost(
-                compilation.problem.language.constant(
-                    CostOptions.VERY_HIGH.value,
-                    compilation.problem.language.get_sort("Integer"),
-                )
-            ),
-        )
+        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+            compilation.problem.goal = compilation.done_goal_post()
+            compilation.problem.action(
+                f"{RestrictedOperations.GOAL.value}",
+                parameters=[],
+                precondition=compilation.done_goal_pre(),
+                effects=[fs.AddEffect(compilation.done_goal_post())],
+                cost=iofs.AdditiveActionCost(
+                    compilation.problem.language.constant(
+                        CostOptions.VERY_HIGH.value,
+                        compilation.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
 
     elif goal_type == GoalOptions.AND_OR:
         goal_predicates = set()
@@ -197,7 +199,8 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
                     ),
                 )
 
-        compilation.problem.goal = land(*goal_predicates, flat=True)
+        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+            compilation.problem.goal = land(*goal_predicates, flat=True)
 
     else:
         raise TypeError("Unrecognized goal option.")
