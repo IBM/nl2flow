@@ -6,6 +6,11 @@ MAX_RETRY: int = 5
 SLOT_GOODNESS: float = 0.5
 
 
+class NL2FlowOptions(enum.Enum):
+    multi_instance = "MULTI_INSTANCE"
+    allow_retries = "ALLOW_RETRIES"
+
+
 class RestrictedOperations(enum.Enum):
     UNTOKENIZE = "untokenize"
     TOKENIZE = "tokenize"
