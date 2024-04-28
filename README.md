@@ -36,6 +36,45 @@ user:~$ conda activate nl2flow
 
 If you want to contribute code, check [here](docs/CONTRIBUTING.md)
 
+## Example of an NL2Flow Domain
+
+An NL2Flow domain is a mixture of service compostiion and goal-oriented conversation. A typical plan includes elements of API calls, systems calls, and interactions with the user, in pursuit of 
+a higher level goal. The following is an example of a plan helping an user with a [trip approval process](https://github.com/IBM/nl2flow/blob/main/tests/sketch/sample_sketches/06-sketch_with_instantiated_goals.yaml)
+involving flight and hotel bookings, taxi services to and from airports and location of the event, and subprocesses involving conference registration, visa approval, etc. handed off to the corresponding agents.
+Notice the information gathering actions, either directly from the user or from other services, performed by the system to facilitate the above requirements of the goal.
+
+```
+[0] ask(conference name)
+[1] ask(w3)
+[2] list of papers = Author Workbench(w3, conference name)
+[3] ask(username)
+[4] invoice = Registration Bot(conference name, list of papers, username)
+[5] map(invoice, conference registration)
+[6] name, address, Employee ID, Passport = W3 Agent(w3)
+[7] name, address, Employer Letter = Workday(Employee ID)
+[8] visa = Visa Application(Passport, address, Employer Letter)
+[9] ask(start date)
+[10] ask(end date)
+[11] map(home, address)
+[12] map(BOS, destination)
+[13] booking = Taxi(date, address, destination)
+[14] map(LAX, address)
+[15] map(JW Marriott Los Angeles LA 900 W Olympic Blvd, destination)
+[16] booking = Taxi(date, address, destination)
+[17] map(end date, date)
+[18] map(JW Marriott Los Angeles LA 900 W Olympic Blvd, address)
+[19] map(LAX, destination)
+[20] booking = Taxi(date, address, destination)
+[21] map(BOS, address)
+[22] map(destination, home)
+[23] booking = Taxi(date, address, destination)
+[24] assert eval(is a business trip)
+[25] flight_ticket, hotel_booking = Concur(start date, end date, home, destination)
+[26] map(flight_ticket, ticket to conference)
+[27] assert $hotel_booking.price + $flight_ticket.price < 1500
+[28] approval = Trip Approval(ticket to conference, conference registration)
+``` 
+
 ## Usage
 
 Get started with constructing a simple flow where you have two operators, one target operator and another one which provides required items for the target operator.
