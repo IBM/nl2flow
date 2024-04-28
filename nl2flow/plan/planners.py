@@ -1,14 +1,13 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
-from nl2flow.plan.schemas import RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
+from nl2flow.plan.schemas import Action, RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS, TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items
-from nl2flow.compile.schemas import PDDL
+from nl2flow.compile.schemas import PDDL, Constraint
 from nl2flow.compile.options import (
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
-    BasicOperations,
 )
 
 from abc import ABC, abstractmethod
@@ -46,13 +45,18 @@ class Planner(ABC):
         pretty = ""
 
         for step, action in enumerate(plan.plan):
-            inputs = ", ".join([item.item_id for item in action.inputs]) or None
-            input_string = f"({inputs or ''})" if not action.name.startswith(BasicOperations.CONSTRAINT.value) else ""
+            if isinstance(action, Action):
+                inputs = ", ".join(action.inputs) or None
+                input_string = f"({inputs or ''})"
 
-            outputs = ", ".join([item.item_id for item in action.outputs]) or None
-            output_string = f"{outputs} = " if outputs else ""
+                outputs = ", ".join(action.outputs) or None
+                output_string = f"{outputs} = " if outputs else ""
 
-            pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string}{action.name}{input_string}\n"
+                pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string}{action.name}{input_string}\n"
+
+            elif isinstance(action, Constraint):
+                constraint_string = f"assert {'' if action.truth_value else 'not '}{action.constraint}"
+                pretty += f"{f'[{step}] ' if line_numbers else ''}{constraint_string}\n"
 
         return pretty.strip()
 

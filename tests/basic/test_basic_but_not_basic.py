@@ -37,7 +37,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 2, "Plan of length 2."
         assert (
-            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0].item_id == "list of errors"
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0] == "list of errors"
         ), "Ask directly for list of errors."
 
         self.flow.add(
@@ -54,9 +54,9 @@ class TestBasicButNotBasic(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 4, "Plan of length 4."
         assert (
-            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0].item_id == "database link"
+            poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0] == "database link"
         ), "Ask directly for database link."
-        assert poi.plan[2].name == BasicOperations.MAPPER.value and set(i.item_id for i in poi.plan[2].inputs) == {
+        assert poi.plan[2].name == BasicOperations.MAPPER.value and set(poi.plan[2].inputs) == {
             "list of errors"
         }, "Map list of errors."
 

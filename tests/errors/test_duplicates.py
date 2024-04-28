@@ -1,5 +1,4 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType
 from nl2flow.compile.schemas import (
@@ -8,6 +7,7 @@ from nl2flow.compile.schemas import (
     SignatureItem,
     GoalItems,
     GoalItem,
+    Step,
 )
 
 import pytest
