@@ -25,7 +25,7 @@ def plan_with_type_of_single_instance_same_as_direct_instance(
     assert poi.plan[1].name.startswith("Agent"), "... followed by the Agent."
 
 
-def seperated_ands_should_be_same_as_combined_ands(plans: PlannerResponse) -> None:
+def separated_ands_should_be_same_as_combined_ands(plans: PlannerResponse) -> None:
     assert plans.list_of_plans, "There should be plans."
 
     poi = plans.list_of_plans[0]
@@ -81,7 +81,7 @@ class TestGoalsBasic(BaseTestAgents):
             self.flow.add(goal)
 
         plans = self.get_plan()
-        seperated_ands_should_be_same_as_combined_ands(plans)
+        separated_ands_should_be_same_as_combined_ands(plans)
 
     def test_and_goals_spread_across_goal_items(self) -> None:
         target_agents = ["Agent C", "Agent B"]
@@ -89,7 +89,7 @@ class TestGoalsBasic(BaseTestAgents):
         self.flow.add([goal])
 
         plans = self.get_plan()
-        seperated_ands_should_be_same_as_combined_ands(plans)
+        separated_ands_should_be_same_as_combined_ands(plans)
 
     def test_goal_with_object_used(self) -> None:
         self.flow.add(MemoryItem(item_id="id123", item_type="Mappable", item_state=MemoryState.KNOWN))
