@@ -36,6 +36,12 @@ class TestPrettifier:
         self.flow = Flow(name="Test Prettifier")
         self.flow.add([agent_1, agent_0, agent_b, agent_a])
 
+    def test_prettified_plan_verbose(self) -> None:
+        self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = PLANNER.pretty_print_plan_verbose(self.flow, planner_response.list_of_plans[0])
+        print(pretty)
+
     def test_prettified_plan(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)

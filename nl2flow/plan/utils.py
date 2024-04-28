@@ -15,6 +15,7 @@ from nl2flow.compile.schemas import (
     OperatorDefinition,
     Outcome,
     Constraint,
+    Step,
 )
 
 
@@ -58,6 +59,24 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
     new_plan.plan = [new_action] + temp_plan + plan.plan[new_start_of_plan:] if new_start_of_plan else plan.plan
     new_plan.length = len(new_plan.plan)
     return new_plan
+
+
+def is_goal(action_name: str, flow_object: Flow) -> bool:
+    for goal_items in flow_object.flow_definition.goal_items:
+        goals = goal_items.goals
+
+        if not isinstance(goals, List):
+            goals = [goals]
+
+        for goal in goals:
+            if isinstance(goal, Constraint):
+                continue
+            else:
+                goal_name = goal.goal_name.name if isinstance(goal.goal_name, Step) else goal.goal_name
+                if action_name == goal_name:
+                    return True
+
+    return False
 
 
 def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Optional[Union[Action, Constraint]]:

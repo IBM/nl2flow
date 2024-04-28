@@ -2,9 +2,10 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
 from nl2flow.plan.schemas import Action, RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS, TIMEOUT
-from nl2flow.plan.utils import parse_action, group_items
+from nl2flow.plan.utils import parse_action, group_items, is_goal
 from nl2flow.compile.schemas import PDDL, Constraint
 from nl2flow.compile.options import (
+    BasicOperations,
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
@@ -39,6 +40,45 @@ class Planner(ABC):
     @abstractmethod
     def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
         pass
+
+    @classmethod
+    def pretty_print_plan_verbose(cls, flow_object: Flow, plan: Plan) -> str:
+        verbose_strings = []
+
+        for step, action in enumerate(plan.plan):
+            if isinstance(action, Action):
+                if action.name == BasicOperations.SLOT_FILLER.value:
+                    verbose_strings.append(f"{step}. Acquire the value of {action.inputs[0]} by asking the user.")
+
+                elif action.name == BasicOperations.MAPPER.value:
+                    verbose_strings.append(
+                        f"{step}. Get the value of {action.inputs[1]} from {action.inputs[0]} which is already known."
+                    )
+
+                elif action.name == BasicOperations.CONFIRM.value:
+                    verbose_strings.append(
+                        f"{step}. Confirm with the user that the value of {action.inputs[0]} is correct."
+                    )
+
+                else:
+                    inputs = ", ".join(action.inputs) or None
+                    input_string = f" with {inputs} as input{'s' if len(action.inputs) > 1 else ''}" if inputs else ""
+
+                    outputs = ", ".join(action.outputs) or None
+                    output_string = f" This will result in acquiring {outputs}." if outputs else ""
+
+                    action_string = f"{step}. Execute action {action.name}{input_string}.{output_string}"
+
+                    if is_goal(action.name, flow_object):
+                        action_string += f" Since {action.name} was a goal of this plan, return the results of {action.name}({inputs}) to the user."
+
+                    verbose_strings.append(action_string)
+
+            elif isinstance(action, Constraint):
+                constraint_string = f"Check that {action.constraint} is {action.truth_value}"
+                verbose_strings.append(f"{step}. {constraint_string}.")
+
+        return "\n".join(verbose_strings)
 
     @classmethod
     def pretty_print_plan(cls, plan: Plan, line_numbers: bool = True) -> str:
