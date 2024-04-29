@@ -1,5 +1,4 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -7,8 +6,9 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     BasicOperations,
 )
-from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
+    Step,
+    Parameter,
     MemoryItem,
     SignatureItem,
     SlotProperty,
@@ -129,6 +129,6 @@ class TestHistoryReplan(BaseTestAgents):
             cached_params = set()
             for action in poi.plan:
                 if action.name == BasicOperations.MAPPER.value:
-                    cached_params.add(action.inputs[0].item_id)
+                    cached_params.add(action.inputs[0])
 
             assert cached_params != {"item14311", "item12321"}, "Use different emails."

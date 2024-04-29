@@ -6,8 +6,9 @@ from nl2flow.compile.options import (
     BasicOperations,
     GoalType,
 )
-from nl2flow.plan.schemas import Parameter
+from nl2flow.plan.schemas import Action
 from nl2flow.compile.schemas import (
+    Parameter,
     Constraint,
     ManifestConstraint,
     MemoryItem,
@@ -46,7 +47,7 @@ class TestConstraints(BaseTestAgents):
         assert len(poi.plan) == 3, "There should be 3 step plan."
 
         step_2 = poi.plan[1]
-        assert step_2.name.startswith(BasicOperations.CONSTRAINT.value), "With a constraint check."
+        assert step_2.constraint == "len($tweet) <= 240", "With a constraint check."
 
     def test_constraints_with_replan(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Twitter"))
@@ -68,7 +69,7 @@ class TestConstraints(BaseTestAgents):
         assert len(poi.plan) == 5, "There should be 5 step plan."
         assert poi.plan[1].name == "Bitly", "Use Bitly to redo constraint check."
         assert {poi.plan[0].name, poi.plan[2].name} == {BasicOperations.MAPPER.value}, "Surrounded by two mappings."
-        assert poi.plan[3].name.startswith(BasicOperations.CONSTRAINT.value), "Redo constraint check."
+        assert poi.plan[3].constraint == "len($tweet) <= 240", "Redo constraint check."
 
     def test_constraints_in_output(self) -> None:
         tweet_generator_agent = Operator("TweetGen")
@@ -109,8 +110,8 @@ class TestConstraints(BaseTestAgents):
 
         for plan in plans.list_of_plans:
             assert len(plan.plan) == 2
-            assert plan.plan[0].name == BasicOperations.SLOT_FILLER.value and plan.plan[0].inputs[0].item_id == "tweet"
-            assert plan.plan[1].name.startswith(BasicOperations.CONSTRAINT.value)
+            assert plan.plan[0].name == BasicOperations.SLOT_FILLER.value and plan.plan[0].inputs[0] == "tweet"
+            assert plan.plan[1].constraint == "len($tweet) <= 240"
 
         self.flow.add(
             [
@@ -127,9 +128,11 @@ class TestConstraints(BaseTestAgents):
 
         for plan in plans.list_of_plans:
             assert len(plan.plan) == 4
-            assert "Bitly" in [step.name for step in plan.plan], "There must be a Bitly now."
-            assert plan.plan[-1].name.startswith(
-                BasicOperations.CONSTRAINT.value
+            assert "Bitly" in [
+                step.name for step in plan.plan if isinstance(step, Action)
+            ], "There must be a Bitly now."
+            assert (
+                plan.plan[-1].constraint == "len($tweet) <= 240"
             ), "Check it again against your list and see consistency."
 
     def test_manifest_constraint(self) -> None:

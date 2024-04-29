@@ -1,5 +1,5 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step, Parameter, PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -10,6 +10,8 @@ from nl2flow.compile.options import (
     GoalOptions,
 )
 from nl2flow.compile.schemas import (
+    Step,
+    Parameter,
     MemoryItem,
     SignatureItem,
     MappingItem,
@@ -31,7 +33,7 @@ class TestGoalsAdvanced(BaseTestAgents):
             assert (
                 poi.plan[0].name == BasicOperations.MAPPER.value
                 and len(poi.plan[0].inputs) == 8
-                and {poi.plan[0].inputs[i].item_id for i in range(0, 8, 2)} == set(desired_goal_parameters)
+                and {poi.plan[0].inputs[i] for i in range(0, 8, 2)} == set(desired_goal_parameters)
             ), "A giant mapping action with all the desired mappings ..."
             assert {action.name for action in poi.plan[1:-1]} == {
                 BasicOperations.CONFIRM.value
