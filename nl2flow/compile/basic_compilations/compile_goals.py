@@ -6,8 +6,7 @@ from nl2flow.compile.basic_compilations.utils import get_type_of_constant, add_m
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
 from nl2flow.debug.schemas import SolutionQuality
-from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem, Constraint
-from nl2flow.plan.schemas import Step, Parameter
+from nl2flow.compile.schemas import GoalItem, GoalItems, MemoryItem, Constraint, Step, Parameter
 from nl2flow.compile.options import (
     TypeOptions,
     GoalType,

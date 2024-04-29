@@ -1,7 +1,7 @@
 from nl2flow.compile.schemas import Constraint, MemoryItem, Step
 from nl2flow.compile.options import ConstraintState, MemoryState
 from nl2flow.plan.planners import Kstar
-from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 from tests.sketch.test_basic import load_assets
@@ -16,15 +16,17 @@ class TestSketchConstraints:
         sketch_compilation = BasicSketchCompilation(name=sketch.sketch_name)
         flow_object = sketch_compilation.compile_to_flow(sketch, catalog)
 
-        planner_response = flow_object.plan_it(PLANNER)
+        planner_response: PlannerResponse = flow_object.plan_it(PLANNER)
         print(PLANNER.pretty_print(planner_response))
 
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:
-            action_names = [step.name for step in plan.plan]
-            index_of_visa_status_check_failure = action_names.index("assert not $visa.status == SUCCESS")
+            action_names = [step.name if isinstance(step, Action) else step.constraint for step in plan.plan]
+            index_of_visa_status_check_failure = action_names.index("$visa.status == SUCCESS")
 
             assert index_of_visa_status_check_failure > -1
+            assert plan.plan[index_of_visa_status_check_failure].truth_value is False
+
             assert action_names.index("Visa Application") < index_of_visa_status_check_failure
             assert action_names.index("Vacation Bot") > index_of_visa_status_check_failure
             assert action_names.index("Email Agent") > index_of_visa_status_check_failure
@@ -69,12 +71,12 @@ class TestSketchConstraints:
 
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:
-            action_names = [step.name for step in plan.plan]
+            action_names = [step.name if isinstance(step, Action) else step.constraint for step in plan.plan]
 
             assert action_names.index("Registration Bot") > action_names.index("Trip Approval"), "Explicit order."
             assert action_names.index("Trip Approval") > action_names.index("Concur"), "Explicit order."
 
-            assert len([a for a in action_names if a.startswith("check(visa.status")]) == 0, "No visa checks"
+            assert len([a for a in action_names if a.startswith("$visa.status")]) == 0, "No visa checks"
 
         return planner_response
 
@@ -83,11 +85,13 @@ class TestSketchConstraints:
         final_planner_response = self.check_sketch_with_execution(catalog, sketch)
 
         for plan in final_planner_response.list_of_plans:
-            assert plan.plan[-1].name == "assert not $approval.status == FAILED"
+            assert plan.plan[-1].constraint == "$approval.status == FAILED"
+            assert not plan.plan[-1].truth_value
 
     def test_with_complex_goals(self) -> None:
         catalog, sketch = load_assets(catalog_name="catalog", sketch_name="08-sketch_with_complex_goals")
         final_planner_response = self.check_sketch_with_execution(catalog, sketch)
 
         for plan in final_planner_response.list_of_plans:
-            assert plan.plan[-1].name == "assert $approval.status == SUCCESS"
+            assert plan.plan[-1].constraint == "$approval.status == SUCCESS"
+            assert plan.plan[-1].truth_value

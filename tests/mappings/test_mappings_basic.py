@@ -126,8 +126,8 @@ class TestMappingsBasic(BaseTestAgents):
         step_2: Action = poi.plan[1]
         assert (
             step_2.name == BasicOperations.MAPPER.value
-            and step_2.inputs[0].item_id == "preferred errors"
-            and step_2.inputs[1].item_id == "list of errors"
+            and step_2.inputs[0] == "preferred errors"
+            and step_2.inputs[1] == "list of errors"
         ), "The high probability mapping is preferred."
 
     def test_mapper_with_slot_preference(self) -> None:
@@ -156,8 +156,8 @@ class TestMappingsBasic(BaseTestAgents):
         )
 
         assert len(slot_fill_actions) == 2, "Two slot fill actions."
-        assert "Name" in [action.inputs[0].item_id for action in slot_fill_actions], "One slot fill for Name."
-        assert "Email" in [action.inputs[0].item_id for action in slot_fill_actions], "One slot fill for Email."
+        assert "Name" in [action.inputs[0] for action in slot_fill_actions], "One slot fill for Name."
+        assert "Email" in [action.inputs[0] for action in slot_fill_actions], "One slot fill for Email."
 
         assert BasicOperations.MAPPER.value in [
             action.name for action in poi.plan[1:3]

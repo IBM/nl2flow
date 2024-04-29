@@ -1,7 +1,8 @@
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations, LifeCycleOptions
-from nl2flow.plan.schemas import Action, Parameter
+from nl2flow.plan.schemas import Action
 from nl2flow.compile.schemas import (
+    Parameter,
     GoalItem,
     GoalItems,
     MappingItem,

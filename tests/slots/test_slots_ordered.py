@@ -30,7 +30,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         assert len(poi.plan) == 4, "There should be 4 steps in the plan."
 
         assert all([step.name == BasicOperations.SLOT_FILLER.value for step in poi.plan[:3]]), "Three slot fills..."
-        assert [step.inputs[0].item_id for step in poi.plan[:3]] == ["a", "b", "c"], "... of a, b, c in order."
+        assert [step.inputs[0] for step in poi.plan[:3]] == ["a", "b", "c"], "... of a, b, c in order."
 
     def test_in_order_with_last_resort(self) -> None:
         self.flow.slot_options.add(SlotOptions.ordered)
@@ -45,7 +45,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 6, "There should be 6 steps in the plan."
         assert poi.plan[2].name == "Agent A", "Agent A is used to get value of a."
-        assert [step.inputs[0].item_id for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
+        assert [step.inputs[0] for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
             "x",
             "y",
             "b",
@@ -65,7 +65,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         assert len(poi.plan) == 2, "There should be 2 steps in the plan."
 
         assert poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs, "One slot fill..."
-        assert [item.item_id for item in poi.plan[0].inputs] == ["a", "b", "c"], "... of a, b, c in order."
+        assert poi.plan[0].inputs == ["a", "b", "c"], "... of a, b, c in order."
 
     def test_slot_all_together_conflict_with_last_resort(self) -> None:
         self.flow.slot_options.add(SlotOptions.all_together)
@@ -83,7 +83,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         slots_filled = set()
         for step in poi.plan:
             if step.name.startswith(BasicOperations.SLOT_FILLER.value):
-                slots_filled.update({input.item_id for input in step.inputs})
+                slots_filled.update(step.inputs)
 
         assert slots_filled == {
             "x",
@@ -96,6 +96,6 @@ class TestSlotFillerOrdered(BaseTestAgents):
         plans = self.get_plan()
 
         assert len(plans.list_of_plans) == 2, "There should be two plans."
-        assert set([item.item_id for item in plans.list_of_plans[0].plan[0].inputs]) == set(
-            [item.item_id for item in plans.list_of_plans[0].plan[0].inputs]
+        assert set(plans.list_of_plans[0].plan[0].inputs) == set(
+            plans.list_of_plans[1].plan[0].inputs
         ), "All the slots grouped together."
