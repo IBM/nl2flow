@@ -215,15 +215,12 @@ def add_multi_instance_properties(
         parameter_list.extend([pre_level, post_level])
 
     else:
-        precondition_list.extend(
-            [
-                getattr(compilation, new_has_done_predicate_name)(*parameter_list),
-                neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list)),
-            ]
+        precondition_list.append(
+            neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list)),
         )
 
         add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list))
-        add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
+        # add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
 
 
 def add_enabler_action_for_operator(
