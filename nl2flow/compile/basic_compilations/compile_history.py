@@ -62,16 +62,26 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
             compilation.init.add(step_predicate)
 
             has_done_predicate_name = f"has_done_{step.name}"
-            parameter_names = [p.item_id if isinstance(p, Parameter) else p for p in step.parameters] if NL2FlowOptions.multi_instance in optimization_options else []
+            parameter_names = (
+                [p.item_id if isinstance(p, Parameter) else p for p in step.parameters]
+                if NL2FlowOptions.multi_instance in optimization_options
+                else []
+            )
 
             if NL2FlowOptions.allow_retries in optimization_options:
-                indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
+                indices_of_interest = [
+                    i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name
+                ]
 
                 num_try = indices_of_interest.index(index) + 1
                 parameter_names.append(f"try_level_{num_try}")
 
-            step_predicate = None if not parameter_names else getattr(compilation, has_done_predicate_name)(
-                *[compilation.constant_map[p] for p in parameter_names]
+            step_predicate = (
+                None
+                if not parameter_names
+                else getattr(compilation, has_done_predicate_name)(
+                    *[compilation.constant_map[p] for p in parameter_names]
+                )
             )
 
         return step_predicate
