@@ -20,6 +20,8 @@ from pebble import ProcessPool
 
 import tempfile
 
+from nl2flow.utility.file_utility import open_atomic
+
 
 class Planner(ABC):
     def __init__(self) -> None:
@@ -119,8 +121,11 @@ class Kstar(Planner):
             domain_file = Path(tempfile.gettempdir()) / domain_temp.name
             problem_file = Path(tempfile.gettempdir()) / problem_temp.name
 
-            domain_file.write_text(pddl.domain)
-            problem_file.write_text(pddl.problem)
+            with open_atomic(domain_file, "w") as domain_handle:
+                domain_handle.write(pddl.domain)
+
+            with open_atomic(problem_file, "w") as problem_handle:
+                problem_handle.write(pddl.problem)
 
             planner_result = planners.plan_unordered_topq(
                 domain_file=domain_file,
