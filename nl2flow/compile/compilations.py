@@ -39,6 +39,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.options import (
+    NL2FlowOptions,
     SlotOptions,
     MappingOptions,
     TypeOptions,
@@ -104,6 +105,8 @@ class ClassicPDDL(Compilation):
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
         debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
         reserved_types = [
             TypeOptions.ROOT,
@@ -111,8 +114,10 @@ class ClassicPDDL(Compilation):
             TypeOptions.HAS_DONE,
             TypeOptions.STATUS,
             TypeOptions.MEMORY,
-            TypeOptions.RETRY,
         ]
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            reserved_types.append(TypeOptions.RETRY)
 
         for reserved_type in reserved_types:
             add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
@@ -207,12 +212,13 @@ class ClassicPDDL(Compilation):
             self.lang.Real,
         )
 
-        self.connected = self.lang.predicate(
-            "connected",
-            self.type_map[TypeOptions.OPERATOR.value],
-            self.type_map[TypeOptions.RETRY.value],
-            self.type_map[TypeOptions.RETRY.value],
-        )
+        if NL2FlowOptions.allow_retries in optimization_options:
+            self.connected = self.lang.predicate(
+                "connected",
+                self.type_map[TypeOptions.OPERATOR.value],
+                self.type_map[TypeOptions.RETRY.value],
+                self.type_map[TypeOptions.RETRY.value],
+            )
 
         self.free = self.lang.predicate(
             "free",
@@ -236,12 +242,12 @@ class ClassicPDDL(Compilation):
                     )
                 )
 
-        add_retry_states(self)
+        if NL2FlowOptions.allow_retries in optimization_options:
+            add_retry_states(self)
+
         compile_operators(self, **kwargs)
         compile_confirmation(self, **kwargs)
         add_extra_objects(self, **kwargs)
-
-        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
         if len(slot_options) > 1:
             compile_new_object_maps(self, **kwargs)
