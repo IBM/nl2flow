@@ -25,8 +25,8 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
                     if isinstance(r, Step) and r.name == item.name:
                         indices_of_interest.append(i)
 
-                index_of_operation = indices_of_interest.index(index) + 1
-                step_predicate = get_predicate_from_step(compilation, item, index_of_operation)
+                index_of_operation = indices_of_interest.index(index)
+                step_predicate = get_predicate_from_step(compilation, item, index_of_operation, **kwargs)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)

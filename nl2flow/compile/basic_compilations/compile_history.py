@@ -34,7 +34,7 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         return None
 
 
-def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs) -> Optional[Any]:
+def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs: Any) -> Optional[Any]:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
     # noinspection PyBroadException
@@ -69,11 +69,7 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
             )
 
             if NL2FlowOptions.allow_retries in optimization_options:
-                indices_of_interest = [
-                    i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name
-                ]
-
-                num_try = indices_of_interest.index(index) + 1
+                num_try = index + 1
                 parameter_names.append(f"try_level_{num_try}")
 
             step_predicate = (
@@ -93,7 +89,11 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
 
 def compile_history(compilation: Any, **kwargs: Any) -> None:
     for index, step in enumerate(compilation.flow_definition.history):
-        step_predicate = get_predicate_from_step(compilation, step, index, **kwargs)
+        indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
+
+        index_of_operation = indices_of_interest.index(index)
+        step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
+
         if step_predicate:
             compilation.init.add(step_predicate)
 
