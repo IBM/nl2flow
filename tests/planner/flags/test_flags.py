@@ -4,6 +4,8 @@ from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, GoalItems, GoalItem, SlotProperty
 from nl2flow.compile.options import SlotOptions, BasicOperations
 
+import pytest
+
 
 class TestFlags:
     def setup_method(self) -> None:
@@ -68,6 +70,7 @@ class TestFlags:
         slot_order = [step.inputs[0] for step in plan.plan[:-1]]
         assert slot_order == ["a_0", "a_1", "a_2", "a_3", "a_4", "a_5"]
 
+    @pytest.mark.skip(reason="Pending kstar getting its timeout.")
     def test_timeout(self) -> None:
         self.PLANNER.timeout = 1
 
