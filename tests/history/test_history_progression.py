@@ -60,7 +60,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 1, "There should be 1 step plan."
-        assert poi.plan[0].name == "Fix Errors", "First and (orignally final) step is the goal action."
+        assert poi.plan[0].name == "Fix Errors", "First and (originally final) step is the goal action."
 
     def test_history_slot_ban(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
