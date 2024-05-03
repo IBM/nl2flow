@@ -1,11 +1,11 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.schemas import Step
 from nl2flow.compile.options import (
     MemoryState,
     BasicOperations,
 )
 from nl2flow.compile.schemas import (
+    Step,
     PartialOrder,
     MemoryItem,
     SignatureItem,
@@ -23,7 +23,7 @@ class TestOrderings(BaseTestAgents):
             new_agent = Operator(f"Agent {item}")
             new_agent.add_output(
                 SignatureItem(
-                    parameters=[MemoryItem(item_id=item.lower())],
+                    parameters=item.lower(),
                 )
             )
             self.flow.add(new_agent)

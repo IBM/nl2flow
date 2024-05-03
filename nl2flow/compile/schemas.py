@@ -1,11 +1,10 @@
 from __future__ import annotations
 from typing import Set, List, Dict, Optional, Union, Any
 from collections import Counter
+from re import findall
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 from pydantic_core.core_schema import FieldValidationInfo
-
-from nl2flow.plan.schemas import Step, Parameter
-from nl2flow.compile.utils import string_transform, Transform
+from nl2flow.compile.utils import string_transform, revert_string_transform, Transform
 from nl2flow.compile.options import (
     TypeOptions,
     CostOptions,
@@ -14,6 +13,33 @@ from nl2flow.compile.options import (
     SLOT_GOODNESS,
     RETRY,
 )
+
+
+class Parameter(BaseModel):
+    item_id: str
+    item_type: Optional[str] = None
+
+    @classmethod
+    def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
+        return Parameter(
+            item_id=string_transform(parameter.item_id, transforms),
+            item_type=string_transform(parameter.item_type, transforms)
+            if parameter.item_type is not None
+            else TypeOptions.ROOT.value,
+        )
+
+
+class Step(BaseModel):
+    name: str
+    parameters: List[Union[Parameter, str]] = []
+
+    @classmethod
+    def transform(cls, step: Step, transforms: List[Transform]) -> Step:
+        parameters = [p if isinstance(p, Parameter) else Parameter(item_id=p) for p in step.parameters]
+        return Step(
+            name=string_transform(step.name, transforms),
+            parameters=[p.transform(p, transforms) for p in parameters],
+        )
 
 
 class MappingItem(BaseModel):
@@ -49,19 +75,22 @@ class MemoryItem(Parameter):
 
 
 class Constraint(BaseModel):
-    constraint_id: str
-    constraint: Optional[str] = None
-    parameters: List[str] = []
+    constraint: str
     truth_value: Optional[bool] = None
 
     @classmethod
     def transform(cls, constraint: Constraint, transforms: List[Transform]) -> Constraint:
         return Constraint(
-            constraint_id=string_transform(constraint.constraint_id, transforms),
-            constraint=constraint.constraint,
-            parameters=[string_transform(param, transforms) for param in constraint.parameters],
+            constraint=string_transform(constraint.constraint, transforms, hashit=True),
             truth_value=constraint.truth_value if constraint.truth_value is not None else True,
         )
+
+    @staticmethod
+    def get_variable_references_from_constraint(constraint: str, transforms: List[Transform]) -> List[str]:
+        revert_constraint = revert_string_transform(constraint, transforms) if transforms else constraint
+        raw_references = findall(r"[^$]*(\$[a-zA-Z\d_]*)*[^$]*", revert_constraint or "")
+        references = [r.replace("$", "").strip() for r in raw_references if r]
+        return references
 
 
 class ManifestConstraint(BaseModel):
@@ -208,6 +237,14 @@ class PDDL(BaseModel):
     problem: str
 
 
+class ClassicalPlanReference(BaseModel):
+    plan: List[Union[Step, Constraint]] = []
+
+    @classmethod
+    def transform(cls, reference: ClassicalPlanReference, transforms: List[Transform]) -> ClassicalPlanReference:
+        return ClassicalPlanReference(plan=[item.transform(item, transforms) for item in reference.plan])
+
+
 class FlowDefinition(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
@@ -224,15 +261,17 @@ class FlowDefinition(BaseModel):
     manifest_constraints: List[ManifestConstraint] = []
     starts_with: Optional[str] = None
     ends_with: Optional[str] = None
+    reference: Optional[ClassicalPlanReference] = None
 
     @classmethod
     def transform(cls, flow: FlowDefinition, transforms: List[Transform]) -> FlowDefinition:
         new_flow = FlowDefinition(
             name=string_transform(flow.name, transforms),
+            reference=flow.reference.transform(flow.reference, transforms) if flow.reference else None,
         )
 
         for defn in cls.model_fields.items():
-            if defn[0] not in ["name", "starts_with", "ends_with"]:
+            if defn[0] not in ["name", "starts_with", "ends_with", "reference"]:
                 setattr(
                     new_flow,
                     defn[0],
@@ -280,7 +319,7 @@ class FlowDefinition(BaseModel):
         check_list_key = {
             "operators": "name",
             "type_hierarchy": "name",
-            "constraints": "constraint_id",
+            "constraints": "constraint",
             "history": "name",
         }
 
@@ -369,8 +408,9 @@ class FlowDefinition(BaseModel):
 
     @classmethod
     def constraint_parser(cls, list_of_objects: Dict[str, Set[str]], constraint: Constraint) -> None:
-        cls.update_object_map(list_of_objects, constraint.constraint_id, None)
-        for p in constraint.parameters:
+        cls.update_object_map(list_of_objects, constraint.constraint, None)
+        constraint_parameters = constraint.get_variable_references_from_constraint(constraint.constraint, [])
+        for p in constraint_parameters:
             cls.update_object_map(list_of_objects, p, None)
 
     @classmethod
@@ -399,7 +439,7 @@ class FlowDefinition(BaseModel):
                         )
 
                 elif isinstance(goal.goal_name, Constraint):
-                    for param in goal.goal_name.parameters:
+                    for param in goal.goal_name.get_variable_references_from_constraint(goal.goal_name.constraint, []):
                         cls.update_object_map(list_of_objects, param)
 
         for operator in flow.operators:

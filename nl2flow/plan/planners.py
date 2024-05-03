@@ -1,21 +1,24 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform
-from nl2flow.plan.schemas import RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
+from nl2flow.plan.schemas import Action, RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS, TIMEOUT
-from nl2flow.plan.utils import parse_action, group_items
-from nl2flow.compile.schemas import PDDL
+from nl2flow.plan.utils import parse_action, group_items, is_goal
+from nl2flow.compile.schemas import PDDL, Constraint
 from nl2flow.compile.options import (
+    BasicOperations,
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, Dict
+from typing import Any, List, Set
 from pathlib import Path
 from kstar_planner import planners
 
 import tempfile
+
+from nl2flow.utility.file_utility import open_atomic
 
 
 class Planner(ABC):
@@ -31,7 +34,7 @@ class Planner(ABC):
         self._timeout = int(set_timeout)
 
     @abstractmethod
-    def plan(self, pddl: PDDL, **kwargs: Dict[str, Any]) -> PlannerResponse:
+    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         pass
 
     @abstractmethod
@@ -39,44 +42,72 @@ class Planner(ABC):
         pass
 
     @classmethod
-    def pretty_print_plan(cls, plan: Plan) -> str:
+    def pretty_print_plan_verbose(cls, flow_object: Flow, plan: Plan) -> str:
+        verbose_strings = []
+
+        for step, action in enumerate(plan.plan):
+            if isinstance(action, Action):
+                if action.name == BasicOperations.SLOT_FILLER.value:
+                    verbose_strings.append(f"{step}. Acquire the value of {action.inputs[0]} by asking the user.")
+
+                elif action.name == BasicOperations.MAPPER.value:
+                    verbose_strings.append(
+                        f"{step}. Get the value of {action.inputs[1]} from {action.inputs[0]} which is already known."
+                    )
+
+                elif action.name == BasicOperations.CONFIRM.value:
+                    verbose_strings.append(
+                        f"{step}. Confirm with the user that the value of {action.inputs[0]} is correct."
+                    )
+
+                else:
+                    inputs = ", ".join(action.inputs) or None
+                    input_string = f" with {inputs} as input{'s' if len(action.inputs) > 1 else ''}" if inputs else ""
+
+                    outputs = ", ".join(action.outputs) or None
+                    output_string = f" This will result in acquiring {outputs}." if outputs else ""
+
+                    action_string = f"{step}. Execute action {action.name}{input_string}.{output_string}"
+
+                    if is_goal(action.name, flow_object):
+                        action_string += f" Since {action.name} was a goal of this plan, return the results of {action.name}({inputs}) to the user."
+
+                    verbose_strings.append(action_string)
+
+            elif isinstance(action, Constraint):
+                constraint_string = f"Check that {action.constraint} is {action.truth_value}"
+                verbose_strings.append(f"{step}. {constraint_string}.")
+
+        return "\n".join(verbose_strings)
+
+    @classmethod
+    def pretty_print_plan(cls, plan: Plan, line_numbers: bool = True) -> str:
         pretty = ""
 
         for step, action in enumerate(plan.plan):
-            inputs = ", ".join([item.item_id for item in action.inputs]) or None
-            input_string = f"({inputs})" if inputs else ""
+            if isinstance(action, Action):
+                inputs = ", ".join(action.inputs) or None
+                input_string = f"({inputs or ''})"
 
-            outputs = ", ".join([item.item_id for item in action.outputs]) or None
-            output_string = f" -> {outputs}" if outputs else ""
+                outputs = ", ".join(action.outputs) or None
+                output_string = f"{outputs} = " if outputs else ""
 
-            pretty += f"[{step}] {action.name}{input_string}{output_string}\n"
+                pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string}{action.name}{input_string}\n"
 
-        return pretty
+            elif isinstance(action, Constraint):
+                constraint_string = f"assert {'' if action.truth_value else 'not '}{action.constraint}"
+                pretty += f"{f'[{step}] ' if line_numbers else ''}{constraint_string}\n"
 
-    @classmethod
-    def pretty_print_plan_verbose(cls, plan: Plan) -> str:
-        pretty = ""
-
-        for step, action in enumerate(plan.plan):
-            inputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.inputs])
-            outputs = ", ".join([f"{item.item_id} ({item.item_type})" for item in action.outputs])
-
-            pretty += (
-                f"Step {step}: {action.name}, "
-                f"Inputs: {inputs if action.inputs else None}, "
-                f"Outputs: {outputs if action.outputs else None}\n"
-            )
-
-        return pretty
+        return pretty.strip()
 
     @classmethod
-    def pretty_print(cls, planner_response: PlannerResponse, verbose: bool = False) -> str:
+    def pretty_print(cls, planner_response: PlannerResponse) -> str:
         pretty = ""
 
         for index, plan in enumerate(planner_response.list_of_plans):
             pretty += f"\n\n---- Plan #{index} ----\n"
             pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
-            pretty += cls.pretty_print_plan(plan) if not verbose else cls.pretty_print_plan_verbose(plan)
+            pretty += cls.pretty_print_plan(plan)
 
         return pretty
 
@@ -87,8 +118,11 @@ class Kstar(Planner):
             domain_file = Path(tempfile.gettempdir()) / domain_temp.name
             problem_file = Path(tempfile.gettempdir()) / problem_temp.name
 
-            domain_file.write_text(pddl.domain)
-            problem_file.write_text(pddl.problem)
+            with open_atomic(domain_file, "w") as domain_handle:
+                domain_handle.write(pddl.domain)
+
+            with open_atomic(problem_file, "w") as problem_handle:
+                problem_handle.write(pddl.problem)
 
             planner_result = planners.plan_unordered_topq(
                 domain_file=domain_file,

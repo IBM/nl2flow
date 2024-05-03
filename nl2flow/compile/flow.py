@@ -2,7 +2,8 @@ from typing import Set, List, Union, Any, Tuple, Dict, Optional
 from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
-from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, Transform
+from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, ClassicalPlanReference, Transform
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
     CompileOptions,
     SlotOptions,
@@ -10,6 +11,7 @@ from nl2flow.compile.options import (
     ConfirmOptions,
     LifeCycleOptions,
     GoalOptions,
+    NL2FlowOptions,
     LOOKAHEAD,
 )
 
@@ -25,6 +27,7 @@ class Flow:
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._goal_type = GoalOptions.AND_AND
         self._lookahead: int = LOOKAHEAD
+        self._optimization_options: Set[NL2FlowOptions] = {NL2FlowOptions.multi_instance, NL2FlowOptions.allow_retries}
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
@@ -108,6 +111,14 @@ class Flow:
         self._lookahead = lookahead
 
     @property
+    def optimization_options(self) -> Set[NL2FlowOptions]:
+        return self._optimization_options
+
+    @optimization_options.setter
+    def optimization_options(self, options: Set[NL2FlowOptions]) -> None:
+        self._optimization_options = options
+
+    @property
     def flow_definition(self) -> FlowDefinition:
         return self._flow_definition
 
@@ -151,6 +162,9 @@ class Flow:
 
                         for child in children:
                             self.add(TypeItem(name=child, parent=item.name, children=[]))
+
+                elif isinstance(item, ClassicalPlanReference):
+                    setattr(self.flow_definition, key_name, item)
             else:
                 raise TypeError("Attempted to add unknown type of object to flow.")
 
@@ -163,14 +177,16 @@ class Flow:
     def plan_it(
         self,
         planner: Any,
+        debug_flag: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
-        pddl, transforms = self.compile_to_pddl(compilation_type)
+        pddl, transforms = self.compile_to_pddl(debug_flag, compilation_type)
         parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms)
         return parsed_plans
 
     def compile_to_pddl(
         self,
+        debug_flag: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
@@ -182,8 +198,10 @@ class Flow:
             mapping_options=self.mapping_options,
             confirm_options=self.confirm_options,
             variable_life_cycle=self.variable_life_cycle,
+            optimization_options=self.optimization_options,
             goal_type=self.goal_type,
             lookahead=self.lookahead,
+            debug_flag=debug_flag,
         )
 
         return pddl, transforms

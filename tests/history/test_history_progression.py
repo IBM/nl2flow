@@ -3,7 +3,7 @@ from tests.slots.test_slots_basic import (
     fallback_and_last_resort_tests_should_look_the_same,
 )
 
-from nl2flow.plan.schemas import PlannerResponse, Parameter
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -11,6 +11,7 @@ from nl2flow.compile.options import (
     BasicOperations,
 )
 from nl2flow.compile.schemas import (
+    Parameter,
     MemoryItem,
     SignatureItem,
     SlotProperty,
@@ -29,7 +30,7 @@ def basic_plan_with_two_steps(planner_response: PlannerResponse) -> None:
     first_step = poi.plan[0]
     first_step_parameter = first_step.inputs[0]
     assert (
-        first_step.name == BasicOperations.SLOT_FILLER.value and first_step_parameter.item_id == "list of errors"
+        first_step.name == BasicOperations.SLOT_FILLER.value and first_step_parameter == "list of errors"
     ), "First step should slot fill list of errors directly."
 
 
@@ -59,7 +60,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         poi = plans.list_of_plans[0]
         assert len(poi.plan) == 1, "There should be 1 step plan."
-        assert poi.plan[0].name == "Fix Errors", "First and (orignally final) step is the goal action."
+        assert poi.plan[0].name == "Fix Errors", "First and (originally final) step is the goal action."
 
     def test_history_slot_ban(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
@@ -96,7 +97,7 @@ class TestHistoryProgression(BaseTestAgents):
 
         step_1 = poi.plan[0]
         assert (
-            step_1.name == BasicOperations.MAPPER.value and step_1.inputs[0].item_id == "id123"
+            step_1.name == BasicOperations.MAPPER.value and step_1.inputs[0] == "id123"
         ), "Must be mapping the new thing."
 
     def test_history_mapping_ban_step_1(self) -> None:
@@ -126,9 +127,7 @@ class TestHistoryProgression(BaseTestAgents):
         assert len(poi.plan) == 2, "There should be 2 step plan."
 
         step_0 = poi.plan[0]
-        assert (
-            step_0.name == BasicOperations.CONFIRM.value and step_0.inputs[0].item_id == "W3 ID"
-        ), "Confirm the W3 ID value."
+        assert step_0.name == BasicOperations.CONFIRM.value and step_0.inputs[0] == "W3 ID", "Confirm the W3 ID value."
 
     def test_history_mapping_ban_step_2(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="W3 Agent"))

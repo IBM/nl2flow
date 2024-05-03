@@ -65,7 +65,7 @@ class TestFlags:
         plan = planner_response.list_of_plans[0]
         assert all([step.name == BasicOperations.SLOT_FILLER.value for step in plan.plan[:-1]])
 
-        slot_order = [step.inputs[0].item_id for step in plan.plan[:-1]]
+        slot_order = [step.inputs[0] for step in plan.plan[:-1]]
         assert slot_order == ["a_0", "a_1", "a_2", "a_3", "a_4", "a_5"]
 
     def test_timeout(self) -> None:

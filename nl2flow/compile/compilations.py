@@ -2,10 +2,9 @@ import tarski
 import tarski.fstrips as fs
 from tarski.theories import Theory
 from tarski.io import FstripsWriter
-
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Any, Tuple
-
+from typing import List, Set, Dict, Any, Tuple, Optional
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.schemas import (
     FlowDefinition,
     PDDL,
@@ -16,6 +15,7 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
+from nl2flow.compile.basic_compilations.compile_reference import compile_reference
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
@@ -39,6 +39,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.options import (
+    NL2FlowOptions,
     SlotOptions,
     MappingOptions,
     TypeOptions,
@@ -53,7 +54,7 @@ class Compilation(ABC):
         self.flow_definition = flow_definition
 
     @abstractmethod
-    def compile(self, **kwargs: Dict[str, Any]) -> Tuple[PDDL, List[Transform]]:
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
         pass
 
 
@@ -96,19 +97,27 @@ class ClassicPDDL(Compilation):
         self.connected: Any = None
         self.done_goal_pre: Any = None
         self.done_goal_post: Any = None
+        self.has_asked: Any = None
+        self.ready_for_token: Any = None
 
         self.type_map: Dict[str, Any] = dict()
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
+        debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
         reserved_types = [
             TypeOptions.ROOT,
             TypeOptions.OPERATOR,
             TypeOptions.HAS_DONE,
             TypeOptions.STATUS,
             TypeOptions.MEMORY,
-            TypeOptions.RETRY,
         ]
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            reserved_types.append(TypeOptions.RETRY)
 
         for reserved_type in reserved_types:
             add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
@@ -128,6 +137,18 @@ class ClassicPDDL(Compilation):
                         item_type=reserved_type_map[item].value,
                     ),
                 )
+
+        if debug_flag:
+            self.ready_for_token = self.lang.predicate("ready_for_token")
+            self.has_asked = self.lang.predicate(
+                "has_asked",
+                self.type_map[TypeOptions.ROOT.value],
+            )
+
+            for index in range(len(self.flow_definition.reference.plan) + 1):
+                token_predicate_name = f"token_{index}"
+                token_predicate = self.lang.predicate(token_predicate_name)
+                setattr(self, token_predicate_name, token_predicate)
 
         self.has_done = self.lang.predicate(
             "has_done",
@@ -191,12 +212,13 @@ class ClassicPDDL(Compilation):
             self.lang.Real,
         )
 
-        self.connected = self.lang.predicate(
-            "connected",
-            self.type_map[TypeOptions.OPERATOR.value],
-            self.type_map[TypeOptions.RETRY.value],
-            self.type_map[TypeOptions.RETRY.value],
-        )
+        if NL2FlowOptions.allow_retries in optimization_options:
+            self.connected = self.lang.predicate(
+                "connected",
+                self.type_map[TypeOptions.OPERATOR.value],
+                self.type_map[TypeOptions.RETRY.value],
+                self.type_map[TypeOptions.RETRY.value],
+            )
 
         self.free = self.lang.predicate(
             "free",
@@ -220,12 +242,12 @@ class ClassicPDDL(Compilation):
                     )
                 )
 
-        add_retry_states(self)
+        if NL2FlowOptions.allow_retries in optimization_options:
+            add_retry_states(self)
+
         compile_operators(self, **kwargs)
         compile_confirmation(self, **kwargs)
         add_extra_objects(self, **kwargs)
-
-        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
 
         if len(slot_options) > 1:
             compile_new_object_maps(self, **kwargs)
@@ -245,9 +267,12 @@ class ClassicPDDL(Compilation):
         if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
             compile_typed_mappings(self, **kwargs)
 
-        compile_history(self, **kwargs)
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
+        compile_history(self, **kwargs)
+
+        if debug_flag:
+            compile_reference(self, **kwargs)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

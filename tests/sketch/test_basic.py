@@ -4,8 +4,9 @@ from typing import Tuple
 import yaml  # type: ignore
 
 from nl2flow.compile.options import BasicOperations
+from nl2flow.compile.schemas import Constraint
 from nl2flow.plan.planners import Kstar
-from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 
@@ -38,7 +39,7 @@ def sketch_to_plan(catalog_name: str, sketch_name: str) -> PlannerResponse:
     sketch_compilation = BasicSketchCompilation(name=sketch.sketch_name)
     pddl, transforms = sketch_compilation.compile_to_pddl(sketch, catalog)
 
-    planner_response = sketch_compilation.plan_it(pddl, transforms)
+    planner_response: PlannerResponse = sketch_compilation.plan_it(pddl, transforms)
     print(PLANNER.pretty_print(planner_response))
 
     return planner_response
@@ -54,33 +55,33 @@ class TestSketchBasic:
         assert planner_response.list_of_plans, "There should be plans."
 
         for plan in planner_response.list_of_plans:
-            action_names = [step.name for step in plan.plan]
-            assert (
-                len([a for a in action_names if a.startswith(BasicOperations.CONSTRAINT.value)]) == 2
-            ), "Two constraint checks."
-
-            assert [
-                a.startswith(BasicOperations.CONSTRAINT.value) and "business trip" in a for a in action_names
-            ].index(True) < action_names.index("Concur"), "Constraint check for business trip before Concur."
-
-            assert [
-                a.startswith(BasicOperations.CONSTRAINT.value) and "travel policy" in a for a in action_names
-            ].index(True) > action_names.index("Concur"), "Constraint check for travel policy after Concur."
+            constraints = [step.constraint for step in plan.plan if isinstance(step, Constraint)]
+            assert len(constraints) == 2, "Two constraint checks."
 
             action_names = [
-                a
-                for a in action_names
-                if a not in BasicOperations._value2member_map_ and not a.startswith(BasicOperations.CONSTRAINT.value)
+                step.name
+                for step in plan.plan
+                if isinstance(step, Action) and step.name not in BasicOperations._value2member_map_
             ]
 
             assert set(action_names) == {"Workday", "W3 Agent", "Visa Application", "Concur", "Trip Approval"}
+
+            action_names = [step.name if isinstance(step, Action) else step.constraint for step in plan.plan]
+            assert action_names.index("eval(is a business trip)") < action_names.index(
+                "Concur"
+            ), "Constraint check for business trip before Concur."
+
+            travel_policy = "$hotel_booking.price + $flight_ticket.price < 150"
+            assert action_names.index(travel_policy) > action_names.index(
+                "Concur"
+            ), "Constraint check for travel policy after Concur."
 
     def test_with_order(self) -> None:
         planner_response = sketch_to_plan(catalog_name="catalog", sketch_name="02-simple_sketch_in_order")
         self.check_basic_plan(planner_response)
 
         for plan in planner_response.list_of_plans:
-            action_names = [step.name for step in plan.plan]
+            action_names = [step.name for step in plan.plan if isinstance(step, Action)]
             assert action_names.index("Visa Application") > action_names.index(
                 "Trip Approval"
             ), "Visa application always occurs after Trip Approval."

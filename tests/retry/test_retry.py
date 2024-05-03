@@ -1,8 +1,9 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType, MemoryState, BasicOperations
 from nl2flow.compile.schemas import (
+    Step,
+    Parameter,
     MemoryItem,
     SignatureItem,
     GoalItems,
@@ -99,7 +100,7 @@ class TestRetryBasic(BaseTestAgents):
         assert (
             len(poi.plan) == 2
             and poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].item_id == "x"
+            and poi.plan[0].inputs[0] == "x"
         ), "Same old 2 step plan."
 
     def test_retry_with_instance_blocked(self) -> None:
@@ -117,8 +118,8 @@ class TestRetryBasic(BaseTestAgents):
         assert (
             len(poi.plan) == 3
             and poi.plan[0].name == BasicOperations.SLOT_FILLER.value
-            and poi.plan[0].inputs[0].item_id.startswith("new_object")
-        ), "3 step plan with a new spwaned object."
+            and poi.plan[0].inputs[0].startswith("new_object")
+        ), "3 step plan with a new spawned object."
 
         self.flow.add(MemoryItem(item_id="id123", item_type="shareable", item_state=MemoryState.KNOWN))
 

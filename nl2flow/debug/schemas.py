@@ -1,49 +1,30 @@
-from nl2flow.plan.schemas import Step, ClassicalPlan as Plan, RawPlan
+from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.compile.schemas import Step, ClassicalPlanReference, Constraint
 from typing import List, Optional, Union
 from pydantic import BaseModel
+from enum import Enum
 
 
-class StoryConfig(BaseModel):
-    ordered: bool = True
-    optimal: bool = True
-    partial: bool = False
-    noise: bool = False
+class DiffAction(Enum):
+    ADD = "+"
+    DELETE = "-"
 
 
-class Story(BaseModel):
-    goal: List[str]
-    plan: List[Step]
+class SolutionQuality(Enum):
+    SOUND = "SOUND"
+    VALID = "VALID"
+    OPTIMAL = "OPTIMAL"
 
 
-class StoryBoard(BaseModel):
-    id: str
-    story: Story
-    reference: Union[Plan, RawPlan]
-    parameters: List[str]
-    config: StoryConfig
-
-
-class Completion(BaseModel):
-    raw: RawPlan
-    plan: Plan
-
-
-class PlanDiff(BaseModel):
-    present: List[Union[Step, str]]
-    absent: List[Union[Step, str]]
-
-
-class ReferenceReport(BaseModel):
-    same: bool
-    equivalent: bool
-    diff: Optional[PlanDiff]
+class StepDiff(BaseModel):
+    diff_type: Optional[DiffAction] = None
+    step: Union[Step, Constraint, str]
 
 
 class Report(BaseModel):
-    id: str
-    good: bool
-    completion: Optional[Completion]
-    valid: bool
-    complete: bool
-    optimal: Optional[bool]
-    reference: ReferenceReport
+    report_type: SolutionQuality
+    determination: Optional[bool] = None
+    planner_response: PlannerResponse
+    reference: Optional[ClassicalPlanReference] = None
+    plan_diff_obj: List[StepDiff] = []
+    plan_diff_str: List[str] = []

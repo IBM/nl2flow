@@ -13,6 +13,10 @@ class Operator(ABC):
     def name(self) -> str:
         return str(self.operator_definition.name)
 
+    @name.setter
+    def name(self, name: str) -> None:
+        self.operator_definition.name = name
+
     @property
     def definition(self) -> OperatorDefinition:
         return self.operator_definition

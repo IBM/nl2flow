@@ -1,14 +1,13 @@
 from tests.testing import BaseTestAgents
-from nl2flow.plan.schemas import Step
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType
 from nl2flow.compile.schemas import (
     TypeItem,
-    Constraint,
     MemoryItem,
     SignatureItem,
     GoalItems,
     GoalItem,
+    Step,
 )
 
 import pytest
@@ -82,52 +81,6 @@ class TestDuplicates(BaseTestAgents):
 
         with pytest.raises(Exception):
             self.flow.add(agent_1)
-
-    def test_constraint_operator_hash_conflict(self) -> None:
-        agent_1 = Operator("Agent")
-        agent_1.add_input(
-            SignatureItem(
-                parameters=["x"],
-                constraints=[Constraint(constraint_id="case conflict", parameters=["X"])],
-            )
-        )
-
-        with pytest.raises(Exception):
-            self.flow.add(agent_1)
-
-    def test_constraint_id_hash_conflict(self) -> None:
-        agent_1 = Operator("Agent")
-        agent_1.add_input(
-            SignatureItem(
-                parameters=["param"],
-                constraints=[
-                    Constraint(constraint_id="case conflict", parameters=["X"]),
-                    Constraint(constraint_id="case_conflict", parameters=["Y"]),
-                ],
-            )
-        )
-
-        with pytest.raises(Exception):
-            self.flow.add(agent_1)
-
-    def test_constraint_id_hash_conflict_history(self) -> None:
-        agent_1 = Operator("Agent")
-        agent_1.add_input(
-            SignatureItem(
-                parameters=["param"],
-                constraints=[
-                    Constraint(constraint_id="case conflict", parameters=["X"]),
-                ],
-            )
-        )
-
-        with pytest.raises(Exception):
-            self.flow.add(
-                [
-                    agent_1,
-                    Constraint(constraint_id="case_conflict", parameters=["Y"], truth_value=False),
-                ]
-            )
 
     def test_step_hash_conflict_history(self) -> None:
         with pytest.raises(Exception):

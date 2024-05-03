@@ -1,8 +1,8 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint as SignatureItemConstraint
+from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint
 from nl2flow.compile.options import TypeOptions, ConstraintState
-from nl2flow.services.schemas.sketch_schemas import Catalog, Signature, Constraint as CatalogConstraint
+from nl2flow.services.schemas.sketch_schemas import Catalog, Signature
 
 
 def basic_catalog_compilation(flow: Flow, catalog: Catalog) -> None:
@@ -17,11 +17,9 @@ def basic_catalog_compilation(flow: Flow, catalog: Catalog) -> None:
                         parameters=Parameter(item_id=item.name, item_type=item.type or TypeOptions.ROOT.value)
                     )
 
-                elif isinstance(item, CatalogConstraint):
-                    signature_constraint = SignatureItemConstraint(
-                        constraint_id=item.constraint,
-                        constraint=item.evaluate,
-                        parameters=[v.name for v in item.variables],
+                elif isinstance(item, Constraint):
+                    signature_constraint = Constraint(
+                        constraint=item.constraint,
                         truth_value=ConstraintState.TRUE.value if index == 1 else None,
                     )
 
