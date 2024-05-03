@@ -45,6 +45,8 @@ class TestGoalsBasic(BaseTestAgents):
             new_agent = Operator(f"Agent {item}")
             item = item.lower()
 
+            self.flow.add(MemoryItem(item_id=item, item_type="Mappable"))
+
             new_agent.add_input(
                 SignatureItem(
                     parameters=[Parameter(item_id=item, item_type="Mappable")],
@@ -59,7 +61,6 @@ class TestGoalsBasic(BaseTestAgents):
             )
 
             self.flow.add(new_agent)
-            self.flow.add(MemoryItem(item_id=item, item_type="Mappable"))
 
     def test_goal_with_operator(self) -> None:
         target_agent_name = "Agent B"
