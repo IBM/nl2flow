@@ -12,7 +12,7 @@ from nl2flow.compile.schemas import (
     SlotProperty,
     Parameter,
 )
-from nl2flow.compile.options import SlotOptions
+from nl2flow.compile.options import SlotOptions, NL2FlowOptions
 from uuid import uuid4
 
 
@@ -106,6 +106,10 @@ def get_flow_from_agent_infos(
     )
     if slot_filler_option is not None and slot_filler_option == SlotOptions.last_resort:
         flow.slot_options.add(SlotOptions.last_resort)
+
+    flow.optimization_options.remove(NL2FlowOptions.multi_instance)
+    flow.optimization_options.remove(NL2FlowOptions.allow_retries)
+
     return flow
 
 
