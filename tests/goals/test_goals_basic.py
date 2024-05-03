@@ -1,12 +1,13 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.schemas import PlannerResponse, Parameter
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.options import (
     MemoryState,
     GoalType,
     BasicOperations,
 )
 from nl2flow.compile.schemas import (
+    Parameter,
     MemoryItem,
     SignatureItem,
     GoalItems,

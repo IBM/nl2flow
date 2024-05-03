@@ -2,8 +2,8 @@ from tests.testing import BaseTestAgents
 
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import BasicOperations
-from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
+    Parameter,
     GoalItem,
     GoalItems,
     TypeItem,

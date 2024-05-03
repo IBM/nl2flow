@@ -17,7 +17,7 @@ def fallback_and_last_resort_tests_should_look_the_same(
 
     step_1: Action = poi.plan[0]
     assert (
-        step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0].item_id == "database link"
+        step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0] == "database link"
     ), "The first step should be looking to slot fill database link."
 
     step_2: Action = poi.plan[1]
@@ -42,7 +42,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         assert len(poi.plan) == 3, "There should be 3 steps."
 
         assert Counter(["AccountID", "Email"]) == Counter(
-            [step.inputs[0].item_id for step in poi.plan[:2]]
+            [step.inputs[0] for step in poi.plan[:2]]
         ), "Two slot fills for account ID and email."
 
         assert poi.plan[2].name == "Credit Score API", "Third action should be the goal action."
@@ -95,13 +95,13 @@ class TestSlotFillerBasic(BaseTestAgents):
 
         step_1: Action = poi.plan[0]
         assert (
-            step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0].item_id == "name of database"
+            step_1.name == BasicOperations.SLOT_FILLER.value and step_1.inputs[0] == "name of database"
         ), "The first step should be looking to slot fill name of database instead of database link."
 
         step_2: Action = poi.plan[1]
         assert (
             step_2.name == "Find Errors Alternative"
-        ), "Step 2 acquires list of errors using alternative Find Erro;ljrs operation."
+        ), "Step 2 acquires list of errors using alternative Find Errors operation."
 
         step_3: Action = poi.plan[2]
         assert step_3.name == "Fix Errors", "Fix Errors using the alternative path."

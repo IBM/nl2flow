@@ -2,9 +2,8 @@ from nl2flow.debug.debug import BasicDebugger
 from nl2flow.debug.schemas import ClassicalPlanReference, DiffAction, SolutionQuality
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem
+from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem, Step
 from nl2flow.compile.options import LifeCycleOptions, BasicOperations
-from nl2flow.plan.schemas import Step
 from nl2flow.plan.planners import Kstar
 from copy import deepcopy
 

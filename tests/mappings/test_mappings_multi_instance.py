@@ -8,8 +8,8 @@ from nl2flow.compile.options import (
     LifeCycleOptions,
     GoalType,
 )
-from nl2flow.plan.schemas import Parameter
 from nl2flow.compile.schemas import (
+    Parameter,
     SignatureItem,
     MemoryItem,
     GoalItem,
@@ -88,9 +88,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         index_of_map = [action.name for action in poi.plan].index(BasicOperations.MAPPER.value)
 
         assert index_of_map > 0, "There should be a rogue mapping action"
-        assert Counter([o.item_id for o in poi.plan[index_of_map].inputs]) == Counter(
-            ["to", "from"]
-        ), "A rogue to-from mapping."
+        assert Counter(poi.plan[index_of_map].inputs) == Counter(["to", "from"]), "A rogue to-from mapping."
 
         self.flow.add(MappingItem(source_name="to", target_name="from", probability=0.0))
         self.flow.mapping_options.add(MappingOptions.transitive)
@@ -125,7 +123,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         poi = plans.list_of_plans[0]
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert action.inputs[0].item_id == "item12321", "Item item12321 mapped twice"
+                assert action.inputs[0] == "item12321", "Item item12321 mapped twice"
 
     def test_multi_instance_from_memory_with_same_skill_no_preference(self) -> None:
         self.flow.add(self.emails_in_memory)
@@ -176,7 +174,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
             ], "Either mapping or slot fill."
 
             if action.name == BasicOperations.MAPPER.value:
-                assert [i.item_id for i in action.inputs] in [
+                assert [i for i in action.inputs] in [
                     ["item55132", "to"],
                     ["item12321", "from"],
                 ], "Preferred mappings only."
@@ -221,8 +219,8 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert action.inputs[0].item_id == "file", "... map file item twice ..."
-                assert action.inputs[1].item_id in [
+                assert action.inputs[0] == "file", "... map file item twice ..."
+                assert action.inputs[1] in [
                     "source",
                     "target",
                 ], "... and map to the target agent inputs."
@@ -273,8 +271,8 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
-                assert action.inputs[0].item_id == "file", "... map file item twice ..."
-                assert action.inputs[1].item_id in [
+                assert action.inputs[0] == "file", "... map file item twice ..."
+                assert action.inputs[1] in [
                     "source",
                     "target",
                 ], "... and map to the target agent inputs."

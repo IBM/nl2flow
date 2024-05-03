@@ -4,7 +4,6 @@ from collections import Counter
 from re import findall
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 from pydantic_core.core_schema import FieldValidationInfo
-from nl2flow.plan.schemas import Step, Parameter
 from nl2flow.compile.utils import string_transform, revert_string_transform, Transform
 from nl2flow.compile.options import (
     TypeOptions,
@@ -14,6 +13,33 @@ from nl2flow.compile.options import (
     SLOT_GOODNESS,
     RETRY,
 )
+
+
+class Parameter(BaseModel):
+    item_id: str
+    item_type: Optional[str] = None
+
+    @classmethod
+    def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
+        return Parameter(
+            item_id=string_transform(parameter.item_id, transforms),
+            item_type=string_transform(parameter.item_type, transforms)
+            if parameter.item_type is not None
+            else TypeOptions.ROOT.value,
+        )
+
+
+class Step(BaseModel):
+    name: str
+    parameters: List[Union[Parameter, str]] = []
+
+    @classmethod
+    def transform(cls, step: Step, transforms: List[Transform]) -> Step:
+        parameters = [p if isinstance(p, Parameter) else Parameter(item_id=p) for p in step.parameters]
+        return Step(
+            name=string_transform(step.name, transforms),
+            parameters=[p.transform(p, transforms) for p in parameters],
+        )
 
 
 class MappingItem(BaseModel):

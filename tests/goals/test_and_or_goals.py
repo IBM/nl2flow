@@ -1,6 +1,6 @@
 from tests.testing import BaseTestAgents
 from typing import List
-from nl2flow.plan.schemas import Parameter, PlannerResponse
+from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     SlotOptions,
@@ -8,6 +8,7 @@ from nl2flow.compile.options import (
     GoalOptions,
 )
 from nl2flow.compile.schemas import (
+    Parameter,
     MemoryItem,
     SignatureItem,
     GoalItems,

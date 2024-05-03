@@ -1,11 +1,11 @@
 from typing import Any, List, Optional, Union
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import revert_string_transform, string_transform
-from nl2flow.plan.schemas import ClassicalPlan, Action, Parameter
+from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
+from nl2flow.plan.schemas import ClassicalPlan, Action
 from nl2flow.compile.options import (
     BasicOperations,
     RestrictedOperations,
-    TypeOptions,
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
@@ -13,9 +13,9 @@ from nl2flow.compile.options import (
 )
 from nl2flow.compile.schemas import (
     OperatorDefinition,
-    MemoryItem,
-    SignatureItem,
     Outcome,
+    Constraint,
+    Step,
 )
 
 
@@ -44,7 +44,9 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
     temp_plan = []
 
     for index, action in enumerate(plan.plan):
-        if action.name not in [item.value for item in BasicOperations]:
+        if action.name not in [
+            item.value for item in BasicOperations if item.value != BasicOperations.CONSTRAINT.value
+        ]:
             new_start_of_plan = index
             break
 
@@ -59,105 +61,81 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
     return new_plan
 
 
-def parse_action(
-    action_name: str,
-    parameters: List[str],
-    **kwargs: Any,
-) -> Optional[Action]:
-    def __add_parameters(signatures: List[SignatureItem]) -> List[Parameter]:
-        list_of_parameters: List[Parameter] = list()
+def is_goal(action_name: str, flow_object: Flow) -> bool:
+    for goal_items in flow_object.flow_definition.goal_items:
+        goals = goal_items.goals
 
-        for signature_item in signatures:
-            signature_parameters = (
-                signature_item.parameters
-                if isinstance(signature_item.parameters, List)
-                else [signature_item.parameters]
-            )
+        if not isinstance(goals, List):
+            goals = [goals]
 
-            for parameter in signature_parameters:
-                if isinstance(parameter, Parameter):
-                    list_of_parameters.append(
-                        Parameter(
-                            item_id=parameter.item_id,
-                            item_type=parameter.item_type or TypeOptions.ROOT.value,
-                        )
-                    )
+        for goal in goals:
+            if isinstance(goal, Constraint):
+                continue
+            else:
+                goal_name = goal.goal_name.name if isinstance(goal.goal_name, Step) else goal.goal_name
+                if action_name == goal_name:
+                    return True
 
-                elif isinstance(parameter, str):
-                    find_in_memory = list(
-                        filter(
-                            lambda x: x.item_id == parameter,
-                            flow.flow_definition.memory_items,
-                        )
-                    )
+    return False
 
-                    if find_in_memory:
-                        memory_item: MemoryItem = find_in_memory[0]
-                        list_of_parameters.append(
-                            Parameter(
-                                item_id=memory_item.item_id,
-                                item_type=memory_item.item_type,
-                            )
-                        )
 
-                    else:
-                        list_of_parameters.append(Parameter(item_id=parameter, item_type=TypeOptions.ROOT.value))
-
-        return list_of_parameters
-
+def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Optional[Union[Action, Constraint]]:
     transforms = kwargs["transforms"]
-    new_action = Action(name=action_name)
     flow: Flow = kwargs["flow"]
 
-    if any([action_name.startswith(item.value) for item in BasicOperations]):
-        if action_name.startswith(BasicOperations.SLOT_FILLER.value) or action_name.startswith(
-            BasicOperations.MAPPER.value
-        ):
-            temp = action_name.split("----")
-            new_action.name = (
-                BasicOperations.SLOT_FILLER.value
-                if BasicOperations.SLOT_FILLER.value in temp[0]
-                else BasicOperations.MAPPER.value
-            )
-
-            if temp[1:] and not parameters:
-                parameters = temp[1:]
-
-        elif action_name.startswith(BasicOperations.CONSTRAINT.value):
-            new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
-            action_split_for_id = new_action_name.split("_to_")
-
-            constraint = revert_string_transform(action_split_for_id[0], transforms)
-            assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
-
-            action_split_for_truth_value = action_split_for_id[1].split("_with_")
-
-            truth_value = None
-            for v in ConstraintState:
-                if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
-                    truth_value = v.value
-
-            new_action.name = f"assert {'' if truth_value else 'not '}{constraint}"
-
-        new_action.inputs = [
-            Parameter(
-                item_id=revert_string_transform(param, transforms),
-                item_type=TypeOptions.ROOT.value,
-            )
-            for param in parameters
-        ]
-
-    elif any([action_name.startswith(item.value) for item in RestrictedOperations]):
+    if any([action_name.startswith(item.value) for item in RestrictedOperations]):
         return None
 
-    else:
-        operator: OperatorDefinition = list(filter(lambda x: x.name == action_name, flow.flow_definition.operators))[0]
+    elif action_name.startswith(BasicOperations.SLOT_FILLER.value):
+        new_action = Action(name=BasicOperations.SLOT_FILLER.value)
 
-        new_action.inputs = __add_parameters(operator.inputs)
+        temp = action_name.split("----")
+        if temp[1:] and not parameters:
+            parameters = temp[1:]
+
+        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
+        return new_action
+
+    elif action_name.startswith(BasicOperations.CONFIRM.value):
+        new_action = Action(name=BasicOperations.CONFIRM.value)
+        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
+        return new_action
+
+    elif action_name.startswith(BasicOperations.MAPPER.value):
+        new_action = Action(name=BasicOperations.MAPPER.value)
+
+        temp = action_name.split("----")
+        if temp[1:] and not parameters:
+            parameters = temp[1:]
+
+        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
+        return new_action
+
+    elif action_name.startswith(BasicOperations.CONSTRAINT.value):
+        new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
+        action_split_for_id = new_action_name.split("_to_")
+
+        constraint = revert_string_transform(action_split_for_id[0], transforms)
+        assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
+
+        action_split_for_truth_value = action_split_for_id[1].split("_with_")
+
+        truth_value = None
+        for v in ConstraintState:
+            if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
+                truth_value = v.value
+
+        return Constraint(constraint=constraint, truth_value=truth_value)
+
+    else:
+        operator: OperatorDefinition = next(filter(lambda x: x.name == action_name, flow.flow_definition.operators))
+        new_action = Action(name=operator.name)
+
+        new_action.inputs = unpack_list_of_signature_items(operator.inputs)
 
         if isinstance(operator.outputs, Outcome):
-            new_action.outputs = __add_parameters(operator.outputs.outcomes)
+            new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)
         else:
-            raise TypeError("Parsing classical action, must have only one outcome.")
+            raise NotImplementedError("Only working on classical operators at the moment.")
 
-    return new_action
+        return new_action
