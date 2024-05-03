@@ -15,8 +15,6 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Set
 from pathlib import Path
 from kstar_planner import planners
-from concurrent.futures import TimeoutError
-from pebble import ProcessPool
 
 import tempfile
 
@@ -25,15 +23,15 @@ from nl2flow.utility.file_utility import open_atomic
 
 class Planner(ABC):
     def __init__(self) -> None:
-        self._timeout: float = TIMEOUT
+        self._timeout: int = TIMEOUT
 
     @property
-    def timeout(self) -> float:
+    def timeout(self) -> int:
         return self._timeout
 
     @timeout.setter
-    def timeout(self, set_timeout: float) -> None:
-        self._timeout = set_timeout
+    def timeout(self, set_timeout: int) -> None:
+        self._timeout = int(set_timeout)
 
     @abstractmethod
     def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
@@ -115,8 +113,7 @@ class Planner(ABC):
 
 
 class Kstar(Planner):
-    @staticmethod
-    def call_to_planner(pddl: PDDL) -> RawPlannerResult:
+    def __call_to_planner(self, pddl: PDDL) -> RawPlannerResult:
         with tempfile.NamedTemporaryFile() as domain_temp, tempfile.NamedTemporaryFile() as problem_temp:
             domain_file = Path(tempfile.gettempdir()) / domain_temp.name
             problem_file = Path(tempfile.gettempdir()) / problem_temp.name
@@ -130,22 +127,22 @@ class Kstar(Planner):
             planner_result = planners.plan_unordered_topq(
                 domain_file=domain_file,
                 problem_file=problem_file,
+                timeout=self.timeout,
                 quality_bound=QUALITY_BOUND,
                 number_of_plans_bound=NUM_PLANS,
             )
             result = RawPlannerResult(list_of_plans=planner_result.get("plans", []))
             result.error_running_planner = False
-            result.is_no_solution = len(result.list_of_plans) == 0
-            result.is_timeout = False
+            result.is_no_solution = planner_result.get("unsolvable", None)
+            result.is_timeout = planner_result.get("timeout_triggered", None)
+            result.planner_output = planner_result.get("planner_output")
+            result.planner_error = planner_result.get("planner_error")
             return result
 
     def raw_plan(self, pddl: PDDL) -> RawPlannerResult:
-        pool = ProcessPool()
-        cc = pool.schedule(self.call_to_planner, args=[pddl], timeout=self.timeout)
-
         # noinspection PyBroadException
         try:
-            raw_planner_result: RawPlannerResult = cc.result()
+            raw_planner_result = self.__call_to_planner(pddl)
             return raw_planner_result
 
         except TimeoutError as error:

@@ -15,6 +15,7 @@ from nl2flow.compile.options import (
     CostOptions,
     MemoryState,
     HasDoneState,
+    NL2FlowOptions,
 )
 
 
@@ -44,23 +45,39 @@ def get_orphaned_items(compilation: Any, goal_items: List[str]) -> List[str]:
 
 
 def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
+    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
         if isinstance(goal, Step):
             new_goal_predicate = f"has_done_{goal.name}"
-            new_goal_parameters = [
-                compilation.constant_map[p.item_id] if isinstance(p, Parameter) else compilation.constant_map[p]
-                for p in goal.parameters
-            ]
+            new_goal_parameters = (
+                []
+                if NL2FlowOptions.multi_instance not in optimization_options
+                else [
+                    compilation.constant_map[p.item_id] if isinstance(p, Parameter) else compilation.constant_map[p]
+                    for p in goal.parameters
+                ]
+            )
 
-            try_level = 1
-            for historical_step in compilation.flow_definition.history:
-                try_level += int(goal == historical_step)
+            if NL2FlowOptions.allow_retries in optimization_options:
+                try_level = 1
+                for historical_step in compilation.flow_definition.history:
+                    try_level += int(goal == historical_step)
 
-            try_level_parameter = compilation.constant_map[f"try_level_{try_level}"]
-            new_goal_parameters.append(try_level_parameter)
-            goal_predicates.add(getattr(compilation, new_goal_predicate)(*new_goal_parameters))
+                try_level_parameter = compilation.constant_map[f"try_level_{try_level}"]
+                new_goal_parameters.append(try_level_parameter)
+
+            if new_goal_parameters:
+                goal_predicates.add(getattr(compilation, new_goal_predicate)(*new_goal_parameters))
+            else:
+                goal_predicates.add(
+                    compilation.has_done(
+                        compilation.constant_map[goal.name],
+                        compilation.constant_map[HasDoneState.present.value],
+                    )
+                )
 
         elif isinstance(goal, str):
             goal_predicates.add(
@@ -129,7 +146,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
 
         for goal_items in list_of_goal_items:
             for goal_item in goal_items.goals:
-                compile_goal_item(compilation, goal_item, goal_predicates)
+                compile_goal_item(compilation, goal_item, goal_predicates, **kwargs)
 
         if debug_flag is None or debug_flag != SolutionQuality.SOUND:
             compilation.problem.goal = land(*goal_predicates, flat=True)
@@ -138,7 +155,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
         for goal_index, goal_items in enumerate(list_of_goal_items):
             goal_predicates = set()
             for goal_item in goal_items.goals:
-                compile_goal_item(compilation, goal_item, goal_predicates)
+                compile_goal_item(compilation, goal_item, goal_predicates, **kwargs)
 
             compilation.problem.action(
                 f"{RestrictedOperations.GOAL.value}-{goal_index}",
@@ -184,7 +201,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
             for goal_item_index, goal_item in enumerate(goals):
                 precondition_set: Set[Any] = set()
 
-                compile_goal_item(compilation, goal_item, precondition_set)
+                compile_goal_item(compilation, goal_item, precondition_set, **kwargs)
                 compilation.problem.action(
                     f"{RestrictedOperations.GOAL.value}-{goal_index}-{goal_item_index}",
                     parameters=[],

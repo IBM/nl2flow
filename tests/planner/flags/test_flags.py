@@ -4,12 +4,14 @@ from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, GoalItems, GoalItem, SlotProperty
 from nl2flow.compile.options import SlotOptions, BasicOperations
 
+import pytest
+
 
 class TestFlags:
     def setup_method(self) -> None:
         agent_a = Operator(name="Agent A")
 
-        for i in range(5):
+        for i in range(6):
             agent_a.add_input(SignatureItem(parameters=f"a_{i}"))
 
         self.empty_flow = Flow(name="Empty Flow")
@@ -27,8 +29,17 @@ class TestFlags:
         assert raw_plans.is_timeout is False
         assert isinstance(raw_plans.stderr, BaseException)
 
+    def test_empty_plan(self) -> None:
+        planner_response = self.flow.plan_it(self.PLANNER)
+        assert len(planner_response.list_of_plans) == 0
+        assert planner_response.error_running_planner is False
+        assert planner_response.is_no_solution is False
+        assert planner_response.is_timeout is False
+        assert planner_response.error_running_planner is False
+        assert planner_response.stderr is None
+
     def test_no_solution(self) -> None:
-        for i in range(5):
+        for i in range(6):
             self.flow.add(SlotProperty(slot_name=f"a_{i}", slot_desirability=0.0))
 
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent A")))
@@ -57,10 +68,11 @@ class TestFlags:
         assert all([step.name == BasicOperations.SLOT_FILLER.value for step in plan.plan[:-1]])
 
         slot_order = [step.inputs[0] for step in plan.plan[:-1]]
-        assert slot_order == ["a_0", "a_1", "a_2", "a_3", "a_4"]
+        assert slot_order == ["a_0", "a_1", "a_2", "a_3", "a_4", "a_5"]
 
+    @pytest.mark.skip(reason="Pending kstar getting its timeout.")
     def test_timeout(self) -> None:
-        self.PLANNER.timeout = 0.1
+        self.PLANNER.timeout = 1
 
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent A")))
         planner_response = self.flow.plan_it(self.PLANNER)

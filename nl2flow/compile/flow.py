@@ -11,6 +11,7 @@ from nl2flow.compile.options import (
     ConfirmOptions,
     LifeCycleOptions,
     GoalOptions,
+    NL2FlowOptions,
     LOOKAHEAD,
 )
 
@@ -26,6 +27,7 @@ class Flow:
         self._variable_life_cycle: Set[LifeCycleOptions] = set()
         self._goal_type = GoalOptions.AND_AND
         self._lookahead: int = LOOKAHEAD
+        self._optimization_options: Set[NL2FlowOptions] = {NL2FlowOptions.multi_instance, NL2FlowOptions.allow_retries}
         self._slot_options: Set[SlotOptions] = {
             SlotOptions.higher_cost,
             SlotOptions.relaxed,
@@ -109,6 +111,14 @@ class Flow:
         self._lookahead = lookahead
 
     @property
+    def optimization_options(self) -> Set[NL2FlowOptions]:
+        return self._optimization_options
+
+    @optimization_options.setter
+    def optimization_options(self, options: Set[NL2FlowOptions]) -> None:
+        self._optimization_options = options
+
+    @property
     def flow_definition(self) -> FlowDefinition:
         return self._flow_definition
 
@@ -188,6 +198,7 @@ class Flow:
             mapping_options=self.mapping_options,
             confirm_options=self.confirm_options,
             variable_life_cycle=self.variable_life_cycle,
+            optimization_options=self.optimization_options,
             goal_type=self.goal_type,
             lookahead=self.lookahead,
             debug_flag=debug_flag,

@@ -119,7 +119,7 @@ class TestRetryBasic(BaseTestAgents):
             len(poi.plan) == 3
             and poi.plan[0].name == BasicOperations.SLOT_FILLER.value
             and poi.plan[0].inputs[0].startswith("new_object")
-        ), "3 step plan with a new spwaned object."
+        ), "3 step plan with a new spawned object."
 
         self.flow.add(MemoryItem(item_id="id123", item_type="shareable", item_state=MemoryState.KNOWN))
 

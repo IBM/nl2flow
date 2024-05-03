@@ -1,8 +1,8 @@
 from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map
 from nl2flow.compile.schemas import Parameter, MemoryItem, Constraint, Step
-from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations
+from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
-from typing import Any, Optional
+from typing import Any, Optional, Set
 
 
 def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> Optional[Any]:
@@ -34,7 +34,9 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         return None
 
 
-def get_predicate_from_step(compilation: Any, step: Step, num_try: int = 0) -> Optional[Any]:
+def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs: Any) -> Optional[Any]:
+    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+
     # noinspection PyBroadException
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):
@@ -53,38 +55,47 @@ def get_predicate_from_step(compilation: Any, step: Step, num_try: int = 0) -> O
             )
 
         else:
-            has_done_predicate_name = f"has_done_{step.name}"
-            parameter_names = [p.item_id if isinstance(p, Parameter) else p for p in step.parameters]
-            parameter_names.append(f"try_level_{num_try}")
+            step_predicate = compilation.has_done(
+                compilation.constant_map[step.name],
+                compilation.constant_map[HasDoneState.past.value],
+            )
+            compilation.init.add(step_predicate)
 
-            step_predicate = getattr(compilation, has_done_predicate_name)(
-                *[compilation.constant_map[p] for p in parameter_names]
+            has_done_predicate_name = f"has_done_{step.name}"
+            parameter_names = (
+                [p.item_id if isinstance(p, Parameter) else p for p in step.parameters]
+                if NL2FlowOptions.multi_instance in optimization_options
+                else []
+            )
+
+            if NL2FlowOptions.allow_retries in optimization_options:
+                num_try = index + 1
+                parameter_names.append(f"try_level_{num_try}")
+
+            step_predicate = (
+                None
+                if not parameter_names
+                else getattr(compilation, has_done_predicate_name)(
+                    *[compilation.constant_map[p] for p in parameter_names]
+                )
             )
 
         return step_predicate
 
     except Exception as e:
-        print(f"Error generating constraint predicate: {e}")
+        print(f"Error generating step predicate: {e}")
         return None
 
 
 def compile_history(compilation: Any, **kwargs: Any) -> None:
-    multi_instance: bool = kwargs.get("multi_instance", True)
-
     for index, step in enumerate(compilation.flow_definition.history):
-        step_predicate = compilation.has_done(
-            compilation.constant_map[step.name],
-            compilation.constant_map[HasDoneState.past.value],
-        )
-        compilation.init.add(step_predicate)
+        indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
 
-        if multi_instance:
-            indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
-            num_try = indices_of_interest.index(index) + 1
+        index_of_operation = indices_of_interest.index(index)
+        step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
 
-            parameterized_step_predicate = get_predicate_from_step(compilation, step, num_try)
-            if parameterized_step_predicate:
-                compilation.init.add(parameterized_step_predicate)
+        if step_predicate:
+            compilation.init.add(step_predicate)
 
     for constraint in compilation.flow_definition.constraints:
         constraint_predicate = get_predicate_from_constraint(compilation, constraint)
