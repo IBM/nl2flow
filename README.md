@@ -1,9 +1,10 @@
 # NL2Flow: A PDDL Interface to Flow Construction
 
 [![IBM](https://img.shields.io/badge/IBM%20Research-AI-green)](https://research.ibm.com)
-![image](https://img.shields.io/badge/python->=3.9-darkblue)
-![image](https://img.shields.io/badge/tarski-0.8.2-blue)
-[![AI](https://img.shields.io/badge/Planner-KStar-purple)](https://github.com/IBM/kstar)
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FIBM%2Fnl2flow%2Fmain%2Fpyproject.toml)
+[![PyPI - Version](https://img.shields.io/pypi/v/kstar-planner?label=kstar&color=purple)](https://github.com/IBM/kstar)
+![PyPI - Version](https://img.shields.io/pypi/v/tarski?label=tarski&color=purple)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/IBM/nl2flow/run-all-tests.yml)
 
 This package allows developers to easily integrate automated planning applications into their systems. Migrating research efforts to product creates knowledge gaps and blindspots, along with requirements for long-term support which often cannot be followed through. Particularly, the adoption of automated planners into products requires developers to get familiar with declarative modeling and understand the requirements of the [PDDL](https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language) syntax. This package mitigates this need by creating an abstraction around the underlying formal representation so that anyone can use automated planners to create workflows through a Python API, with their desired specifications. 
 
@@ -11,30 +12,11 @@ This package allows developers to easily integrate automated planning applicatio
 
 # Getting Started
 
-#### Clone the repository
-
 ```commandline
-user:~$ git clone git@github.com:IBM/nl2flow.git
-user:~$ cd nl2flow
+user:~$ pip install nl2flow
 ```
 
-#### Change to a virtual environment
-
-We also strongly recommend using a virtual environment, such
-as [anaconda](https://www.anaconda.com/), for development.
-
-```commandline
-user:~$ conda create --name nl2flow
-user:~$ conda activate nl2flow
-```
-
-#### Install Dependencies
-
-```commandline
-(nl2flow) user:~$ pip install -e .
-```
-
-If you want to contribute code, check [here](docs/CONTRIBUTING.md)
+If you want to install locally and/or contribute code, check [here](docs/CONTRIBUTING.md)
 
 ## Example of an NL2Flow Domain
 
@@ -83,6 +65,7 @@ Get started with constructing a simple flow where you have two operators, one ta
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
+from nl2flow.plan.planners import Kstar
 
 new_flow = Flow("Basic Test")
 
@@ -99,6 +82,8 @@ goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
 new_flow.add(goal)
 
 pddl, _ = new_flow.compile_to_pddl() # if you want the PDDL only
+
+planner = Kstar()
 parsed_plans = new_flow.plan_it(planner) # if you want the plans
 
 print(planner.pretty_print(parsed_plans))
