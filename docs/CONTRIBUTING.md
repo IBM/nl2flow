@@ -17,6 +17,34 @@ You must sign off your commits using the `-s` flag in the commit message.
 git commit -s -m 'informative commit message'
 ```
 
+## Installing locally 
+
+#### Clone the repository
+
+```commandline
+user:~$ git clone git@github.com:IBM/nl2flow.git
+user:~$ cd nl2flow
+```
+
+#### Change to a virtual environment
+
+We also strongly recommend using a virtual environment, such
+as [anaconda](https://www.anaconda.com/), for development.
+
+```commandline
+user:~$ conda create --name nl2flow
+user:~$ conda activate nl2flow
+```
+
+#### Install Dependencies
+
+```commandline
+(nl2flow) user:~$ pip install -e .
+```
+
+
+
+
 ## Setting up the dev environment
 
 ![BLACK](https://img.shields.io/badge/code%20style-black-black)
