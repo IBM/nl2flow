@@ -10,6 +10,7 @@ class PddlGeneratorOutput(BaseModel):
     pddl_problem: str  # PDDL problem
     list_of_plans: List[ClassicalPlan] = []  # Response from a planner
     prettified_plans: str  # prettified plans
+    prettified_optimal_plan_forward: str  # prettified optimal plan for executing optimal plan
     sample_hash: str  # hash for PDDL domain and problem
     agent_info_generator_input: AgentInfoGeneratorInput  # input to generator
     compiler_planner_lag_millisecond: float  # lag in millisecond
