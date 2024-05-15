@@ -49,6 +49,7 @@ def generate_dataset_with_info_generator(
                 agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
                 compiler_planner_lag_millisecond=compiler_planner_lag,
                 planner_response=planner_response,
+                agent_info_generator_output_item=sample,
             )
         )
 
