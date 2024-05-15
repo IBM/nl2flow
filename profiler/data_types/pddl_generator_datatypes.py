@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List
 from nl2flow.plan.schemas import ClassicalPlan, PlannerResponse
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
+from profiler.data_types.generator_output_data_type import AgentInfoGeneratorOutputItem
 
 
 class PddlGeneratorOutput(BaseModel):
@@ -15,3 +16,4 @@ class PddlGeneratorOutput(BaseModel):
     agent_info_generator_input: AgentInfoGeneratorInput  # input to generator
     compiler_planner_lag_millisecond: float  # lag in millisecond
     planner_response: PlannerResponse  # planner response
+    agent_info_generator_output_item: AgentInfoGeneratorOutputItem  # seed for flow object
