@@ -157,8 +157,8 @@ def get_variables(
     return variable_slot_fillable_state
 
 
-def get_goals(num_goals: int, agent_infos: List[AgentInfo], random: ModuleType) -> Set[str]:
-    return set(random.sample(list(map(lambda info: info.agent_id[:], agent_infos)), num_goals))
+def get_goals(num_goals: int, agent_infos: List[AgentInfo], random: ModuleType) -> List[str]:
+    return list(random.sample(list(map(lambda info: info.agent_id[:], agent_infos)), num_goals))
 
 
 def get_mappings(variable_infos: List[VariableInfo], random: ModuleType) -> List[Tuple[str, str, float]]:

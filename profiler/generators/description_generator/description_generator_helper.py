@@ -172,7 +172,7 @@ def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:
     return " ".join(list(map(lambda mapping: get_mapping_description(mapping), mappings)))
 
 
-def get_goal_description(goals: Set[str]) -> str:
+def get_goal_description(goals: List[str]) -> str:
     goals_list = sorted(list(map(lambda name: "Action " + name, goals)))
 
     return f"The goal of the system is to execute {get_names(goals_list)}."
