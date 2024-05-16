@@ -87,7 +87,7 @@ def check_sample(
     input: AgentInfoGeneratorInput,
     available_agents: List[AgentInfo],
     available_data: List[Tuple[str, Optional[str]]],
-    goal_agent_ids: Set[str],
+    goal_agent_ids: List[str],
     mappings: List[Tuple[str, str, float]],
 ) -> None:
     # agents

@@ -24,7 +24,7 @@ def generate_dataset_with_info_generator(
         flow = get_flow_from_agent_infos(
             available_agents=sample.available_agents,
             mappings=sample.mappings,
-            goals=sample.goal_agent_ids,
+            goals=set(sample.goal_agent_ids),
             available_data=sample.available_data,
             slot_filler_option=agent_info_generator_input.slot_filler_option,
         )
