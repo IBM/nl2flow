@@ -5,12 +5,12 @@ from pydantic import BaseModel
 from enum import Enum
 
 
-class DiffAction(Enum):
+class DiffAction(str, Enum):
     ADD = "+"
     DELETE = "-"
 
 
-class SolutionQuality(Enum):
+class SolutionQuality(str, Enum):
     SOUND = "SOUND"
     VALID = "VALID"
     OPTIMAL = "OPTIMAL"
