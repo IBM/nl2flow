@@ -24,7 +24,7 @@ def generate_dataset_with_info_generator(
         flow = get_flow_from_agent_infos(
             available_agents=sample.available_agents,
             mappings=sample.mappings,
-            goals=sample.goal_agent_ids,
+            goals=set(sample.goal_agent_ids),
             available_data=sample.available_data,
             slot_filler_option=agent_info_generator_input.slot_filler_option,
         )
@@ -40,10 +40,16 @@ def generate_dataset_with_info_generator(
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
                 prettified_plans=planner.pretty_print(planner_response) if should_plan else "",
+                prettified_optimal_plan_forward=(
+                    planner.pretty_print_plan_verbose(flow, planner_response.list_of_plans[0])
+                    if len(planner_response.list_of_plans) > 0
+                    else "no plan"
+                ),
                 sample_hash=sample.get_hash(),
                 agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
                 compiler_planner_lag_millisecond=compiler_planner_lag,
                 planner_response=planner_response,
+                agent_info_generator_output_item=sample,
             )
         )
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 from profiler.data_types.agent_info_data_types import AgentInfo
 from profiler.generators.description_generator.description_generator_helper import (
     get_variables_description,
@@ -18,7 +18,7 @@ from nl2flow.compile.options import SlotOptions
 
 def get_sample_description(
     available_agents: List[AgentInfo],
-    goal_agent_ids: Set[str],
+    goal_agent_ids: List[str],
     mappings: List[Tuple[str, str, float]],
     available_data: List[Tuple[str, Optional[str]]],
     slot_option: Optional[SlotOptions] = None,
