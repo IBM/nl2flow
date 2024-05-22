@@ -81,7 +81,7 @@ class Planner(ABC):
         return "\n".join(verbose_strings)
 
     @classmethod
-    def pretty_print_plan(cls, plan: Plan, line_numbers: bool = True) -> str:
+    def pretty_print_plan(cls, plan: Plan, show_output: bool = True, line_numbers: bool = True) -> str:
         pretty = ""
 
         for step, action in enumerate(plan.plan):
@@ -92,7 +92,7 @@ class Planner(ABC):
                 outputs = ", ".join(action.outputs) or None
                 output_string = f"{outputs} = " if outputs else ""
 
-                pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string}{action.name}{input_string}\n"
+                pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string if show_output else ''}{action.name}{input_string}\n"
 
             elif isinstance(action, Constraint):
                 constraint_string = f"assert {'' if action.truth_value else 'not '}{action.constraint}"
