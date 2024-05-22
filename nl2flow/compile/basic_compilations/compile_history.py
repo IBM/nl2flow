@@ -2,6 +2,7 @@ from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant
 from nl2flow.compile.schemas import Parameter, MemoryItem, Constraint, Step
 from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
+from nl2flow.debug.schemas import SolutionQuality
 from typing import Any, Optional, Set
 
 
@@ -36,30 +37,38 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
 
 def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs: Any) -> Optional[Any]:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
     # noinspection PyBroadException
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):
             step_predicate = compilation.has_asked(compilation.constant_map[step.parameters[0].item_id])
+            return step_predicate
 
         elif step.name.startswith(BasicOperations.MAPPER.value):
             step_predicate = compilation.mapped_to(
                 compilation.constant_map[step.parameters[0].item_id],
                 compilation.constant_map[step.parameters[1].item_id],
             )
+            return step_predicate
 
         elif step.name.startswith(BasicOperations.CONFIRM.value):
             step_predicate = compilation.known(
                 compilation.constant_map[step.parameters[0].item_id],
                 compilation.constant_map[MemoryState.KNOWN.value],
             )
+            return step_predicate
 
         else:
             step_predicate = compilation.has_done(
                 compilation.constant_map[step.name],
-                compilation.constant_map[HasDoneState.past.value],
+                compilation.constant_map[HasDoneState.present.value]
+                if debug_flag
+                else compilation.constant_map[HasDoneState.past.value],
             )
-            compilation.init.add(step_predicate)
+
+            if not debug_flag:
+                compilation.init.add(step_predicate)
 
             has_done_predicate_name = f"has_done_{step.name}"
             parameter_names = (
@@ -72,7 +81,7 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
                 num_try = index + 1
                 parameter_names.append(f"try_level_{num_try}")
 
-            step_predicate = (
+            step_predicate_parameterized = (
                 None
                 if not parameter_names
                 else getattr(compilation, has_done_predicate_name)(
@@ -80,7 +89,7 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
                 )
             )
 
-        return step_predicate
+            return step_predicate if step_predicate_parameterized is None else step_predicate_parameterized
 
     except Exception as e:
         print(f"Error generating step predicate: {e}")

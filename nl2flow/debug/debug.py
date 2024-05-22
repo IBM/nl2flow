@@ -144,7 +144,7 @@ class BasicDebugger(Debugger):
 
         planner_response = self.flow.plan_it(PLANNER, debug_flag=debug)
         new_report = Report(
-            report_type=SolutionQuality.SOUND,
+            report_type=debug.value,
             planner_response=planner_response,
             reference=reference_plan,
         )
