@@ -10,7 +10,6 @@ from profiler.generators.description_generator.description_generator_helper impo
 )
 from profiler.generators.description_generator.descripter_generator_data import (
     ask_description,
-    ask_last_resort_description,
     map_description,
 )
 from nl2flow.compile.options import SlotOptions
@@ -44,9 +43,6 @@ def get_sample_description(
 
     # slot-fillers
     descriptions.append(ask_description[:])
-
-    if slot_option is not None and slot_option == SlotOptions.last_resort:
-        descriptions.append(ask_last_resort_description[:])
 
     # variable description
     if len(available_agents) > 0 or len(available_data) > 0:
