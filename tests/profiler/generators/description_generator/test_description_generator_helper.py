@@ -88,7 +88,7 @@ class TestDescriptionGeneratorHelper:
         available_agents: List[AgentInfo] = list()
         available_agents.extend([AgentInfo(agent_id="a"), AgentInfo(agent_id="c"), AgentInfo(agent_id="c")])
         name_str = get_available_action_names(available_agents)
-        assert name_str == "action a, action c, and action c"
+        assert name_str == "a, c, and c"
 
     def test_get_available_agents_description_single(self) -> None:
         available_agents: List[AgentInfo] = list()
@@ -101,7 +101,7 @@ class TestDescriptionGeneratorHelper:
         available_agents.append(AgentInfo(agent_id="a"))
         available_agents.append(AgentInfo(agent_id="b"))
         res = get_available_agents_description(available_agents)
-        assert res == "The system has action a and action b."
+        assert res == "The system has actions a and b."
 
     def test_get_available_agents_description_triple(self) -> None:
         available_agents: List[AgentInfo] = list()
@@ -109,7 +109,7 @@ class TestDescriptionGeneratorHelper:
         available_agents.append(AgentInfo(agent_id="b"))
         available_agents.append(AgentInfo(agent_id="c"))
         res = get_available_agents_description(available_agents)
-        assert res == "The system has action a, action b, and action c."
+        assert res == "The system has actions a, b, and c."
 
     def test_get_signature_item_names_single(self) -> None:
         items: List[AgentInfoSignatureItem] = list()

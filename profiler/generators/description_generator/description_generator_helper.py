@@ -24,7 +24,7 @@ def get_available_action_names(available_agents: List[AgentInfo]) -> str:
         sorted(
             list(
                 map(
-                    lambda agent_info: "action " + agent_info.agent_id,
+                    lambda agent_info: agent_info.agent_id,
                     available_agents,
                 )
             )
@@ -33,7 +33,10 @@ def get_available_action_names(available_agents: List[AgentInfo]) -> str:
 
 
 def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
-    txt = "The system has " + get_available_action_names(available_agents) + "."
+    parts: List[str] = ["The system has"]
+    parts.append("action" if len(available_agents) == 1 else "actions")
+    parts.append(f"{get_available_action_names(available_agents)}.")
+    txt = " ".join(parts)
     return txt.capitalize()
 
 
