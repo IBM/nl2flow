@@ -167,8 +167,8 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
 
     variable_names = list(set(variable_names))
     part_list: List[str] = []
-    is_plural = len(variable_names) == 1
-    prepend_word = "variable" if is_plural else "variables"
+    is_singular = len(variable_names) == 1
+    prepend_word = "variable" if is_singular else "variables"
     if is_in_sig:
         part_list.append(f"To execute action {agent_info.agent_id},")
         part_list.append(prepend_word)
@@ -178,7 +178,7 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
         part_list.append(f"After executing action {agent_info.agent_id},")
         part_list.append(prepend_word)
         part_list.append(get_names(variable_names))
-        part_list.append("is" if is_plural else "are")
+        part_list.append("is" if is_singular else "are")
         part_list.append("known.")
     txt = " ".join(part_list)
 
