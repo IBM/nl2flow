@@ -36,15 +36,13 @@ def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
     parts: List[str] = ["The system has"]
     parts.append("action" if len(available_agents) == 1 else "actions")
     parts.append(f"{get_available_action_names(available_agents)}.")
-    txt = " ".join(parts)
-    return txt.capitalize()
+    return " ".join(parts)
 
 
 def get_variable_type_str(variable_name: str, type_str: Optional[str]) -> str:
     if type_str is None or len(type_str) == 0:
         return ""
-    txt = f"The type of variable {variable_name} is {type_str}."
-    return txt.capitalize()
+    return f"The type of variable {variable_name} is {type_str}."
 
 
 def get_variable_name_from_sig_item(
@@ -77,8 +75,7 @@ def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
                 "can be acquired by asking the user." if slot_fillable else "cannot be acquired by asking the user."
             )
             sentence_parts.append(slot_fillable_description)
-            description = " ".join(sentence_parts)
-            variable_description_str_lst.append(description.capitalize())
+            variable_description_str_lst.append(" ".join(sentence_parts))
 
     return "\n".join(variable_description_str_lst)
 
@@ -98,9 +95,8 @@ def get_vartiable_type_description(
         sig = agent_info.actuator_signature
         variable_type_strs += get_variable_type_from_sig_item(sig.in_sig_full)
         variable_type_strs += get_variable_type_from_sig_item(sig.out_sig_full)
-    txt = (" ".join(sorted(list(set(variable_type_strs))))).strip() if len(variable_type_strs) > 0 else ""
 
-    return txt.capitalize()
+    return (" ".join(sorted(list(set(variable_type_strs))))).strip() if len(variable_type_strs) > 0 else ""
 
 
 def get_variable_type_from_sig_item(
@@ -148,12 +144,10 @@ def get_action_variable_description(agent_info: AgentInfo) -> str:
     ) + get_names_from_signature_items_no_category(sig.out_sig_full)
 
     if len(variable_names) > 0:
-        part_list: List[str] = [f"action {agent_info.agent_id} has"]
+        part_list: List[str] = [f"Action {agent_info.agent_id} has"]
         part_list.append("variable" if len(variable_names) == 1 else "variables")
         part_list.append(get_names(list(set(variable_names))))
-        txt = " ".join(part_list) + "."
-        return txt.capitalize()
-
+        return " ".join(part_list) + "."
     return ""
 
 
@@ -162,8 +156,7 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
     variable_names = get_names_from_signature_items_no_category(sig.in_sig_full if is_in_sig else sig.out_sig_full)
 
     if len(variable_names) == 0:
-        txt = f"action {agent_info.agent_id} can be executed without knowing any variable" if is_in_sig else ""
-        return txt.capitalize()
+        return f"Action {agent_info.agent_id} can be executed without knowing any variable" if is_in_sig else ""
 
     variable_names = list(set(variable_names))
     part_list: List[str] = []
@@ -180,9 +173,8 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
         part_list.append(get_names(variable_names))
         part_list.append("is" if is_singular else "are")
         part_list.append("known.")
-    txt = " ".join(part_list)
 
-    return txt.capitalize()
+    return " ".join(part_list)
 
 
 def get_names_from_signature_items_no_category(
@@ -212,8 +204,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
-    txt = f"Action map can determine the value of variable {mapping[0]} from variable {mapping[1]}."
-    return txt.capitalize()
+    return f"Action map can determine the value of variable {mapping[0]} from variable {mapping[1]}."
 
 
 def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:
@@ -224,8 +215,7 @@ def get_goal_description(goals: List[str]) -> str:
     parts: List[str] = ["The goal of the system is to execute"]
     parts.append("action" if len(goals) == 1 else "actions")
     parts.append(f"{get_names(goals)}.")
-    txt = " ".join(parts)
-    return txt.capitalize()
+    return " ".join(parts)
 
 
 def get_description_available_data(available_items: List[Tuple[str, Optional[str]]]) -> str:
@@ -238,6 +228,5 @@ def get_description_available_data(available_items: List[Tuple[str, Optional[str
     parts.append("Values are available already for")
     parts.append("variable" if len(item_list) == 1 else "variables")
     parts.append(f"{get_names(item_list)}.")
-    txt = " ".join(parts)
 
-    return txt.capitalize()
+    return " ".join(parts)
