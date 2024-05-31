@@ -167,6 +167,20 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
+    def test_optimal_plan_without_outputs(self) -> None:
+        alternative_tokens = [
+            "agent_a()",
+            "map(a_1, a)",
+            "confirm(a)",
+            "assert $a > 10",
+            "agent_c(a)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, show_output=False)
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
     def test_invalid_tokens(self) -> None:
         messed_up_tokens = [
             "a_1 = agent_aa()",  # unknown agent

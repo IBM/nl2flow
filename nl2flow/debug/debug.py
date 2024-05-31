@@ -4,7 +4,6 @@ from difflib import Differ
 from re import match
 from warnings import warn
 
-from nl2flow.plan.schemas import RawPlan
 from nl2flow.plan.planners import Kstar
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.compile.flow import Flow
@@ -21,18 +20,11 @@ class Debugger(ABC):
         self.flow = instance
 
     @abstractmethod
-    def debug_raw_plan(self, raw_plan: RawPlan) -> None:
-        pass
-
-    @abstractmethod
     def debug(self, list_of_tokens: List[str], debug: SolutionQuality, timeout: int = TIMEOUT) -> Report:
         pass
 
 
 class BasicDebugger(Debugger):
-    def debug_raw_plan(self, raw_plan: RawPlan) -> None:
-        raise NotImplementedError
-
     @staticmethod
     def parse_parameters(prefix: str, signature: str) -> List[str]:
         m = match(rf"{prefix}\((?P<parameters>.*)\)", signature)
@@ -136,7 +128,9 @@ class BasicDebugger(Debugger):
 
         return diff_obj
 
-    def debug(self, list_of_tokens: List[str], debug: SolutionQuality, timeout: int = TIMEOUT) -> Report:
+    def debug(
+        self, list_of_tokens: List[str], debug: SolutionQuality, timeout: int = TIMEOUT, show_output: bool = True
+    ) -> Report:
         PLANNER.timeout = timeout
 
         reference_plan: ClassicalPlanReference = self.parse_tokens(list_of_tokens)
@@ -151,7 +145,8 @@ class BasicDebugger(Debugger):
 
         if len(planner_response.list_of_plans) > 0:
             first_plan = planner_response.list_of_plans[0]
-            first_plan_stringify = PLANNER.pretty_print_plan(first_plan, line_numbers=False).split("\n")
+            first_plan_stringify = PLANNER.pretty_print_plan(first_plan, show_output, line_numbers=False)
+            first_plan_stringify = first_plan_stringify.split("\n")
 
             new_report.plan_diff_str = list(DIFFER.compare(list_of_tokens, first_plan_stringify))
             new_report.plan_diff_obj = self.plan_diff_str2obj(new_report.plan_diff_str)
