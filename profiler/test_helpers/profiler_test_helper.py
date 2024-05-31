@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import Tuple
 from nl2flow.compile.schemas import PDDL
-from nl2flow.plan.planners import Planner
+from nl2flow.plan.planner import Planner
 from nl2flow.plan.schemas import PlannerResponse
 from profiler.test_helpers.profiler_test_helper_variables import (
     domain_file_name,

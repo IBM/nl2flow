@@ -4,7 +4,7 @@ from difflib import Differ
 from re import match
 from warnings import warn
 
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.options import BasicOperations
@@ -145,8 +145,7 @@ class BasicDebugger(Debugger):
 
         if len(planner_response.list_of_plans) > 0:
             first_plan = planner_response.list_of_plans[0]
-            first_plan_stringify = PLANNER.pretty_print_plan(first_plan, show_output, line_numbers=False)
-            first_plan_stringify = first_plan_stringify.split("\n")
+            first_plan_stringify = PLANNER.pretty_print_plan(first_plan, show_output, line_numbers=False).split("\n")
 
             new_report.plan_diff_str = list(DIFFER.compare(list_of_tokens, first_plan_stringify))
             new_report.plan_diff_obj = self.plan_diff_str2obj(new_report.plan_diff_str)

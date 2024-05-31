@@ -1,9 +1,14 @@
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import revert_string_transform
-from nl2flow.plan.schemas import Action, RawPlannerResult, RawPlan, PlannerResponse, ClassicalPlan as Plan
-from nl2flow.plan.options import QUALITY_BOUND, NUM_PLANS, TIMEOUT
+from nl2flow.compile.utils import Transform, revert_string_transform
+from nl2flow.plan.schemas import Action, RawPlan, PlannerResponse, ClassicalPlan as Plan
+from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items, is_goal
-from nl2flow.compile.schemas import PDDL, Constraint
+
+from nl2flow.compile.schemas import (
+    Constraint,
+    PDDL,
+)
+
 from nl2flow.compile.options import (
     BasicOperations,
     SlotOptions,
@@ -13,12 +18,7 @@ from nl2flow.compile.options import (
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Set
-from pathlib import Path
-from kstar_planner import planners
-
-import tempfile
-
-from nl2flow.utility.file_utility import open_atomic
+from copy import deepcopy
 
 
 class Planner(ABC):
@@ -37,9 +37,30 @@ class Planner(ABC):
     def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
         pass
 
-    @abstractmethod
-    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
-        pass
+    @classmethod
+    def post_process(cls, planner_response: PlannerResponse, **kwargs: Any) -> PlannerResponse:
+        flow_object: Flow = kwargs["flow"]
+
+        slot_options: Set[SlotOptions] = flow_object.slot_options
+        mapping_options: Set[MappingOptions] = flow_object.mapping_options
+        confirm_options: Set[ConfirmOptions] = flow_object.confirm_options
+
+        for index, plan in enumerate(planner_response.list_of_plans):
+            new_plan = deepcopy(plan)
+
+            if SlotOptions.group_slots in slot_options:
+                new_plan = group_items(new_plan, SlotOptions.group_slots)
+
+            if MappingOptions.group_maps in mapping_options:
+                new_plan = group_items(new_plan, MappingOptions.group_maps)
+
+            if ConfirmOptions.group_confirms in confirm_options:
+                new_plan = group_items(new_plan, ConfirmOptions.group_confirms)
+
+            new_plan.length = len(new_plan.plan)
+            planner_response.list_of_plans[index] = new_plan
+
+        return planner_response
 
     @classmethod
     def pretty_print_plan_verbose(cls, flow_object: Flow, plan: Plan) -> str:
@@ -112,76 +133,13 @@ class Planner(ABC):
         return pretty
 
 
-class Kstar(Planner):
-    def __call_to_planner(self, pddl: PDDL) -> RawPlannerResult:
-        with tempfile.NamedTemporaryFile() as domain_temp, tempfile.NamedTemporaryFile() as problem_temp:
-            domain_file = Path(tempfile.gettempdir()) / domain_temp.name
-            problem_file = Path(tempfile.gettempdir()) / problem_temp.name
-
-            with open_atomic(domain_file, "w") as domain_handle:
-                domain_handle.write(pddl.domain)
-
-            with open_atomic(problem_file, "w") as problem_handle:
-                problem_handle.write(pddl.problem)
-
-            planner_result = planners.plan_unordered_topq(
-                domain_file=domain_file,
-                problem_file=problem_file,
-                timeout=self.timeout,
-                quality_bound=QUALITY_BOUND,
-                number_of_plans_bound=NUM_PLANS,
-            )
-            result = RawPlannerResult(list_of_plans=planner_result.get("plans", []))
-            result.error_running_planner = False
-            result.is_no_solution = planner_result.get("unsolvable", None)
-            result.is_timeout = planner_result.get("timeout_triggered", None)
-            result.planner_output = planner_result.get("planner_output")
-            result.planner_error = planner_result.get("planner_error")
-            return result
-
-    def raw_plan(self, pddl: PDDL) -> RawPlannerResult:
-        # noinspection PyBroadException
-        try:
-            raw_planner_result = self.__call_to_planner(pddl)
-            return raw_planner_result
-
-        except TimeoutError as error:
-            return RawPlannerResult(
-                is_timeout=True,
-                stderr=error,
-            )
-
-        except Exception as error:
-            return RawPlannerResult(
-                error_running_planner=True,
-                is_timeout=False,
-                stderr=error,
-            )
-
-    def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
-        raw_planner_result = self.raw_plan(pddl)
-        planner_response = PlannerResponse.initialize_from_raw_plans(raw_planner_result)
-        # noinspection PyBroadException
-        try:
-            planner_response.list_of_plans = self.parse(raw_planner_result.list_of_plans, **kwargs)
-            planner_response.is_parse_error = (
-                len(planner_response.list_of_plans) == 0 and planner_response.is_no_solution is False
-            )
-
-            return planner_response
-
-        except Exception as error:
-            planner_response.is_parse_error = True
-            planner_response.stderr = error
-            return planner_response
-
-    def parse(self, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
+class FDDerivedPlanner(ABC):
+    @classmethod
+    def parse(cls, raw_plans: List[RawPlan], **kwargs: Any) -> List[Plan]:
         list_of_plans = list()
 
-        flow: Flow = kwargs["flow"]
-        slot_options: Set[SlotOptions] = flow.slot_options
-        mapping_options: Set[MappingOptions] = flow.mapping_options
-        confirm_options: Set[ConfirmOptions] = flow.confirm_options
+        flow_object: Flow = kwargs["flow"]
+        transforms: List[Transform] = kwargs.get("transforms", [])
 
         for plan in raw_plans:
             new_plan = Plan(cost=plan.cost, reference=plan.actions)
@@ -189,24 +147,20 @@ class Kstar(Planner):
 
             for action in actions:
                 action_split = action.split()
-                action_name = revert_string_transform(action_split[0], kwargs["transforms"])
+                action_name = revert_string_transform(action_split[0], transforms)
 
                 if action_name is not None:
-                    new_action = parse_action(action_name=action_name, parameters=action_split[1:], **kwargs)
+                    new_action = parse_action(
+                        action_name=action_name,
+                        parameters=action_split[1:],
+                        flow_object=flow_object,
+                        transforms=transforms,
+                    )
                 else:
                     raise ValueError("Could not parse action name.")
 
                 if new_action:
                     new_plan.plan.append(new_action)
-
-            if SlotOptions.group_slots in slot_options:
-                new_plan = group_items(new_plan, SlotOptions.group_slots)
-
-            if MappingOptions.group_maps in mapping_options:
-                new_plan = group_items(new_plan, MappingOptions.group_maps)
-
-            if ConfirmOptions.group_confirms in confirm_options:
-                new_plan = group_items(new_plan, ConfirmOptions.group_confirms)
 
             new_plan.length = len(new_plan.plan)
             list_of_plans.append(new_plan)

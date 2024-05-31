@@ -1,6 +1,6 @@
 from nl2flow.compile.schemas import Constraint
 from nl2flow.compile.options import BasicOperations, ConstraintState
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from tests.sketch.test_basic import sketch_to_plan, load_assets

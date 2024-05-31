@@ -1,6 +1,6 @@
 from nl2flow.compile.schemas import Constraint, MemoryItem, Step
 from nl2flow.compile.options import ConstraintState, MemoryState
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog

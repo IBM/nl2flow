@@ -2,7 +2,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import PDDL, Transform
 from nl2flow.compile.options import SlotOptions, MappingOptions
 from nl2flow.plan.schemas import PlannerResponse
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
 from nl2flow.services.schemas.sketch_options import SketchOptions

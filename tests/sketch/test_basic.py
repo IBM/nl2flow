@@ -5,7 +5,7 @@ import yaml  # type: ignore
 
 from nl2flow.compile.options import BasicOperations
 from nl2flow.compile.schemas import Constraint
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog

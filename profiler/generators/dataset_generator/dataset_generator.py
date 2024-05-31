@@ -9,7 +9,7 @@ from profiler.common_helpers.string_helper import trim_pddl_str
 from profiler.test_helpers.profiler_test_helper_variables import (
     pddl_start_key,
 )
-from nl2flow.plan.planners import Planner
+from nl2flow.plan.planner import Planner
 from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 
 

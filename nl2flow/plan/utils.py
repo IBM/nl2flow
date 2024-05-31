@@ -1,6 +1,6 @@
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import revert_string_transform, string_transform
+from nl2flow.compile.utils import Transform, revert_string_transform, string_transform
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.plan.schemas import ClassicalPlan, Action
 from nl2flow.compile.options import (
@@ -79,10 +79,9 @@ def is_goal(action_name: str, flow_object: Flow) -> bool:
     return False
 
 
-def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Optional[Union[Action, Constraint]]:
-    transforms = kwargs["transforms"]
-    flow: Flow = kwargs["flow"]
-
+def parse_action(
+    action_name: str, parameters: List[str], flow_object: Flow, transforms: List[Transform]
+) -> Optional[Union[Action, Constraint]]:
     if any([action_name.startswith(item.value) for item in RestrictedOperations]):
         return None
 
@@ -128,7 +127,9 @@ def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Opti
         return Constraint(constraint=constraint, truth_value=truth_value)
 
     else:
-        operator: OperatorDefinition = next(filter(lambda x: x.name == action_name, flow.flow_definition.operators))
+        operator: OperatorDefinition = next(
+            filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
+        )
         new_action = Action(name=operator.name)
 
         new_action.inputs = unpack_list_of_signature_items(operator.inputs)
