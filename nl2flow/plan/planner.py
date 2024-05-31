@@ -1,16 +1,10 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform
-from nl2flow.plan.schemas import Action, RawPlan, PlannerResponse, ClassicalPlan as Plan
+from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import TIMEOUT
-from nl2flow.plan.utils import parse_action, group_items, is_goal
-
-from nl2flow.compile.schemas import (
-    Constraint,
-    PDDL,
-)
-
+from nl2flow.plan.utils import parse_action, group_items
+from nl2flow.compile.schemas import PDDL
 from nl2flow.compile.options import (
-    BasicOperations,
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
@@ -61,76 +55,6 @@ class Planner(ABC):
             planner_response.list_of_plans[index] = new_plan
 
         return planner_response
-
-    @classmethod
-    def pretty_print_plan_verbose(cls, flow_object: Flow, plan: Plan) -> str:
-        verbose_strings = []
-
-        for step, action in enumerate(plan.plan):
-            if isinstance(action, Action):
-                if action.name == BasicOperations.SLOT_FILLER.value:
-                    verbose_strings.append(f"{step}. Acquire the value of {action.inputs[0]} by asking the user.")
-
-                elif action.name == BasicOperations.MAPPER.value:
-                    verbose_strings.append(
-                        f"{step}. Get the value of {action.inputs[1]} from {action.inputs[0]} which is already known."
-                    )
-
-                elif action.name == BasicOperations.CONFIRM.value:
-                    verbose_strings.append(
-                        f"{step}. Confirm with the user that the value of {action.inputs[0]} is correct."
-                    )
-
-                else:
-                    inputs = ", ".join(action.inputs) or None
-                    input_string = f" with {inputs} as input{'s' if len(action.inputs) > 1 else ''}" if inputs else ""
-
-                    outputs = ", ".join(action.outputs) or None
-                    output_string = f" This will result in acquiring {outputs}." if outputs else ""
-
-                    action_string = f"{step}. Execute action {action.name}{input_string}.{output_string}"
-
-                    if is_goal(action.name, flow_object):
-                        action_string += f" Since {action.name} was a goal of this plan, return the results of {action.name}({inputs}) to the user."
-
-                    verbose_strings.append(action_string)
-
-            elif isinstance(action, Constraint):
-                constraint_string = f"Check that {action.constraint} is {action.truth_value}"
-                verbose_strings.append(f"{step}. {constraint_string}.")
-
-        return "\n".join(verbose_strings)
-
-    @classmethod
-    def pretty_print_plan(cls, plan: Plan, show_output: bool = True, line_numbers: bool = True) -> str:
-        pretty = ""
-
-        for step, action in enumerate(plan.plan):
-            if isinstance(action, Action):
-                inputs = ", ".join(action.inputs) or None
-                input_string = f"({inputs or ''})"
-
-                outputs = ", ".join(action.outputs) or None
-                output_string = f"{outputs} = " if outputs else ""
-
-                pretty += f"{f'[{step}] ' if line_numbers else ''}{output_string if show_output else ''}{action.name}{input_string}\n"
-
-            elif isinstance(action, Constraint):
-                constraint_string = f"assert {'' if action.truth_value else 'not '}{action.constraint}"
-                pretty += f"{f'[{step}] ' if line_numbers else ''}{constraint_string}\n"
-
-        return pretty.strip()
-
-    @classmethod
-    def pretty_print(cls, planner_response: PlannerResponse) -> str:
-        pretty = ""
-
-        for index, plan in enumerate(planner_response.list_of_plans):
-            pretty += f"\n\n---- Plan #{index} ----\n"
-            pretty += f"Cost: {plan.cost}, Length: {plan.length}\n\n"
-            pretty += cls.pretty_print_plan(plan)
-
-        return pretty
 
 
 class FDDerivedPlanner(ABC):

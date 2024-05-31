@@ -5,6 +5,7 @@ from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem, Step
 from nl2flow.compile.options import LifeCycleOptions, BasicOperations
 from nl2flow.plan.planners.kstar import Kstar
+from nl2flow.printers.codelike import CodeLikePrint
 from copy import deepcopy
 
 PLANNER = Kstar()
@@ -61,7 +62,9 @@ class TestBasic:
     def test_token_production(self) -> None:
         stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(self.tokens)])
         planner_response = self.flow.plan_it(PLANNER)
-        assert any([stringify_tokens == PLANNER.pretty_print_plan(plan) for plan in planner_response.list_of_plans])
+        assert any(
+            [stringify_tokens == CodeLikePrint.pretty_print_plan(plan) for plan in planner_response.list_of_plans]
+        )
 
     def test_token_parsing(self) -> None:
         reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(self.tokens)

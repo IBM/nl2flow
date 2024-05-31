@@ -33,5 +33,5 @@ class TestQuadrupleGenerator:
 
         pddl, _ = new_flow.compile_to_pddl()
         plans = new_flow.plan_it(PLANNER)
-        write_pddl_plan(pddl, plans, PLANNER)
+        write_pddl_plan(pddl, plans)
         assert True

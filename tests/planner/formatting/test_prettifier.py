@@ -2,6 +2,8 @@ from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem
+from nl2flow.printers.codelike import CodeLikePrint
+from nl2flow.printers.verbalize import VerbalizePrint
 
 PLANNER = Kstar()
 
@@ -36,16 +38,16 @@ class TestPrettifier:
         self.flow = Flow(name="Test Prettifier")
         self.flow.add([agent_1, agent_0, agent_b, agent_a])
 
-    def test_prettified_plan_verbose(self) -> None:
+    def test_prettified_plan_verbalize(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = PLANNER.pretty_print_plan_verbose(self.flow, planner_response.list_of_plans[0])
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
         print(pretty)
 
     def test_prettified_plan(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = PLANNER.pretty_print_plan(planner_response.list_of_plans[0])
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0])
         print(pretty)
 
         if "Agent 1" in pretty:
@@ -74,7 +76,7 @@ class TestPrettifier:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
         planner_response.list_of_plans = planner_response.list_of_plans[:1]
-        pretty = PLANNER.pretty_print(planner_response)
+        pretty = CodeLikePrint.pretty_print(planner_response)
         print(pretty)
 
         if "Agent 1" in pretty:

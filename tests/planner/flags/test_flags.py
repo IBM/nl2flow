@@ -3,6 +3,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, GoalItems, GoalItem, SlotProperty
 from nl2flow.compile.options import SlotOptions, BasicOperations
+from nl2flow.printers.codelike import CodeLikePrint
 
 import pytest
 
@@ -55,7 +56,7 @@ class TestFlags:
     def test_happy_situation(self) -> None:
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Agent A")))
         planner_response = self.flow.plan_it(self.PLANNER)
-        print(self.PLANNER.pretty_print(planner_response))
+        print(CodeLikePrint.pretty_print(planner_response))
 
         assert len(planner_response.list_of_plans) == 1
         assert planner_response.is_timeout is False

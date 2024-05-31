@@ -2,6 +2,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
+from nl2flow.printers.codelike import CodeLikePrint
 
 import os
 
@@ -28,6 +29,6 @@ def test_basic() -> None:
     _ = pddl  # explore the pddl
 
     plans = new_flow.plan_it(PLANNER)
-    print(PLANNER.pretty_print(plans))
+    print(CodeLikePrint.pretty_print(plans))
 
     assert plans.list_of_plans, "There should be plans."
