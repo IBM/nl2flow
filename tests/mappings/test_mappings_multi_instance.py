@@ -1,4 +1,5 @@
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.printers.codelike import CodeLikePrint
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     BasicOperations,
@@ -117,10 +118,10 @@ class TestMappingsMultiInstance(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        planner_response = self.get_plan()
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
                 assert action.inputs[0] == "item12321", "Item item12321 mapped twice"
@@ -131,10 +132,10 @@ class TestMappingsMultiInstance(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        planner_response = self.get_plan()
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         assert len(poi.plan) == 5, "A plan of length 5."
 
         first_four_action_names = [action.name for action in poi.plan[: len(poi.plan) - 1]]
@@ -155,10 +156,10 @@ class TestMappingsMultiInstance(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Email Agent"))
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        planner_response = self.get_plan()
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         assert len(poi.plan) == 5, "A plan of length 5."
 
         first_four_action_names = [action.name for action in poi.plan]
@@ -208,10 +209,10 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         self.flow.add(filename_producer_agent)
 
-        plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        planner_response = self.get_plan()
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         assert len(poi.plan) == 6, "A plan of length 6."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
@@ -257,10 +258,10 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.variable_life_cycle.add(LifeCycleOptions.uncertain_on_use)
         self.flow.mapping_options.add(MappingOptions.transitive)
 
-        plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        planner_response = self.get_plan()
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         assert len(poi.plan) == 8, "A plan of length 8."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
@@ -285,8 +286,30 @@ class TestMappingsMultiInstance(BaseTestAgents):
         )
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        self.multi_email_and_typed_goal_test_should_be_same(plans)
+        planner_response = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(planner_response)
+
+    def test_multi_instance_from_memory_with_multi_skill_printing_collapsed_maps(self) -> None:
+        self.set_up_multi_instance_email_tests()
+
+        goal = GoalItems(
+            goals=[GoalItem(goal_name=item.item_id, goal_type=GoalType.OBJECT_USED) for item in self.emails_in_memory]
+        )
+        self.flow.add(goal)
+
+        planner_response = self.get_plan()
+        best_plan = planner_response.list_of_plans[0]
+        collapse_maps_print = CodeLikePrint.pretty_print_plan(best_plan, collapse_maps=True)
+
+        print(collapse_maps_print)
+        assert collapse_maps_print.split("\n") == [
+            "[0] ask(body)",
+            "[1] ask(attachments)",
+            "[2] ask(from)",
+            "[3] Email Agent(from, item55132, body, attachments)",
+            "[4] Email Agent(from, item14311, body, attachments)",
+            "[5] Email Agent(from, item12321, body, attachments)",
+        ]
 
     def test_multi_instance_from_memory_with_multi_skill_and_confirmation(self) -> None:
         self.set_up_multi_instance_email_tests()
@@ -295,19 +318,19 @@ class TestMappingsMultiInstance(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED))
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        self.multi_email_and_typed_goal_test_should_be_same(plans)
+        planner_response = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(planner_response)
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         action_names = [action.name for action in poi.plan]
 
         assert len(action_names) == 18, "Plan of length 18."
 
         self.flow.slot_options.add(SlotOptions.group_slots)
 
-        plans = self.get_plan()
+        planner_response = self.get_plan()
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         action_names = [action.name for action in poi.plan]
 
         assert len(action_names) == 16, "Plan of length 16."
@@ -319,14 +342,14 @@ class TestMappingsMultiInstance(BaseTestAgents):
         goal = GoalItems(goals=GoalItem(goal_name="Email ID", goal_type=GoalType.OBJECT_USED))
         self.flow.add(goal)
 
-        plans = self.get_plan()
-        self.multi_email_and_typed_goal_test_should_be_same(plans)
+        planner_response = self.get_plan()
+        self.multi_email_and_typed_goal_test_should_be_same(planner_response)
 
     @staticmethod
-    def multi_email_and_typed_goal_test_should_be_same(plans: PlannerResponse) -> None:
-        assert plans.list_of_plans, "There should be plans."
+    def multi_email_and_typed_goal_test_should_be_same(planner_response: PlannerResponse) -> None:
+        assert planner_response.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = planner_response.list_of_plans[0]
         action_names = [action.name for action in poi.plan]
 
         assert action_names.count(BasicOperations.MAPPER.value) == 3, "Three maps."

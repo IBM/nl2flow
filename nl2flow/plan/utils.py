@@ -130,9 +130,11 @@ def parse_action(
         operator: OperatorDefinition = next(
             filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
         )
-        new_action = Action(name=operator.name)
-
-        new_action.inputs = unpack_list_of_signature_items(operator.inputs)
+        new_action = Action(
+            name=operator.name,
+            parameters=[revert_string_transform(p, transforms) for p in parameters],
+            inputs=unpack_list_of_signature_items(operator.inputs),
+        )
 
         if isinstance(operator.outputs, Outcome):
             new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)

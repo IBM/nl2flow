@@ -6,6 +6,7 @@ from nl2flow.compile.schemas import Constraint
 
 class Action(BaseModel):
     name: str
+    parameters: List[str] = []
     inputs: List[str] = []
     outputs: List[str] = []
 
