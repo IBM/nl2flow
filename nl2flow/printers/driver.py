@@ -1,18 +1,32 @@
-from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.plan.schemas import PlannerResponse, ClassicalPlan as Plan
+from nl2flow.compile.schemas import ClassicalPlanReference, Step, Constraint
 from abc import ABC, abstractmethod
-from typing import Any, Union
+from typing import Any, List, Union
 
 
 class Printer(ABC):
     @classmethod
     @abstractmethod
-    def pretty_print_plan(cls, plan: Plan, **kwargs: Any) -> str:
+    def parse_token(cls, token: str, **kwargs: Any) -> Union[Step, Constraint, None]:
         pass
 
     @classmethod
+    def parse_tokens(cls, list_of_tokens: List[str], **kwargs: Any) -> ClassicalPlanReference:
+        parsed_plan = ClassicalPlanReference()
+
+        for index, token in enumerate(list_of_tokens):
+            new_action = cls.parse_token(token, **kwargs)
+
+            if new_action:
+                parsed_plan.plan.append(new_action)
+            else:
+                continue
+
+        return parsed_plan
+
+    @classmethod
     @abstractmethod
-    def parse_token(cls, token: str) -> Union[Step, Constraint, None]:
+    def pretty_print_plan(cls, plan: Plan, **kwargs: Any) -> str:
         pass
 
     @classmethod

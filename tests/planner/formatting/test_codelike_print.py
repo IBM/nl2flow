@@ -1,8 +1,8 @@
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem
-from nl2flow.printers.codelike import CodeLikePrint
+from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem, Step
+from nl2flow.printers.codelike import CodeLikePrint, parse_parameters
 
 PLANNER = Kstar()
 
@@ -196,3 +196,22 @@ class TestCodeLikePrint:
             "Agent A(a, b)",
             "Agent B(a, b, c)",
         ]
+
+    def test_parse_token(self) -> None:
+        target = Step(name="a", parameters=["b", "c"])
+
+        assert CodeLikePrint.parse_token("a(b,c)") == target
+        assert CodeLikePrint.parse_token("[2] a(b,c)") == target
+        assert CodeLikePrint.parse_token(" [2] a(b,c) ") == target
+        assert CodeLikePrint.parse_token(" a(b,c) ") == target
+        assert CodeLikePrint.parse_token("a(b, c)") == target
+        assert CodeLikePrint.parse_token("x = a(b,c)") == target
+        assert CodeLikePrint.parse_token(" x = a(b,c) ") == target
+
+    def test_parse_parameters(self) -> None:
+        assert parse_parameters(prefix="a", signature="a(b,c)") == ["b", "c"]
+        assert parse_parameters(prefix="a", signature="a(b, c)") == ["b", "c"]
+        assert parse_parameters(prefix="a", signature=" a(b,c) ") == ["b", "c"]
+        assert parse_parameters(prefix="a", signature="a(c)") == ["c"]
+        assert parse_parameters(prefix="a", signature="a()") == []
+        assert parse_parameters(prefix="a", signature="a") == []

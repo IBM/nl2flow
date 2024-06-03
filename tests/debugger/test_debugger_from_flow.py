@@ -67,7 +67,7 @@ class TestBasic:
         )
 
     def test_token_parsing(self) -> None:
-        reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(self.tokens)
+        reference_plan: ClassicalPlanReference = CodeLikePrint.parse_tokens(self.tokens)
         assert reference_plan.plan == [
             Step(
                 name="agent_a",
