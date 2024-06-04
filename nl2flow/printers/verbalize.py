@@ -52,5 +52,5 @@ class VerbalizePrint(Printer):
         return delimiter.join(verbose_strings)
 
     @classmethod
-    def parse_token(cls, token: str) -> Union[Step, Constraint, None]:
+    def parse_token(cls, token: str, **kwargs: Any) -> Union[Step, Constraint, None]:
         raise NotImplementedError

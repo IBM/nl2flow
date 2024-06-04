@@ -99,7 +99,7 @@ class BasicDebugger(Debugger):
             best_plan = planner_response.list_of_plans[0]
 
             new_report.plan_diff_str = self.generate_plan_diff(printer, best_plan, list_of_tokens, **kwargs)
-            new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str)
+            new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str, **kwargs)
 
             new_report.determination = len([d for d in new_report.plan_diff_obj if d.diff_type is not None]) == 0
 

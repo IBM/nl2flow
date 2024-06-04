@@ -185,6 +185,23 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
+    def test_optimal_plan_with_collapsed_maps(self) -> None:
+        alternative_tokens = [
+            "a_1 = agent_a()",
+            "confirm(a_1)",
+            "assert $a_1 > 10",
+            "y = agent_c(a_1)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, collapse_maps=True)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
     def test_invalid_tokens(self) -> None:
         messed_up_tokens = [
             "a_1 = agent_aa()",  # unknown agent
@@ -216,13 +233,9 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, printer=CustomPrint())
-        diff_string = "\n".join(report.plan_diff_str)
-        print(f"\n\n{diff_string}")
-        assert report.determination, "Reference plan is optimal"
+        for mode in SolutionQuality:
+            report = self.debugger.debug(alternative_tokens, debug=mode, printer=CustomPrint())
+            diff_string = "\n".join(report.plan_diff_str)
+            print(f"\n\n{diff_string}")
 
-        # report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.VALID, printer=CustomPrint())
-        # assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
-
-
-# [Step(name='agent_a', parameters=[]), Step(name='ask', parameters=['a_1', 'a']), Step(name='confirm', parameters=['a']), Constraint(constraint='$a > 10', truth_value=False), Step(name='agent_c', parameters=['a']), Step(name='agent_d', parameters=['y'])]
+            assert report.determination, f"Reference plan is {mode.value}"

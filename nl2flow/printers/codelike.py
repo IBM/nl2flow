@@ -55,7 +55,17 @@ class CodeLikePrint(Printer):
                 current_index += 1
 
             elif isinstance(action, Constraint):
-                new_string += f"assert {'' if action.truth_value else 'not '}{action.constraint}"
+                constraint_string = action.constraint
+
+                if collapse_maps:
+                    constraint_parameters = action.get_variable_references_from_constraint(
+                        action.constraint, transforms=[]
+                    )
+
+                    for p in constraint_parameters:
+                        constraint_string = constraint_string.replace(f"${p}", f"${current_maps.get(p, p)}")
+
+                new_string += f"assert {'' if action.truth_value else 'not '}{constraint_string}"
                 current_index += 1
 
             pretty.append(new_string)

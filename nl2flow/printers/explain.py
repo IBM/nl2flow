@@ -10,5 +10,5 @@ class ExplainPrint(Printer):
         raise NotImplementedError
 
     @classmethod
-    def parse_token(cls, token: str) -> Union[Step, Constraint, None]:
+    def parse_token(cls, token: str, **kwargs: Any) -> Union[Step, Constraint, None]:
         raise NotImplementedError
