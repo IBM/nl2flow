@@ -2,21 +2,26 @@ from nl2flow.printers.driver import Printer
 from nl2flow.plan.schemas import Action, ClassicalPlan as Plan
 from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.compile.options import BasicOperations
-from typing import List, Union, Any
+from typing import List, Union, Tuple, Any
 from re import match
 from warnings import warn
 
 
-def parse_parameters(prefix: str, signature: str) -> List[str]:
+def parse_parameters(signature: str) -> Tuple[str, List[str]]:
     try:
-        match_object = match(pattern=rf"\s*{prefix}\((?P<parameters>.*)\)\s*", string=signature)
-        parameters = "" if match_object is None else match_object.groupdict().get("parameters", None)
+        match_object = match(pattern=r"\s*(?P<action_name>.*)\((?P<parameters>.*)\)\s*", string=signature)
 
-        return [] if not parameters else [p.strip() for p in parameters.split(",")]
+        if match_object:
+            action_name = match_object.groupdict().get("action_name", "")
+            parameters = match_object.groupdict().get("parameters", None)
+
+            return action_name, [] if not parameters else [p.strip() for p in parameters.split(",")]
+        else:
+            return "", []
 
     except Exception as e:
-        warn(message=f"Could not parse {prefix} operation: {signature}: {e}", category=SyntaxWarning)
-        return []
+        warn(message=f"Could not parse {signature}: {e}", category=SyntaxWarning)
+        return "", []
 
 
 class CodeLikePrint(Printer):
@@ -78,23 +83,14 @@ class CodeLikePrint(Printer):
                             truth_value=not token.startswith(f"{BasicOperations.CONSTRAINT.value} not"),
                         )
                     else:
-                        new_action = Step(
-                            name=action_name,
-                            parameters=parse_parameters(action_name, token),
-                        )
+                        action_name, parameters = parse_parameters(token)
+                        new_action = Step(name=action_name, parameters=parameters)
 
             if new_action is None:
                 action_split = token.split(" = ")
                 agent_signature = action_split[0] if len(action_split) == 1 else action_split[1]
-
-                agent_signature_split = agent_signature.split("(")
-                action_name = agent_signature_split[0]
-                parameters = parse_parameters(action_name, agent_signature)
-
-                new_action = Step(
-                    name=action_name,
-                    parameters=parameters,
-                )
+                action_name, parameters = parse_parameters(agent_signature)
+                new_action = Step(name=action_name, parameters=parameters)
 
             if new_action:
                 return new_action

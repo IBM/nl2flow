@@ -6,6 +6,7 @@ from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalIt
 from nl2flow.compile.options import LifeCycleOptions, BasicOperations
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.printers.codelike import CodeLikePrint
+from tests.debugger.custom_formatter.custom_print import CustomPrint
 from copy import deepcopy
 
 PLANNER = Kstar()
@@ -204,3 +205,24 @@ class TestBasic:
 
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 11, "1 edits"
         assert report.determination is False, "Reference plan is not sound"
+
+    def test_custom_formatter(self) -> None:
+        alternative_tokens = [
+            "agent_a() -> a_1",
+            "map a_1 -> a",
+            "confirm a",
+            "check if $a > 10 is True",
+            "agent_c(a) -> y",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, printer=CustomPrint())
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+        assert report.determination, "Reference plan is optimal"
+
+        # report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.VALID, printer=CustomPrint())
+        # assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+
+
+# [Step(name='agent_a', parameters=[]), Step(name='ask', parameters=['a_1', 'a']), Step(name='confirm', parameters=['a']), Constraint(constraint='$a > 10', truth_value=False), Step(name='agent_c', parameters=['a']), Step(name='agent_d', parameters=['y'])]

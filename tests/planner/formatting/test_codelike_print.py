@@ -209,9 +209,12 @@ class TestCodeLikePrint:
         assert CodeLikePrint.parse_token(" x = a(b,c) ") == target
 
     def test_parse_parameters(self) -> None:
-        assert parse_parameters(prefix="a", signature="a(b,c)") == ["b", "c"]
-        assert parse_parameters(prefix="a", signature="a(b, c)") == ["b", "c"]
-        assert parse_parameters(prefix="a", signature=" a(b,c) ") == ["b", "c"]
-        assert parse_parameters(prefix="a", signature="a(c)") == ["c"]
-        assert parse_parameters(prefix="a", signature="a()") == []
-        assert parse_parameters(prefix="a", signature="a") == []
+        assert parse_parameters(signature="a(b,c)") == ("a", ["b", "c"])
+        assert parse_parameters(signature="a(b, c)") == ("a", ["b", "c"])
+        assert parse_parameters(signature=" a(b,c) ") == ("a", ["b", "c"])
+
+        assert parse_parameters(signature="a(c)") == ("a", ["c"])
+        assert parse_parameters(signature="a()") == ("a", [])
+
+        assert parse_parameters(signature="agent_a(b,c)") == ("agent_a", ["b", "c"])
+        assert parse_parameters(signature="3a-1(b-2,c3)") == ("3a-1", ["b-2", "c3"])
