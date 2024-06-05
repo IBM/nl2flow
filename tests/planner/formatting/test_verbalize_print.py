@@ -1,41 +1,15 @@
 from nl2flow.plan.planners.kstar import Kstar
-from nl2flow.compile.flow import Flow
-from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem
+from nl2flow.compile.schemas import GoalItems, GoalItem, MappingItem, MemoryItem, Constraint
+from nl2flow.compile.options import GoalType, MemoryState
 from nl2flow.printers.verbalize import VerbalizePrint
+from tests.planner.formatting.test_codelike_print import generate_problem_for_testing_printers
 
 PLANNER = Kstar()
 
 
 class TestVerbalizePrint:
     def setup_method(self) -> None:
-        agent_1 = Operator("Agent 1")
-        agent_1.add_input(SignatureItem(parameters=["b"]))
-        agent_1.add_output(SignatureItem(parameters="a"))
-
-        agent_0 = Operator("Agent 0")
-        agent_0.add_input(SignatureItem(parameters=["b"]))
-        agent_0.add_output(SignatureItem(parameters="a"))
-
-        agent_a = Operator("Agent A")
-        agent_a.add_input(SignatureItem(parameters=["a", "b"]))
-        agent_a.add_input(
-            SignatureItem(
-                constraints=[
-                    Constraint(
-                        constraint="check_if_agent_0_is_done($a, $b)",
-                    )
-                ]
-            )
-        )
-        agent_a.add_output(SignatureItem(parameters=Parameter(item_id="c", item_type="type_c")))
-
-        agent_b = Operator("Agent B")
-        agent_b.add_input(SignatureItem(parameters=["a", "b"]))
-        agent_b.add_input(SignatureItem(parameters=Parameter(item_id="x", item_type="type_c")))
-
-        self.flow = Flow(name="Test Prettifier")
-        self.flow.add([agent_1, agent_0, agent_b, agent_a])
+        self.flow = generate_problem_for_testing_printers()
 
     def test_prettified_plan_verbalize(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
@@ -43,11 +17,114 @@ class TestVerbalizePrint:
         pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
         print(pretty)
 
-    def test_prettified_plan_verbalize_with_object(self) -> None:
-        pass
+        pretty_split = pretty.split("\n")
 
-    def test_prettified_plan_verbalize_with_constraint(self) -> None:
-        pass
+        assert pretty_split[1] in [
+            "1. Execute action Agent 1 with b as input. This will result in acquiring a.",
+            "1. Execute action Agent 0 with b as input. This will result in acquiring a.",
+        ]
 
-    def test_prettified_plan_verbalize_with_groups(self) -> None:
-        pass
+        assert pretty_split[:1] + pretty_split[2:] == [
+            "0. Acquire the value of b by asking the user.",
+            "2. Check that check_if_agent_0_is_done($a, $b) is True.",
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. Since executing Agent A was a goal of this plan, return the results of Agent A(a, b) to the user.",
+            "4. Get the value of x from c which is already known.",
+            "5. Execute action Agent B with a, b, and x as inputs. Since executing Agent B was a goal of this plan, return the results of Agent B(a, b, x) to the user.",
+        ]
+
+    def test_verbalize_single_goal(self) -> None:
+        self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B")]))
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        print(pretty)
+
+        pretty_split = pretty.split("\n")
+
+        assert pretty_split[1] in [
+            "1. Execute action Agent 0 with b as input. This will result in acquiring a.",
+            "1. Execute action Agent 1 with b as input. This will result in acquiring a.",
+        ]
+
+        assert pretty_split[:1] + pretty_split[2:] == [
+            "0. Acquire the value of b by asking the user.",
+            "2. Check that check_if_agent_0_is_done($a, $b) is True.",
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c.",
+            "4. Get the value of x from c which is already known.",
+            "5. Execute action Agent B with a, b, and x as inputs. Since executing Agent B was the goal of this plan, return the results of Agent B(a, b, x) to the user.",
+        ]
+
+    def test_verbalize_object_acquired_as_goal(self) -> None:
+        self.flow.add(
+            GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="c", goal_type=GoalType.OBJECT_KNOWN)])
+        )
+
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        print(pretty)
+
+        pretty_split = pretty.split("\n")
+
+        assert pretty_split[3:] == [
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. Since acquiring c was a goal of this plan, return c to the user.",
+            "4. Get the value of x from c which is already known.",
+            "5. Execute action Agent B with a, b, and x as inputs. Since executing Agent B was a goal of this plan, return the results of Agent B(a, b, x) to the user.",
+        ]
+
+    def test_verbalize_object_used_as_goal(self) -> None:
+        self.flow.add(
+            [
+                MemoryItem(item_id="id123", item_state=MemoryState.KNOWN),
+                MemoryItem(item_id="id345", item_state=MemoryState.KNOWN),
+                MappingItem(source_name="id123", target_name="a"),
+                MappingItem(source_name="id345", target_name="b"),
+                GoalItems(
+                    goals=[
+                        GoalItem(goal_name="id123", goal_type=GoalType.OBJECT_USED),
+                        GoalItem(goal_name="id345", goal_type=GoalType.OBJECT_USED),
+                    ]
+                ),
+            ]
+        )
+
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        print(pretty)
+
+        pretty_split = pretty.split("\n")
+
+        assert pretty_split == [
+            "0. Get the value of b from id345 which is already known.",
+            "1. Get the value of a from id123 which is already known.",
+            "2. Check that check_if_agent_0_is_done($a, $b) is True.",
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. The goal of using id123 and id345 is now complete.",
+        ]
+
+    def test_verbalize_constraint_as_goal(self) -> None:
+        self.flow.add(
+            GoalItems(
+                goals=[
+                    GoalItem(
+                        goal_name=Constraint(constraint="check_if_agent_0_is_done($a, $b)"),
+                        goal_type=GoalType.CONSTRAINT,
+                    )
+                ]
+            )
+        )
+
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        print(pretty)
+
+        pretty_split = pretty.split("\n")
+        assert pretty_split == [
+            "0. Acquire the value of b by asking the user.",
+            "1. Execute action Agent 1 with b as input. This will result in acquiring a.",
+            "2. Check that check_if_agent_0_is_done($a, $b) is True. This was the goal of the plan.",
+        ]
+
+    def test_comma_separation(self) -> None:
+        assert VerbalizePrint.comma_separate([]) == ""
+        assert VerbalizePrint.comma_separate(["a"]) == "a"
+        assert VerbalizePrint.comma_separate(["a", "b"]) == "a and b"
+        assert VerbalizePrint.comma_separate(["a", "b", "c"]) == "a, b, and c"
+        assert VerbalizePrint.comma_separate(["a", "b", "c", "d"]) == "a, b, c, and d"

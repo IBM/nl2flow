@@ -6,6 +6,7 @@ from tests.goals.test_and_or_goals import (
 )
 
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.utils import find_goal, get_all_goals
 from nl2flow.compile.options import GoalType, GoalOptions, SlotOptions
 from nl2flow.compile.schemas import GoalItems, GoalItem
 
@@ -15,6 +16,30 @@ class TestOrAndGoals(BaseTestAgents):
         BaseTestAgents.setup_method(self)
         self.flow.goal_type = GoalOptions.OR_AND
         self.flow.slot_options.add(SlotOptions.last_resort)
+
+    def test_goal_aggregator(self) -> None:
+        set_up_agents(self)
+
+        self.flow.add(
+            [
+                GoalItems(goals=[GoalItem(goal_name="Agent X"), GoalItem(goal_name="Agent Y")]),
+                GoalItems(goals=[GoalItem(goal_name="Agent A"), GoalItem(goal_name="Agent B")]),
+            ]
+        )
+
+        assert find_goal(name="Agent X", flow_object=self.flow) == GoalItem(
+            goal_name="Agent X", goal_type=GoalType.OPERATOR
+        )
+        assert find_goal(name="Agent B", flow_object=self.flow) == GoalItem(
+            goal_name="Agent B", goal_type=GoalType.OPERATOR
+        )
+
+        assert get_all_goals(flow_object=self.flow) == [
+            GoalItem(goal_name="Agent X"),
+            GoalItem(goal_name="Agent Y"),
+            GoalItem(goal_name="Agent A"),
+            GoalItem(goal_name="Agent B"),
+        ]
 
     def test_or_and_basic(self) -> None:
         set_up_agents(self)

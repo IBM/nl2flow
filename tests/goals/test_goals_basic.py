@@ -1,6 +1,7 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.utils import find_goal
 from nl2flow.compile.options import (
     MemoryState,
     GoalType,
@@ -97,12 +98,15 @@ class TestGoalsBasic(BaseTestAgents):
         self.flow.add(MemoryItem(item_id="id123", item_type="Mappable", item_state=MemoryState.KNOWN))
         self.flow.add(GoalItems(goals=GoalItem(goal_name="id123", goal_type=GoalType.OBJECT_USED)))
 
+        assert find_goal(name="id123", flow_object=self.flow) == GoalItem(
+            goal_name="id123", goal_type=GoalType.OBJECT_USED
+        )
+
         plans = self.get_plan()
         plan_with_type_of_single_instance_same_as_direct_instance(plans)
 
     def test_goal_with_typing_used(self) -> None:
         self.flow.add(MemoryItem(item_id="id123", item_type="Mappable", item_state=MemoryState.KNOWN))
-
         self.flow.add(GoalItems(goals=GoalItem(goal_name="Mappable", goal_type=GoalType.OBJECT_USED)))
 
         plans = self.get_plan()
@@ -140,6 +144,10 @@ class TestGoalsBasic(BaseTestAgents):
             self.flow.add(new_agent)
 
         self.flow.add(GoalItems(goals=GoalItem(goal_name="same thing", goal_type=GoalType.OBJECT_KNOWN)))
+
+        assert find_goal(name="same thing", flow_object=self.flow) == GoalItem(
+            goal_name="same thing", goal_type=GoalType.OBJECT_KNOWN
+        )
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
