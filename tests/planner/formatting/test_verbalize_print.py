@@ -122,6 +122,29 @@ class TestVerbalizePrint:
             "2. Check that check_if_agent_0_is_done($a, $b) is True. This was the goal of the plan.",
         ]
 
+    def test_prettified_plan_verbalize_with_lookahead(self) -> None:
+        self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
+        planner_response = self.flow.plan_it(PLANNER)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        print(pretty)
+
+        pretty_split = pretty.split("\n")
+
+        assert pretty_split[:2] == [
+            "0. Acquire the value of b by asking the user. b is required later by Agent 0.",
+            "1. Execute action Agent 0 with b as input. This will result in acquiring a. a is required later by Agent A and Agent B.",
+        ] or pretty_split[:2] == [
+            "0. Acquire the value of b by asking the user. b is required later by Agent 1.",
+            "1. Execute action Agent 1 with b as input. This will result in acquiring a. a is required later by Agent A and Agent B.",
+        ]
+
+        assert pretty_split[2:] == [
+            "2. Check that check_if_agent_0_is_done($a, $b) is True. This is required to execute Agent A which is a goal of this plan.",
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. Since executing Agent A was a goal of this plan, return the results of Agent A(a, b) to the user. c will be used to acquire the value of x for Agent B.",
+            "4. Get the value of x from c which is already known. x is required later by Agent B which is a goal of this plan.",
+            "5. Execute action Agent B with a, b, and x as inputs. Since executing Agent B was a goal of this plan, return the results of Agent B(a, b, x) to the user.",
+        ]
+
     def test_comma_separation(self) -> None:
         assert VerbalizePrint.comma_separate([]) == ""
         assert VerbalizePrint.comma_separate(["a"]) == "a"
