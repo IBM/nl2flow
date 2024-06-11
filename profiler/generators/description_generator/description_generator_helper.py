@@ -4,6 +4,7 @@ from profiler.data_types.agent_info_data_types import (
     SIGNATURE_TYPES,
     AgentInfo,
     AgentInfoSignatureItem,
+    SimplePlanningModel,
 )
 
 
@@ -230,3 +231,61 @@ def get_description_available_data(available_items: List[Tuple[str, Optional[str
     parts.append(f"{get_names(item_list)}.")
 
     return " ".join(parts)
+
+
+def get_concise_action_description(simple_planning_model: SimplePlanningModel) -> str:
+    description: List[str] = []
+    description.append("actions:")
+
+    for action in simple_planning_model.actions:
+        action_description: List[str] = [f"name: {action.id}"]
+        if len(action.input) > 0:
+            signature_names = ", ".join(action.input)
+            action_description.append("inputs:" + " " + signature_names)
+        if len(action.output) > 0:
+            signature_names = ", ".join(action.output)
+            action_description.append("outputs:" + " " + signature_names)
+        description.append("\n".join(action_description))
+
+    return "\n\n".join(description)
+
+
+def get_concise_mapping_description(simple_planning_model: SimplePlanningModel) -> str:
+    mapping_list: List[str] = []
+    for mapping in simple_planning_model.mappings:
+        mapping_list.append(f"({mapping[0]}, {mapping[1]})")
+    return "mappings: " + ", ".join(mapping_list)
+
+
+def get_concise_available_data_description(simple_planning_model: SimplePlanningModel) -> str:
+    return "available data: " + ", ".join(simple_planning_model.available_data)
+
+
+def get_concise_askable_parameters_description(simple_planning_model: SimplePlanningModel) -> str:
+    return "askable parameters: " + ", ".join(simple_planning_model.askable_parameters)
+
+
+def get_concise_unaskable_parameters_description(simple_planning_model: SimplePlanningModel) -> str:
+    return "unaskable parameters: " + ", ".join(simple_planning_model.unaskable_parameters)
+
+
+def get_concise_goals_description(simple_planning_model: SimplePlanningModel) -> str:
+    return "goals: " + ", ".join(simple_planning_model.goal_action_ids)
+
+
+def get_concise_description(simple_planning_model: SimplePlanningModel) -> str:
+    description: List[str] = []
+    if len(simple_planning_model.actions) > 0:
+        description.append(get_concise_action_description(simple_planning_model=simple_planning_model))
+    if len(simple_planning_model.mappings) > 0:
+        description.append(get_concise_mapping_description(simple_planning_model=simple_planning_model))
+    if len(simple_planning_model.available_data) > 0:
+        description.append(get_concise_available_data_description(simple_planning_model=simple_planning_model))
+    if len(simple_planning_model.askable_parameters) > 0:
+        description.append(get_concise_askable_parameters_description(simple_planning_model=simple_planning_model))
+    if len(simple_planning_model.unaskable_parameters) > 0:
+        description.append(get_concise_unaskable_parameters_description(simple_planning_model=simple_planning_model))
+    if len(simple_planning_model.goal_action_ids) > 0:
+        description.append(get_concise_goals_description(simple_planning_model=simple_planning_model))
+
+    return "\n\n".join(description)
