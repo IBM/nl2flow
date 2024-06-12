@@ -89,7 +89,7 @@ def find_goal(name: str, flow_object: Flow) -> Optional[GoalItem]:
 def parse_action(
     action_name: str, parameters: List[str], flow_object: Flow, transforms: List[Transform]
 ) -> Optional[Union[Action, Constraint]]:
-    if any([action_name.startswith(item.value) for item in RestrictedOperations]):
+    if RestrictedOperations.is_restricted(action_name):
         return None
 
     elif action_name.startswith(BasicOperations.SLOT_FILLER.value):

@@ -1,7 +1,7 @@
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.schemas import GoalItems, GoalItem, MappingItem, MemoryItem, Constraint
 from nl2flow.compile.options import GoalType, MemoryState
-from nl2flow.printers.verbalize import VerbalizePrint
+from nl2flow.printers.verbalize import VerbalizePrint, comma_separate
 from tests.planner.formatting.test_codelike_print import generate_problem_for_testing_printers
 
 PLANNER = Kstar()
@@ -125,29 +125,31 @@ class TestVerbalizePrint:
     def test_prettified_plan_verbalize_with_lookahead(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
-        print(pretty)
+        pretty = VerbalizePrint.pretty_print_plan(
+            planner_response.list_of_plans[0], flow_object=self.flow, lookahead=True
+        )
 
+        print(pretty)
         pretty_split = pretty.split("\n")
 
         assert pretty_split[:2] == [
-            "0. Acquire the value of b by asking the user. b is required later by Agent 0.",
-            "1. Execute action Agent 0 with b as input. This will result in acquiring a. a is required later by Agent A and Agent B.",
+            "0. Acquire the value of b by asking the user. b is required later by action Agent 0, action Agent A, action Agent B, and constraint check_if_agent_0_is_done($a, $b).",
+            "1. Execute action Agent 0 with b as input. This will result in acquiring a. a is required later by action Agent A, action Agent B, and constraint check_if_agent_0_is_done($a, $b).",
         ] or pretty_split[:2] == [
-            "0. Acquire the value of b by asking the user. b is required later by Agent 1.",
-            "1. Execute action Agent 1 with b as input. This will result in acquiring a. a is required later by Agent A and Agent B.",
+            "0. Acquire the value of b by asking the user. b is required later by action Agent 1, action Agent A, action Agent B, and constraint check_if_agent_0_is_done($a, $b).",
+            "1. Execute action Agent 1 with b as input. This will result in acquiring a. a is required later by action Agent A, action Agent B, and constraint check_if_agent_0_is_done($a, $b).",
         ]
 
         assert pretty_split[2:] == [
-            "2. Check that check_if_agent_0_is_done($a, $b) is True. This is required to execute Agent A which is a goal of this plan.",
-            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. Since executing Agent A was a goal of this plan, return the results of Agent A(a, b) to the user. c will be used to acquire the value of x for Agent B.",
-            "4. Get the value of x from c which is already known. x is required later by Agent B which is a goal of this plan.",
+            "2. Check that check_if_agent_0_is_done($a, $b) is True. This is needed to execute Agent A.",
+            "3. Execute action Agent A with a and b as inputs. This will result in acquiring c. c is required later by action map to produce x (x is required later by action Agent B). Since executing Agent A was a goal of this plan, return the results of Agent A(a, b) to the user.",
+            "4. Get the value of x from c which is already known. x is required later by action Agent B.",
             "5. Execute action Agent B with a, b, and x as inputs. Since executing Agent B was a goal of this plan, return the results of Agent B(a, b, x) to the user.",
         ]
 
     def test_comma_separation(self) -> None:
-        assert VerbalizePrint.comma_separate([]) == ""
-        assert VerbalizePrint.comma_separate(["a"]) == "a"
-        assert VerbalizePrint.comma_separate(["a", "b"]) == "a and b"
-        assert VerbalizePrint.comma_separate(["a", "b", "c"]) == "a, b, and c"
-        assert VerbalizePrint.comma_separate(["a", "b", "c", "d"]) == "a, b, c, and d"
+        assert comma_separate([]) == ""
+        assert comma_separate(["a"]) == "a"
+        assert comma_separate(["a", "b"]) == "a and b"
+        assert comma_separate(["a", "b", "c"]) == "a, b, and c"
+        assert comma_separate(["a", "b", "c", "d"]) == "a, b, c, and d"
