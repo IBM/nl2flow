@@ -201,7 +201,7 @@ class TestDescriptionGeneratorHelper:
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         assert len(res) > 0
 
-    def test_get_concide_description(self) -> None:
+    def test_get_concise_description(self) -> None:
         available_agents = [
             AgentInfo(
                 agent_id="a",
