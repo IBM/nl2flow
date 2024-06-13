@@ -1,5 +1,6 @@
 from tests.testing import BaseTestAgents
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.plan.utils import find_goal
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import (
     MemoryState,
@@ -96,6 +97,10 @@ class TestGoalsAdvanced(BaseTestAgents):
                     )
                 ),
             ]
+        )
+
+        assert find_goal(name="Email Agent", flow_object=self.flow) == GoalItem(
+            goal_name="Email Agent", goal_type=GoalType.OPERATOR
         )
 
         plans = self.get_plan()

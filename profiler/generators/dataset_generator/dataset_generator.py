@@ -9,7 +9,9 @@ from profiler.common_helpers.string_helper import trim_pddl_str
 from profiler.test_helpers.profiler_test_helper_variables import (
     pddl_start_key,
 )
-from nl2flow.plan.planners import Planner
+from nl2flow.plan.planner import Planner
+from nl2flow.printers.codelike import CodeLikePrint
+from nl2flow.printers.verbalize import VerbalizePrint
 from profiler.common_helpers.time_helper import get_current_time_in_millisecond
 
 
@@ -39,9 +41,9 @@ def generate_dataset_with_info_generator(
                 pddl_domain=trim_pddl_str(pddl.domain, pddl_start_key),
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
-                prettified_plans=planner.pretty_print(planner_response) if should_plan else "",
+                prettified_plans=CodeLikePrint.pretty_print(planner_response) if should_plan else "",
                 prettified_optimal_plan_forward=(
-                    planner.pretty_print_plan_verbose(flow, planner_response.list_of_plans[0])
+                    VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=flow)
                     if len(planner_response.list_of_plans) > 0
                     else "no plan"
                 ),

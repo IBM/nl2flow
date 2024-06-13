@@ -1,6 +1,6 @@
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import revert_string_transform, string_transform
+from nl2flow.compile.utils import Transform, revert_string_transform, string_transform
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.plan.schemas import ClassicalPlan, Action
 from nl2flow.compile.options import (
@@ -15,6 +15,7 @@ from nl2flow.compile.schemas import (
     OperatorDefinition,
     Outcome,
     Constraint,
+    GoalItem,
     Step,
 )
 
@@ -61,7 +62,9 @@ def group_items(plan: ClassicalPlan, option: Union[SlotOptions, MappingOptions, 
     return new_plan
 
 
-def is_goal(action_name: str, flow_object: Flow) -> bool:
+def get_all_goals(flow_object: Flow) -> List[GoalItem]:
+    list_of_goals = list()
+
     for goal_items in flow_object.flow_definition.goal_items:
         goals = goal_items.goals
 
@@ -69,21 +72,24 @@ def is_goal(action_name: str, flow_object: Flow) -> bool:
             goals = [goals]
 
         for goal in goals:
-            if isinstance(goal, Constraint):
-                continue
+            if isinstance(goal.goal_name, Constraint):
+                list_of_goals.append(GoalItem(goal_name=goal.goal_name.constraint, goal_type=goal.goal_type))
             else:
                 goal_name = goal.goal_name.name if isinstance(goal.goal_name, Step) else goal.goal_name
-                if action_name == goal_name:
-                    return True
+                list_of_goals.append(GoalItem(goal_name=goal_name, goal_type=goal.goal_type))
 
-    return False
+    return list_of_goals
 
 
-def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Optional[Union[Action, Constraint]]:
-    transforms = kwargs["transforms"]
-    flow: Flow = kwargs["flow"]
+def find_goal(name: str, flow_object: Flow) -> Optional[GoalItem]:
+    all_goals = get_all_goals(flow_object)
+    return next(filter(lambda goal_item: getattr(goal_item, "goal_name") == name, all_goals), None)
 
-    if any([action_name.startswith(item.value) for item in RestrictedOperations]):
+
+def parse_action(
+    action_name: str, parameters: List[str], flow_object: Flow, transforms: List[Transform]
+) -> Optional[Union[Action, Constraint]]:
+    if RestrictedOperations.is_restricted(action_name):
         return None
 
     elif action_name.startswith(BasicOperations.SLOT_FILLER.value):
@@ -128,10 +134,14 @@ def parse_action(action_name: str, parameters: List[str], **kwargs: Any) -> Opti
         return Constraint(constraint=constraint, truth_value=truth_value)
 
     else:
-        operator: OperatorDefinition = next(filter(lambda x: x.name == action_name, flow.flow_definition.operators))
-        new_action = Action(name=operator.name)
-
-        new_action.inputs = unpack_list_of_signature_items(operator.inputs)
+        operator: OperatorDefinition = next(
+            filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
+        )
+        new_action = Action(
+            name=operator.name,
+            parameters=[revert_string_transform(p, transforms) for p in parameters],
+            inputs=unpack_list_of_signature_items(operator.inputs),
+        )
 
         if isinstance(operator.outputs, Outcome):
             new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)

@@ -7,7 +7,6 @@ from typing import Any, Optional, Set
 
 
 def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> Optional[Any]:
-    # noinspection PyBroadException
     try:
         new_constraint_variable = f"status_{constraint.constraint}"
         constraint_parameters = constraint.get_variable_references_from_constraint(
@@ -39,7 +38,11 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
-    # noinspection PyBroadException
+    mapped_items = kwargs.get("mapped_items", dict())
+    step.parameters = [
+        Parameter(item_id=mapped_items.get(p.item_id, p.item_id), item_type=p.item_type) for p in step.parameters
+    ]
+
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):
             step_predicate = compilation.has_asked(compilation.constant_map[step.parameters[0].item_id])

@@ -2,8 +2,8 @@ import os
 import subprocess
 from typing import Tuple
 from nl2flow.compile.schemas import PDDL
-from nl2flow.plan.planners import Planner
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.printers.codelike import CodeLikePrint
 from profiler.test_helpers.profiler_test_helper_variables import (
     domain_file_name,
     problem_file_name,
@@ -13,7 +13,7 @@ from profiler.test_helpers.profiler_test_helper_variables import (
 from profiler.common_helpers.string_helper import trim_pddl_str
 
 
-def write_pddl_plan(pddl: PDDL, plans: PlannerResponse, planner: Planner) -> None:
+def write_pddl_plan(pddl: PDDL, plans: PlannerResponse) -> None:
     current_directory = os.getenv("PYTEST_CURRENT_TEST", "")
     current_directory_list = current_directory.split("/")[:-1]
     with open("/".join(current_directory_list + [domain_file_name]), "w") as f:
@@ -21,11 +21,10 @@ def write_pddl_plan(pddl: PDDL, plans: PlannerResponse, planner: Planner) -> Non
     with open("/".join(current_directory_list + [problem_file_name]), "w") as f:
         f.write(pddl.problem)
     with open("/".join(current_directory_list + [plan_file_name]), "w") as f:
-        f.write(planner.pretty_print(plans))
+        f.write(CodeLikePrint.pretty_print(plans))
 
 
 def get_str_from_file(path: str) -> str:
-    content = ""
     with open(path, "r") as f:
         content = f.read()
 

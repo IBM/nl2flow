@@ -5,8 +5,8 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def tempfile(suffix: str = "", dir: Any = None) -> Any:
-    tf = tmp.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir)
+def temp_file(suffix: str, dir_name: Any = None) -> Any:
+    tf = tmp.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir_name)
     tf.file.close()
     try:
         yield tf.name
@@ -21,15 +21,15 @@ def tempfile(suffix: str = "", dir: Any = None) -> Any:
 
 
 @contextmanager
-def open_atomic(filepath: Any, *args, **kwargs) -> Any:  # type: ignore
+def open_atomic(filepath: Any, *args: Any, **kwargs: Any) -> Any:
     fsync = kwargs.pop("fsync", False)
 
-    with tempfile(dir=os.path.dirname(os.path.abspath(filepath))) as tmppath:
-        with open(tmppath, *args, **kwargs) as file:
+    with temp_file(suffix="", dir_name=os.path.dirname(os.path.abspath(filepath))) as temp_path:
+        with open(temp_path, *args, **kwargs) as file:
             try:
                 yield file
             finally:
                 if fsync:
                     file.flush()
                     os.fsync(file.fileno())
-        os.rename(tmppath, filepath)
+        os.rename(temp_path, filepath)

@@ -1,6 +1,6 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 from profiler.test_helpers.profiler_test_helper import write_pddl_plan
 
@@ -33,5 +33,5 @@ class TestQuadrupleGenerator:
 
         pddl, _ = new_flow.compile_to_pddl()
         plans = new_flow.plan_it(PLANNER)
-        write_pddl_plan(pddl, plans, PLANNER)
+        write_pddl_plan(pddl, plans)
         assert True

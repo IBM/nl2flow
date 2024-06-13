@@ -1,7 +1,7 @@
 from copy import deepcopy
 from types import ModuleType
 from typing import Any, Dict, Generator, List, Set
-from nl2flow.plan.planners import Planner
+from nl2flow.plan.planner import Planner
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
     AgentInfoGeneratorInputBatch,

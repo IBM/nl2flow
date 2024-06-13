@@ -5,15 +5,17 @@ from typing import Any, Optional
 
 from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
-from nl2flow.compile.options import RestrictedOperations, CostOptions
+from nl2flow.compile.options import RestrictedOperations, BasicOperations, CostOptions
 from nl2flow.debug.schemas import SolutionQuality
 
 
 def compile_reference(compilation: Any, **kwargs: Any) -> None:
     debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
-    cached_predicates = []
-    token_predicates = []
+    cached_predicates = list()
+    token_predicates = list()
+    mapped_items = dict()
+
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
@@ -26,7 +28,13 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
                         indices_of_interest.append(i)
 
                 index_of_operation = indices_of_interest.index(index)
-                step_predicate = get_predicate_from_step(compilation, item, index_of_operation, **kwargs)
+
+                if item.name == BasicOperations.MAPPER.value:
+                    mapped_items[item.parameters[1].item_id] = item.parameters[0].item_id
+
+                step_predicate = get_predicate_from_step(
+                    compilation, item, index_of_operation, mapped_items=mapped_items, **kwargs
+                )
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)
@@ -42,7 +50,6 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
         token_predicates.append(token_predicate)
 
         precondition_list = [p for p in cached_predicates[:index]]
-        # precondition_list.append(neg(compilation.ready_for_token()))
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
 
         compilation.problem.action(

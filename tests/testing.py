@@ -1,8 +1,9 @@
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.printers.codelike import CodeLikePrint
 
 
 class BaseTestAgents:
@@ -15,7 +16,7 @@ class BaseTestAgents:
 
     def get_plan(self) -> PlannerResponse:
         plans: PlannerResponse = self.flow.plan_it(self.planner)
-        print(self.planner.pretty_print(plans))
+        print(CodeLikePrint.pretty_print(plans))
         return plans
 
     def __set_up_default_test_agents(self) -> None:
