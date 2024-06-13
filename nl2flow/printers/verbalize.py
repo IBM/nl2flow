@@ -133,7 +133,6 @@ class VerbalizePrint(Printer):
         )
 
         output_string = f" This will result in acquiring {comma_separate(action.outputs)}." if action.outputs else ""
-
         action_string = f"Execute action {action.name}{input_string}.{output_string}"
 
         if lookahead:
