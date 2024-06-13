@@ -18,12 +18,16 @@ class InputExplained(BaseModel):
 
 class ConstraintExplanation(Constraint):
     explained: bool = False
+    inputs: List[InputExplained] = []
 
     @classmethod
     def initialize_from_constraint(cls, constraint: Constraint) -> ConstraintExplanation:
+        parameters = constraint.get_variable_references_from_constraint(constraint.constraint, transforms=[])
+
         return ConstraintExplanation(
             constraint=constraint.constraint,
             truth_value=constraint.truth_value,
+            inputs=[InputExplained(name=p) for p in parameters],
         )
 
 
@@ -65,6 +69,66 @@ class ClassicalPlanExplanation(BaseModel):
 
 class ExplainPrint(Printer):
     @classmethod
+    def explain_inputs(
+        cls,
+        action: Union[ConstraintExplanation, ActionExplanation],
+        flow_object: Flow,
+        index: int,
+        plan: List[Union[ActionExplanation, ConstraintExplanation]],
+        explained_known: Set[str],
+    ) -> List[str]:
+        input_string = comma_separate([ip.name for ip in action.inputs])
+
+        if isinstance(action, ConstraintExplanation):
+            lead_string = "To evaluate the constraint"
+        else:
+            lead_string = f"In order to execute {action.name}"
+
+        lead_string = f"{lead_string}, the values of its parameters {input_string} must be known."
+        explanation_strings = [lead_string]
+
+        input_set = {ip.name for ip in action.inputs if not ip.explained}
+        already_explained_inputs = input_set.intersection(explained_known)
+
+        if already_explained_inputs:
+            already_explained_string = comma_separate(sorted(list(already_explained_inputs)))
+            explanation_strings.append(
+                f"Values of {already_explained_string} have already been acquired by the rest of the plan."
+            )
+
+        for i, ip in enumerate(action.inputs):
+            if ip.name not in explained_known:
+                explanation_strings.extend(cls.explain_object_known(ip, flow_object, index, plan, explained_known))
+
+                explained_known.add(action.inputs[i].name)
+                action.inputs[i].explained = True
+
+        return explanation_strings
+
+    @classmethod
+    def explain_constraint(
+        cls,
+        action: ConstraintExplanation,
+        flow_object: Flow,
+        index: int,
+        plan: List[Union[ActionExplanation, ConstraintExplanation]],
+        explained_known: Set[str],
+    ) -> List[str]:
+        constraint_strings = [f"{action.constraint} is required to be {action.truth_value}."]
+
+        postfix = plan[:index]
+        postfix.reverse()
+
+        who_need_it_string = comma_separate(who_need_it(action.constraint, flow_object, postfix))
+
+        if who_need_it_string:
+            constraint_strings.append(f"This is required by {who_need_it_string}.")
+
+        constraint_strings.extend(cls.explain_inputs(action, flow_object, index, plan, explained_known))
+        action.explained = True
+        return constraint_strings
+
+    @classmethod
     def explain_action(
         cls,
         action: ActionExplanation,
@@ -87,33 +151,9 @@ class ExplainPrint(Printer):
         if output_string:
             explanation_strings.append(f"Action {action.name} produces {output_string} which is a goal of the plan.")
 
-        input_string = comma_separate([ip.name for ip in action.inputs])
-        explanation_strings.append(
-            f"In order to execute {action.name}, the values of its parameters {input_string} must be known."
-        )
-
-        input_set = {ip.name for ip in action.inputs if not ip.explained}
-        already_explained_inputs = input_set.intersection(explained_known)
-
-        if already_explained_inputs:
-            already_explained_string = comma_separate(sorted(list(already_explained_inputs)))
-            explanation_strings.append(
-                f"Values of {already_explained_string} have already been acquired by the rest of the plan."
-            )
-
-        for i, ip in enumerate(action.inputs):
-            if ip.name not in explained_known:
-                explanation_strings.extend(cls.explain_object_known(ip, flow_object, index, plan, explained_known))
-
-                explained_known.add(action.inputs[i].name)
-                action.inputs[i].explained = True
-
+        explanation_strings.extend(cls.explain_inputs(action, flow_object, index, plan, explained_known))
         action.explained = True
         return explanation_strings
-
-    @classmethod
-    def explain_object_used(cls) -> str:
-        return ""
 
     @classmethod
     def explain_object_known(
@@ -167,16 +207,16 @@ class ExplainPrint(Printer):
 
         for goal_item in all_goals:
             if goal_item.goal_type == GoalType.OPERATOR:
-                goal_strings.append(f"to execute action {goal_item.goal_name}")
+                goal_strings.append(f"execute action {goal_item.goal_name}")
             elif goal_item.goal_type == GoalType.CONSTRAINT:
                 goal_strings.append(f"check {goal_item.goal_name}")
             elif goal_item.goal_type == GoalType.OBJECT_USED:
-                goal_strings.append(f"use the variable {goal_item.goal_name}")
+                goal_strings.append(f"operate on the variable {goal_item.goal_name}")
             elif goal_item.goal_type == GoalType.OBJECT_KNOWN:
                 goal_strings.append(f"acquire the value of variable {goal_item.goal_name}")
 
         goal_string = comma_separate(goal_strings)
-        goal_string = f"The goal of the plan is {goal_string}."
+        goal_string = f"The goal of the plan is to {goal_string}."
 
         plan_explanation_object = ClassicalPlanExplanation.initialize_from_plan(plan)
         explained_known: Set[str] = set()
@@ -196,20 +236,10 @@ class ExplainPrint(Printer):
                 explanations.extend(action_strings)
 
             else:
-                constraint_strings = [f"{action.constraint} is required to be {action.truth_value}."]
-
-                if find_goal(action.constraint, flow_object) is not None:
-                    constraint_strings.append(f"This is {'a' if len(all_goals) > 1 else 'the'} goal of the plan.")
-
-                postfix = plan_explanation_object.plan[:step]
-                postfix.reverse()
-
-                who_need_it_string = comma_separate(who_need_it(action.constraint, flow_object, postfix))
-
-                if who_need_it_string:
-                    constraint_strings.append(f"This is required by {who_need_it_string}.")
-
-                explanations.append(" ".join(constraint_strings))
+                constraint_strings = cls.explain_constraint(
+                    action, flow_object, step, plan_explanation_object.plan, explained_known
+                )
+                explanations.extend(constraint_strings)
 
         explanations = [goal_string] + explanations
         delimiter = "\n" if bulleted else " "
