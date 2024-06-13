@@ -1,10 +1,17 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 from profiler.data_types.agent_info_data_types import (
     SIGNATURE_TYPES,
     AgentInfo,
     AgentInfoSignatureItem,
+    SimpleActionModel,
     SimplePlanningModel,
+)
+from profiler.generators.description_generator.descripter_generator_data import (
+    ask_description,
+    map_description,
+    action_requirement,
+    system_goal_description,
 )
 
 
@@ -20,12 +27,12 @@ def get_names(names: List[str]) -> str:
     return ", ".join(names_filtered[:-1]) + ", and " + names_filtered[-1]
 
 
-def get_available_action_names(available_agents: List[AgentInfo]) -> str:
+def get_available_action_names(available_agents: List[Union[AgentInfo, SimpleActionModel]]) -> str:
     return get_names(
         sorted(
             list(
                 map(
-                    lambda agent_info: agent_info.agent_id,
+                    lambda agent_info: agent_info.agent_id if isinstance(agent_info, AgentInfo) else agent_info.id,
                     available_agents,
                 )
             )
@@ -33,7 +40,7 @@ def get_available_action_names(available_agents: List[AgentInfo]) -> str:
     )
 
 
-def get_available_agents_description(available_agents: List[AgentInfo]) -> str:
+def get_available_agents_description(available_agents: List[Union[AgentInfo, SimpleActionModel]]) -> str:
     parts: List[str] = ["The system has"]
     parts.append("action" if len(available_agents) == 1 else "actions")
     parts.append(f"{get_available_action_names(available_agents)}.")
@@ -276,16 +283,22 @@ def get_concise_goals_description(simple_planning_model: SimplePlanningModel) ->
 def get_concise_description(simple_planning_model: SimplePlanningModel) -> str:
     description: List[str] = []
     if len(simple_planning_model.actions) > 0:
+        description.append(
+            get_available_agents_description(available_agents=simple_planning_model.actions) + " " + action_requirement
+        )
         description.append(get_concise_action_description(simple_planning_model=simple_planning_model))
     if len(simple_planning_model.mappings) > 0:
+        description.append(map_description[:])
         description.append(get_concise_mapping_description(simple_planning_model=simple_planning_model))
     if len(simple_planning_model.available_data) > 0:
         description.append(get_concise_available_data_description(simple_planning_model=simple_planning_model))
     if len(simple_planning_model.askable_parameters) > 0:
+        description.append(ask_description[:])
         description.append(get_concise_askable_parameters_description(simple_planning_model=simple_planning_model))
-    if len(simple_planning_model.unaskable_parameters) > 0:
-        description.append(get_concise_unaskable_parameters_description(simple_planning_model=simple_planning_model))
+    # if len(simple_planning_model.unaskable_parameters) > 0:
+    #     description.append(get_concise_unaskable_parameters_description(simple_planning_model=simple_planning_model))
     if len(simple_planning_model.goal_action_ids) > 0:
+        description.append(system_goal_description)
         description.append(get_concise_goals_description(simple_planning_model=simple_planning_model))
 
     return "\n\n".join(description)
