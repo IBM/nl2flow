@@ -10,7 +10,6 @@ from profiler.generators.description_generator.description_generator_helper impo
 )
 from profiler.generators.description_generator.descripter_generator_data import (
     ask_description,
-    ask_last_resort_description,
     map_description,
 )
 from nl2flow.compile.options import SlotOptions
@@ -27,18 +26,16 @@ def get_sample_description(
     # system
     if len(available_agents) > 0:
         descriptions.append(get_available_agents_description(available_agents))
-    if len(available_agents) > 0 or len(available_data) > 0:
-        descriptions.append(get_variables_description(available_agents, available_data))
-    # slot-fillers
-    if slot_option is not None and slot_option == SlotOptions.last_resort:
-        descriptions.append(ask_last_resort_description[:])
-    descriptions.append(ask_description[:])
+
     # actions
     for agent_info in available_agents:
         pre_cond, effect = get_agent_info_description(agent_info)
-        descriptions.append(pre_cond)
+        parts: List[str] = [pre_cond]
+
         if len(effect) > 0:
-            descriptions.append(effect)
+            parts.append(effect)
+
+        descriptions.append(" ".join(parts))
     # known values
     if len(available_data) > 0:
         descriptions.append(get_description_available_data(available_data))
@@ -46,6 +43,14 @@ def get_sample_description(
     if len(mappings) > 0:
         descriptions.append(map_description[:])
         descriptions.append(get_mappings_description(mappings))
+
+    # slot-fillers
+    descriptions.append(ask_description[:])
+
+    # variable description
+    if len(available_agents) > 0 or len(available_data) > 0:
+        descriptions.append(get_variables_description(available_agents, available_data))
+
     # goals
     if len(goal_agent_ids) > 0:
         descriptions.append(get_goal_description(goal_agent_ids))
