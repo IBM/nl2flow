@@ -41,7 +41,7 @@ def generate_dataset_with_info_generator(
                 pddl_domain=trim_pddl_str(pddl.domain, pddl_start_key),
                 pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
                 list_of_plans=planner_response.list_of_plans,
-                prettified_plans=CodeLikePrint.pretty_print(planner_response) if should_plan else "",
+                prettified_plans=CodeLikePrint.pretty_print(planner_response, show_output=False) if should_plan else "",
                 prettified_optimal_plan_forward=(
                     VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=flow)
                     if len(planner_response.list_of_plans) > 0
