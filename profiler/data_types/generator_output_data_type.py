@@ -2,10 +2,12 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import List, Optional, Tuple
 from pydantic import BaseModel, model_validator
-from profiler.data_types.agent_info_data_types import AgentInfo
+from profiler.data_types.agent_info_data_types import AgentInfo, AgentInfoUnitModel
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
+    PlanningInputDescriptionMode,
 )
+from profiler.generators.description_generator.description_generator_helper import get_concise_description
 from profiler.validators.agent_info_generator_test_utils import check_sample
 from profiler.generators.description_generator.description_generator import (
     get_sample_description,
@@ -38,7 +40,23 @@ class AgentInfoGeneratorOutputItem(BaseModel):
         )
         return self
 
-    def describe(self) -> str:
+    def describe(
+        self, planning_input_description_mode: PlanningInputDescriptionMode = PlanningInputDescriptionMode.VERBOSE
+    ) -> str:
+        agent_info_unit_model = AgentInfoUnitModel(
+            available_agents=self.available_agents,
+            goal_agent_ids=self.goal_agent_ids,
+            mappings=self.mappings,
+            available_data=self.available_data,
+        )
+
+        if planning_input_description_mode == PlanningInputDescriptionMode.JSON:
+            return agent_info_unit_model.get_simple_planning_model_json_str()
+
+        if planning_input_description_mode == PlanningInputDescriptionMode.CONCISE:
+            return get_concise_description(simple_planning_model=agent_info_unit_model.get_simple_planning_model())
+
+        # VERBOSE
         return get_sample_description(  # type: ignore
             self.available_agents,
             self.goal_agent_ids,

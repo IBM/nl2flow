@@ -5,6 +5,12 @@ from pydantic import BaseModel, field_validator, model_validator
 from nl2flow.compile.options import SlotOptions
 
 
+class PlanningInputDescriptionMode(str, Enum):
+    VERBOSE = "VERBOSE"
+    CONCISE = "CONCISE"
+    JSON = "JSON"
+
+
 class NameGenerator(str, Enum):
     NUMBER = "NUMBER"
     HAIKUNATOR = "HAIKUNATOR"

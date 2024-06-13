@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 from profiler.generators.description_generator.description_generator_helper import (
+    get_concise_description,
     get_variables_description,
     get_description_available_data,
     get_names,
@@ -18,6 +19,7 @@ from profiler.data_types.agent_info_data_types import (
     AgentInfo,
     AgentInfoSignature,
     AgentInfoSignatureItem,
+    AgentInfoUnitModel,
 )
 
 
@@ -198,3 +200,34 @@ class TestDescriptionGeneratorHelper:
 
         res = get_variables_description([agent_info], [("r", "type_a"), ("s", None)])
         assert len(res) > 0
+
+    def test_get_concise_description(self) -> None:
+        available_agents = [
+            AgentInfo(
+                agent_id="a",
+                actuator_signature=AgentInfoSignature(
+                    in_sig_full=[
+                        AgentInfoSignatureItem(name="b", slot_fillable=True),
+                        AgentInfoSignatureItem(name="x", slot_fillable=False),
+                    ],
+                    out_sig_full=[
+                        AgentInfoSignatureItem(name="c", slot_fillable=False, data_type="sample_type"),
+                        AgentInfoSignatureItem(name="k", slot_fillable=True),
+                    ],
+                ),
+            )
+        ]
+        goal_agent_ids = [available_agents[0].agent_id]
+        mappings = [("x", "k", 1.0)]
+        available_data = [("b", None)]
+        agent_info_unit_model = AgentInfoUnitModel(
+            available_agents=available_agents,
+            goal_agent_ids=goal_agent_ids,
+            mappings=mappings,
+            available_data=available_data,
+        )
+        description_str = get_concise_description(
+            simple_planning_model=agent_info_unit_model.get_simple_planning_model()
+        )
+
+        assert len(description_str) > 0
