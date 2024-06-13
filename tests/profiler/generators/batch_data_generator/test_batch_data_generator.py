@@ -1,4 +1,4 @@
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInputBatch, NameGenerator
 from profiler.generators.batch_data_generator.batch_data_generator import (
     get_agent_info_generator_inputs,

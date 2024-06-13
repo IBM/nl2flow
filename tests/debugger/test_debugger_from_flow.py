@@ -4,7 +4,9 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem, Step
 from nl2flow.compile.options import LifeCycleOptions, BasicOperations
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
+from nl2flow.printers.codelike import CodeLikePrint
+from tests.debugger.custom_formatter.custom_print import CustomPrint
 from copy import deepcopy
 
 PLANNER = Kstar()
@@ -61,10 +63,12 @@ class TestBasic:
     def test_token_production(self) -> None:
         stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(self.tokens)])
         planner_response = self.flow.plan_it(PLANNER)
-        assert any([stringify_tokens == PLANNER.pretty_print_plan(plan) for plan in planner_response.list_of_plans])
+        assert any(
+            [stringify_tokens == CodeLikePrint.pretty_print_plan(plan) for plan in planner_response.list_of_plans]
+        )
 
     def test_token_parsing(self) -> None:
-        reference_plan: ClassicalPlanReference = self.debugger.parse_tokens(self.tokens)
+        reference_plan: ClassicalPlanReference = CodeLikePrint.parse_tokens(self.tokens)
         assert reference_plan.plan == [
             Step(
                 name="agent_a",
@@ -167,6 +171,37 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
+    def test_optimal_plan_without_outputs(self) -> None:
+        alternative_tokens = [
+            "agent_a()",
+            "map(a_1, a)",
+            "confirm(a)",
+            "assert $a > 10",
+            "agent_c(a)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, show_output=False)
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
+    def test_optimal_plan_with_collapsed_maps(self) -> None:
+        alternative_tokens = [
+            "a_1 = agent_a()",
+            "confirm(a_1)",
+            "assert $a_1 > 10",
+            "y = agent_c(a_1)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, collapse_maps=True)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
+        assert report.determination, "Reference plan is optimal"
+
     def test_invalid_tokens(self) -> None:
         messed_up_tokens = [
             "a_1 = agent_aa()",  # unknown agent
@@ -187,3 +222,20 @@ class TestBasic:
 
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 11, "1 edits"
         assert report.determination is False, "Reference plan is not sound"
+
+    def test_custom_formatter(self) -> None:
+        alternative_tokens = [
+            "agent_a() -> a_1",
+            "map a_1 -> a",
+            "confirm a",
+            "check if $a > 10 is True",
+            "agent_c(a) -> y",
+            "agent_d(y)",
+        ]
+
+        for mode in SolutionQuality:
+            report = self.debugger.debug(alternative_tokens, debug=mode, printer=CustomPrint())
+            diff_string = "\n".join(report.plan_diff_str)
+            print(f"\n\n{diff_string}")
+
+            assert report.determination, f"Reference plan is {mode.value}"

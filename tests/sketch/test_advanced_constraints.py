@@ -1,9 +1,10 @@
 from nl2flow.compile.schemas import Constraint, MemoryItem, Step
 from nl2flow.compile.options import ConstraintState, MemoryState
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
+from nl2flow.printers.codelike import CodeLikePrint
 from tests.sketch.test_basic import load_assets
 from copy import deepcopy
 
@@ -17,7 +18,7 @@ class TestSketchConstraints:
         flow_object = sketch_compilation.compile_to_flow(sketch, catalog)
 
         planner_response: PlannerResponse = flow_object.plan_it(PLANNER)
-        print(PLANNER.pretty_print(planner_response))
+        print(CodeLikePrint.pretty_print(planner_response))
 
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:
@@ -43,7 +44,7 @@ class TestSketchConstraints:
         )
 
         planner_response = new_flow_object.plan_it(PLANNER)
-        print(PLANNER.pretty_print(planner_response))
+        print(CodeLikePrint.pretty_print(planner_response))
 
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:
@@ -67,7 +68,7 @@ class TestSketchConstraints:
         )
 
         planner_response = new_flow_object.plan_it(PLANNER)
-        print(PLANNER.pretty_print(planner_response))
+        print(CodeLikePrint.pretty_print(planner_response))
 
         assert planner_response.list_of_plans, "There should be plans."
         for plan in planner_response.list_of_plans:

@@ -4,7 +4,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, SlotProperty, MappingItem, MemoryItem, GoalItems, GoalItem
 from nl2flow.compile.options import MemoryState, MappingOptions, NL2FlowOptions
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 
 PLANNER = Kstar()
 

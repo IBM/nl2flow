@@ -18,12 +18,20 @@ class RestrictedOperations(enum.Enum):
     ENABLER = "enabler_operator"
     GOAL = "goal_operator"
 
+    @classmethod
+    def is_restricted(cls, name: str) -> bool:
+        return any([name.startswith(x.value) for x in cls])
+
 
 class BasicOperations(enum.Enum):
     SLOT_FILLER = "ask"
     MAPPER = "map"
     CONFIRM = "confirm"
     CONSTRAINT = "assert"
+
+    @classmethod
+    def is_basic(cls, name: str) -> bool:
+        return name in [x.value for x in cls]
 
 
 class CompileOptions(enum.Enum):

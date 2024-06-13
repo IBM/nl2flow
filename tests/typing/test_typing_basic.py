@@ -1,6 +1,5 @@
 from tests.testing import BaseTestAgents
-from tests.mappings.test_mappings_basic import TestMappingsBasic
-
+from tests.mappings.test_mappings_basic import check_basic_mapping_plan
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import (
     GoalItem,
@@ -31,7 +30,7 @@ class TestTypingBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        TestMappingsBasic.check_basic_mapping_plan(plans)
+        check_basic_mapping_plan(plans)
 
     def test_typing_with_hierarchy(self) -> None:
         self.flow.add(TypeItem(name="Contact", parent="Person"))
@@ -48,7 +47,7 @@ class TestTypingBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        TestMappingsBasic.check_basic_mapping_plan(plans)
+        check_basic_mapping_plan(plans)
 
     @pytest.mark.skip(reason="This is not supposed to pass. Illustration.")
     def test_typing_with_costly_hierarchy(self) -> None:
@@ -81,7 +80,7 @@ class TestTypingBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        TestMappingsBasic.check_basic_mapping_plan(plans)
+        check_basic_mapping_plan(plans)
 
         poi = plans.list_of_plans[0]
-        assert "Username" in [step.inputs[0].item_id for step in poi.plan[1:3]], "Make sure Username is used."
+        assert "Username" in [step.inputs[0] for step in poi.plan[1:3]], "Make sure Username is used."

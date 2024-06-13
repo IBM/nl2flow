@@ -7,6 +7,7 @@ from nl2flow.compile.options import (
     GoalType,
 )
 from nl2flow.plan.schemas import Action
+from nl2flow.plan.utils import find_goal
 from nl2flow.compile.schemas import (
     Parameter,
     Constraint,
@@ -104,6 +105,10 @@ class TestConstraints(BaseTestAgents):
             )
         )
         self.flow.add(goal)
+
+        assert find_goal(name="len($tweet) <= 240", flow_object=self.flow) == GoalItem(
+            goal_name="len($tweet) <= 240", goal_type=GoalType.CONSTRAINT
+        )
 
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."

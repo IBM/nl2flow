@@ -1,8 +1,9 @@
 from nl2flow.compile.schemas import Constraint
 from nl2flow.compile.options import BasicOperations, ConstraintState
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import Action
 from nl2flow.services.sketch import BasicSketchCompilation
+from nl2flow.printers.codelike import CodeLikePrint
 from tests.sketch.test_basic import sketch_to_plan, load_assets
 
 PLANNER = Kstar()
@@ -90,7 +91,7 @@ class TestSketchAdvanced:
         )
 
         planner_response = flow_object.plan_it(PLANNER)
-        print(PLANNER.pretty_print(planner_response))
+        print(CodeLikePrint.pretty_print(planner_response))
 
         assert planner_response.list_of_plans, "There should be plans."
 

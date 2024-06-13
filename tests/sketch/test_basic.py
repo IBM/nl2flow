@@ -5,10 +5,11 @@ import yaml  # type: ignore
 
 from nl2flow.compile.options import BasicOperations
 from nl2flow.compile.schemas import Constraint
-from nl2flow.plan.planners import Kstar
+from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.schemas import PlannerResponse, Action
 from nl2flow.services.sketch import BasicSketchCompilation
 from nl2flow.services.schemas.sketch_schemas import Sketch, Catalog
+from nl2flow.printers.codelike import CodeLikePrint
 
 
 FILEPATH = Path(__file__).parent.resolve()
@@ -40,7 +41,7 @@ def sketch_to_plan(catalog_name: str, sketch_name: str) -> PlannerResponse:
     pddl, transforms = sketch_compilation.compile_to_pddl(sketch, catalog)
 
     planner_response: PlannerResponse = sketch_compilation.plan_it(pddl, transforms)
-    print(PLANNER.pretty_print(planner_response))
+    print(CodeLikePrint.pretty_print(planner_response))
 
     return planner_response
 
