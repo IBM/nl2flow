@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple, Union
+from nl2flow.compile.options import BasicOperations
 from profiler.data_types.agent_info_data_types import (
     SIGNATURE_TYPES,
     AgentInfo,
@@ -228,7 +229,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
-    return f"Action map can determine the value of variable {mapping[0]} from variable {mapping[1]}."
+    return f"Action {BasicOperations.MAPPER.value} can determine the value of variable {mapping[0]} from variable {mapping[1]}."
 
 
 def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:
