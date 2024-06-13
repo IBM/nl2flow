@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple, Union
+from nl2flow.compile.options import BasicOperations
 from profiler.data_types.agent_info_data_types import (
     SIGNATURE_TYPES,
     AgentInfo,
@@ -147,15 +148,27 @@ def get_names_from_signature_items(
 
 def get_action_variable_description(agent_info: AgentInfo) -> str:
     sig = agent_info.actuator_signature
-    variable_names = get_names_from_signature_items_no_category(
-        sig.in_sig_full
-    ) + get_names_from_signature_items_no_category(sig.out_sig_full)
+    input_variable_names = get_names_from_signature_items_no_category(sig.in_sig_full)
+    output_variable_names = get_names_from_signature_items_no_category(sig.out_sig_full)
 
-    if len(variable_names) > 0:
-        part_list: List[str] = [f"Action {agent_info.agent_id} has"]
-        part_list.append("variable" if len(variable_names) == 1 else "variables")
-        part_list.append(get_names(list(set(variable_names))))
+    part_list: List[str] = [f"Action {agent_info.agent_id}"]
+
+    if len(input_variable_names) > 0:
+        part_list.append("has input parameter" if len(input_variable_names) == 1 else "has input parameters")
+        part_list.append(get_names(list(set(input_variable_names))))
+
+        if len(output_variable_names) == 0:
+            return " ".join(part_list) + "."
+
+    if len(output_variable_names) > 0:
+        if len(input_variable_names) > 0:
+            part_list.append("and it")
+
+        part_list.append("outputs variable" if len(output_variable_names) == 1 else "outputs variables")
+        part_list.append(get_names(list(set(output_variable_names))))
+
         return " ".join(part_list) + "."
+
     return ""
 
 
@@ -164,7 +177,11 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
     variable_names = get_names_from_signature_items_no_category(sig.in_sig_full if is_in_sig else sig.out_sig_full)
 
     if len(variable_names) == 0:
-        return f"Action {agent_info.agent_id} can be executed without knowing any variable" if is_in_sig else ""
+        return (
+            f"Action {agent_info.agent_id} can be executed without knowing the value of any variable"
+            if is_in_sig
+            else ""
+        )
 
     variable_names = list(set(variable_names))
     part_list: List[str] = []
@@ -174,7 +191,7 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
         part_list.append(f"To execute action {agent_info.agent_id},")
         part_list.append(prepend_word)
         part_list.append(get_names(variable_names))
-        part_list.append("should be known.")
+        part_list.append("must be known.")
     else:
         part_list.append(f"After executing action {agent_info.agent_id},")
         part_list.append(prepend_word)
@@ -212,7 +229,7 @@ def get_agent_info_description(agent_info: AgentInfo) -> Tuple[str, str]:
 
 
 def get_mapping_description(mapping: Tuple[str, str, float]) -> str:
-    return f"Action map can determine the value of variable {mapping[0]} from variable {mapping[1]}."
+    return f"Action {BasicOperations.MAPPER.value} can determine the value of variable {mapping[0]} from variable {mapping[1]}."
 
 
 def get_mappings_description(mappings: List[Tuple[str, str, float]]) -> str:

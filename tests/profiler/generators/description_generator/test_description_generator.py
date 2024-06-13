@@ -37,6 +37,7 @@ class TestDescriptionGenerator:
         samples, _ = generate_agent_infos(agent_info_generator_input, random)
 
         assert samples[0].describe() is not None
+        print(samples[0].describe())
 
     def test_get_sample_description_json(self) -> None:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
