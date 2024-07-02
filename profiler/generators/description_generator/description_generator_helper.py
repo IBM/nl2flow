@@ -76,7 +76,7 @@ def get_variable_property_description(available_agents: List[AgentInfo]) -> str:
     for slot_fillable, sig_item_names in property_action_names_dict.items():
         if len(sig_item_names) > 0:
             sentence_parts: List[str] = []
-            variable = "variable" if len(sig_item_names) == 1 else "variables"
+            variable = "Variable" if len(sig_item_names) == 1 else "Variables"
             sentence_parts.append(variable)
             variable_names = get_names(sorted(sig_item_names))
             sentence_parts.append(variable_names)
@@ -178,7 +178,7 @@ def get_action_condition_description(agent_info: AgentInfo, is_in_sig: bool) -> 
 
     if len(variable_names) == 0:
         return (
-            f"Action {agent_info.agent_id} can be executed without knowing the value of any variable"
+            f"Action {agent_info.agent_id} can be executed without knowing the value of any variable."
             if is_in_sig
             else ""
         )
