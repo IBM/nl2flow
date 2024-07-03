@@ -146,19 +146,8 @@ class AgentInfoGeneratorInput(BaseModel):
 
     @model_validator(mode="after")
     def check_proportion_slot_fillable_variable_greater_than_equal_zero_and_less_than_equal_one(self):  # type: ignore
-        num_agents_coupled = ceil(self.num_agents * self.proportion_coupled_agents)
-        max_num_variables_in_agents = (
-            ((self.num_input_parameters * 2) * (self.num_agents - num_agents_coupled))
-            + ((self.num_input_parameters * 2 - 1) * num_agents_coupled)
-            + ((num_agents_coupled + 1) * ceil(self.proportion_coupled_agents))
-        )
         if self.proportion_slot_fillable_variables < 0 or self.proportion_slot_fillable_variables > 1:
             raise ValueError("proportion_slot_fillable_variables should be between 0 (inclusive) and 1 (inclusive)")
-        if ceil(self.num_var * self.proportion_slot_fillable_variables) > max_num_variables_in_agents:
-            raise ValueError(
-                """proportion_slot_fillable_variables should less than
-                  or equal to (num_agents * num_input_parameters * 2 - (the number of coupled agents -1))"""
-            )
         return self
 
     @model_validator(mode="after")
