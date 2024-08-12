@@ -237,7 +237,7 @@ def get_agent_infos_with_coupled_agents(
     chosen_item_index = -1
     loop_cnt = num_coupled_agents - 1
 
-    if proportion_coupled_agents > 0.0:
+    if (len(agent_infos_input) > 1) and (proportion_coupled_agents > 0.0):
         for agent_i in range(loop_cnt):
             # keep using an unused variables until there is no unused variable
             variable_info: Optional[VariableInfo] = (

@@ -105,8 +105,8 @@ class AgentInfoGeneratorInput(BaseModel):
         if self.num_var < self.num_input_parameters * 2:
             raise ValueError("num_variables should be greater than 2 * num_input_parameters")
         if (
-            self.proportion_coupled_agents > 0.0
-            and self.num_agents > 2
+            self.num_agents > 2
+            and self.proportion_coupled_agents > 0.0
             and (self.num_var < self.num_input_parameters * 2 + 1)
         ):
             raise ValueError(
@@ -138,10 +138,11 @@ class AgentInfoGeneratorInput(BaseModel):
 
     @model_validator(mode="after")
     def check_proportion_coupled_agents_greater_than_equal_to_zero_and_less_than_equal_to_one(self):  # type: ignore
-        if self.proportion_coupled_agents < 0 or self.proportion_coupled_agents > 1:
-            raise ValueError("proportion_coupled_agents should be between 0 (inclusive) and 1 (inclusive)")
-        if ceil(self.num_agents * self.proportion_coupled_agents) == 1:
-            raise ValueError("proportion_coupled_agents should make the number of coupled agents not 1")
+        if self.num_agents > 1:
+            if self.proportion_coupled_agents < 0 or self.proportion_coupled_agents > 1:
+                raise ValueError("proportion_coupled_agents should be between 0 (inclusive) and 1 (inclusive)")
+            if ceil(self.num_agents * self.proportion_coupled_agents) == 1:
+                raise ValueError("proportion_coupled_agents should make the number of coupled agents not 1")
         return self
 
     @model_validator(mode="after")
