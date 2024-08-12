@@ -97,10 +97,11 @@ def check_sample(
     # input parameters
     assert check_num_input_parameters(available_agents, input.num_input_parameters)
     # coupling
-    num_coupled_agents, combs = get_stats_coupled_agents(available_agents)
-    expected_couple_agents = ceil(input.num_agents * input.proportion_coupled_agents)
-    expected_couple_agents = 0 if expected_couple_agents == 1 else expected_couple_agents
-    assert expected_couple_agents == num_coupled_agents
+    if input.num_agents > 1:
+        num_coupled_agents, combs = get_stats_coupled_agents(available_agents)
+        expected_couple_agents = ceil(input.num_agents * input.proportion_coupled_agents)
+        expected_couple_agents = 0 if expected_couple_agents == 1 else expected_couple_agents
+        assert expected_couple_agents == num_coupled_agents
     # goals
     assert input.num_goal_agents == len(goal_agent_ids)
     # data mapper
