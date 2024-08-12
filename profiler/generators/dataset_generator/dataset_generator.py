@@ -1,6 +1,7 @@
 from types import ModuleType
 from typing import List, Optional
 from nl2flow.plan.schemas import PlannerResponse
+from profiler.common_helpers.hash_helper import get_hash
 from profiler.data_types.generator_data_type import AgentInfoGeneratorInput
 from profiler.data_types.pddl_generator_datatypes import PddlGeneratorOutput
 from profiler.generators.info_generator.agent_info_generator import generate_agent_infos
@@ -47,7 +48,7 @@ def generate_dataset_with_info_generator(
                     if len(planner_response.list_of_plans) > 0
                     else "no plan"
                 ),
-                sample_hash=sample.get_hash(),
+                sample_hash=get_hash({"pddl": (pddl.domain + pddl.problem)}),
                 agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
                 compiler_planner_lag_millisecond=compiler_planner_lag,
                 planner_response=planner_response,
