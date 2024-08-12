@@ -12,7 +12,6 @@ from profiler.validators.agent_info_generator_test_utils import check_sample
 from profiler.generators.description_generator.description_generator import (
     get_sample_description,
 )
-from profiler.common_helpers.hash_helper import get_hash
 
 
 class AgentInfoGeneratorOutputItemCore(BaseModel):
@@ -51,10 +50,12 @@ class AgentInfoGeneratorOutputItem(BaseModel):
         )
 
         if planning_input_description_mode == PlanningInputDescriptionMode.JSON:
-            return agent_info_unit_model.get_simple_planning_model_json_str()
+            return agent_info_unit_model.get_simple_planning_model_json_str()  # type: ignore
 
         if planning_input_description_mode == PlanningInputDescriptionMode.CONCISE:
-            return get_concise_description(simple_planning_model=agent_info_unit_model.get_simple_planning_model())
+            return get_concise_description(  # type: ignore
+                simple_planning_model=agent_info_unit_model.get_simple_planning_model()
+            )
 
         # VERBOSE
         return get_sample_description(  # type: ignore
@@ -71,12 +72,3 @@ class AgentInfoGeneratorOutputItem(BaseModel):
             mappings=deepcopy(self.mappings),
             available_data=deepcopy(self.available_data),
         )
-
-    def get_hash(self) -> str:
-        core_info = AgentInfoGeneratorOutputItemCore(
-            available_agents=deepcopy(self.available_agents),
-            goal_agent_ids=deepcopy(self.goal_agent_ids),
-            mappings=deepcopy(self.mappings),
-            available_data=deepcopy(self.available_data),
-        )
-        return get_hash(core_info.model_dump_json())  # type: ignore
