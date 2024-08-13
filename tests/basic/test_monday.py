@@ -82,11 +82,13 @@ class TestMonday:
 
     def test_already_tried_conf_id_endpoint_once_with_retry(self) -> None:
         aw_2: OperatorDefinition = next(filter(lambda o: o.name == "aw/{conf_id}", self.flow.flow_definition.operators))
-        aw_2.max_try = 2
+        aw_2.max_try = 4
 
         self.flow.add(
             [
                 MemoryItem(item_id="conf_id", item_state=MemoryState.KNOWN),
+                Step(name="aw/{conf_id}", parameters=["conf_id"]),
+                Step(name="aw/{conf_id}", parameters=["conf_id"]),
                 Step(name="aw/{conf_id}", parameters=["conf_id"]),
                 Step(name="aw/{conf_id}", parameters=["conf_id"]),
             ]
