@@ -30,11 +30,11 @@ class PddlGeneratorOutput(BaseModel):
     compiler_planner_lag_millisecond: float  # lag in millisecond
     planner_response: PlannerResponse  # planner response
     agent_info_generator_output_item: AgentInfoGeneratorOutputItem  # seed for flow object
-    planning_datun_tag: Optional[PlanningDatumTag] = None
+    planning_datum_tag: Optional[PlanningDatumTag] = None
 
     def set_tags(self) -> None:
         num_agents = len(self.agent_info_generator_output_item.available_agents)
-        self.planning_datun_tag = PlanningDatumTag(
+        self.planning_datum_tag = PlanningDatumTag(
             number_of_agents=num_agents,
             number_of_variables=self.agent_info_generator_input.num_var,
             parameters_per_agent=(self.agent_info_generator_input.num_input_parameters * 2),
