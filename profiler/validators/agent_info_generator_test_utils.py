@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import AgentInfo, SIGNATURE_TYPES, AgentInfoSignatureType
 from profiler.data_types.generator_data_type import (
@@ -99,17 +98,17 @@ def check_sample(
     # coupling
     if input.num_agents > 1:
         num_coupled_agents, combs = get_stats_coupled_agents(available_agents)
-        expected_couple_agents = ceil(input.num_agents * input.proportion_coupled_agents)
-        expected_couple_agents = 0 if expected_couple_agents == 1 else expected_couple_agents
+        expected_couple_agents = int(round(input.num_agents * input.proportion_coupled_agents))
+        expected_couple_agents = 0 if expected_couple_agents <= 1 else expected_couple_agents
         assert expected_couple_agents == num_coupled_agents
     # goals
     assert input.num_goal_agents == len(goal_agent_ids)
     # data mapper
-    expected_prop_variables_mapping = ceil(input.num_var * input.proportion_mappable_variables)
-    expected_prop_variables_mapping = 0 if expected_prop_variables_mapping == 1 else expected_prop_variables_mapping
-    assert expected_prop_variables_mapping == get_num_variables_used_for_data_mapping(mappings)
+    expected_num_variables_mapping = int(round(input.num_var * input.proportion_mappable_variables))
+    expected_num_variables_mapping = 0 if expected_num_variables_mapping <= 1 else expected_num_variables_mapping
+    assert expected_num_variables_mapping == get_num_variables_used_for_data_mapping(mappings)
     # slot-filler
     # variables assigned for available data can't be checked if they are slot-fillable
-    assert ceil(input.num_var * input.proportion_slot_fillable_variables) >= get_num_slot_fillable_variables(
+    assert int(round(input.num_var * input.proportion_slot_fillable_variables)) >= get_num_slot_fillable_variables(
         available_agents
     )

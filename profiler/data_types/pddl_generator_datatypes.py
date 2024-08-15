@@ -1,4 +1,3 @@
-from math import ceil
 from pydantic import BaseModel
 from typing import List, Optional
 from nl2flow.plan.schemas import ClassicalPlan, PlannerResponse
@@ -38,12 +37,14 @@ class PddlGeneratorOutput(BaseModel):
             number_of_agents=num_agents,
             number_of_variables=self.agent_info_generator_input.num_var,
             parameters_per_agent=(self.agent_info_generator_input.num_input_parameters * 2),
-            coupling_of_agents=(ceil(num_agents * self.agent_info_generator_input.proportion_coupled_agents) * 100.0),
+            coupling_of_agents=(self.agent_info_generator_input.proportion_coupled_agents * 100.0),
             enable_slots=(
                 True
-                if ceil(
-                    self.agent_info_generator_input.num_var
-                    * self.agent_info_generator_input.proportion_slot_fillable_variables
+                if int(
+                    round(
+                        self.agent_info_generator_input.num_var
+                        * self.agent_info_generator_input.proportion_slot_fillable_variables
+                    )
                 )
                 > 0
                 else False
