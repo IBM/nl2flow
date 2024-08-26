@@ -8,12 +8,29 @@ from profiler.data_types.generator_output_data_type import AgentInfoGeneratorOut
 class PlanningDatumTag(BaseModel):
     number_of_agents: int = -1
     number_of_variables: int = -1
-    parameters_per_agent: int = -1
+    input_parameters_per_agent: int = -1
     coupling_of_agents: float = -1.0
+    parameterized: bool = False
     enable_slots: bool = False
+    enable_slotting_cost: bool = False
     enable_maps: bool = False
+    enable_mapping_cost: bool = False
     multiple_goals: bool = False
+    operators_as_goal: bool = True
+    objects_as_goal: bool = False
+    or_goals: bool = False
+    constraints_in_memory: bool = False
+    constraints_in_spec: bool = False
+    constraints_in_goal: bool = False
+    constraints_in_input: bool = False
+    constraints_in_output: bool = False
+    enable_typing: bool = False
+    flat_type_hierarchy: bool = False
+    number_of_types: int = -1
+    tristate_variables: bool = False
     objects_in_memory: bool = False
+    history_in_memory: bool = False
+    failure_in_history: bool = False
     length_of_sequence: int = -1
 
 
@@ -36,7 +53,7 @@ class PddlGeneratorOutput(BaseModel):
         self.planning_datum_tag = PlanningDatumTag(
             number_of_agents=num_agents,
             number_of_variables=self.agent_info_generator_input.num_var,
-            parameters_per_agent=(self.agent_info_generator_input.num_input_parameters * 2),
+            input_parameters_per_agent=(self.agent_info_generator_input.num_input_parameters * 2),
             coupling_of_agents=(self.agent_info_generator_input.proportion_coupled_agents * 100.0),
             enable_slots=(
                 True
