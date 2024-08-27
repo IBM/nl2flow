@@ -36,24 +36,24 @@ def generate_dataset_with_info_generator(
         planner_time_start = get_current_time_in_millisecond()
         planner_response = flow.plan_it(planner) if should_plan else PlannerResponse()
         compiler_planner_lag = get_current_time_in_millisecond() - planner_time_start
-        pddl_generator_outputs.append(
-            PddlGeneratorOutput(
-                description=sample.describe(),
-                pddl_domain=trim_pddl_str(pddl.domain, pddl_start_key),
-                pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
-                list_of_plans=planner_response.list_of_plans,
-                prettified_plans=CodeLikePrint.pretty_print(planner_response, show_output=False) if should_plan else "",
-                prettified_optimal_plan_forward=(
-                    VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=flow)
-                    if len(planner_response.list_of_plans) > 0
-                    else "no plan"
-                ),
-                sample_hash=get_hash({"pddl": (pddl.domain + pddl.problem)}),
-                agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
-                compiler_planner_lag_millisecond=compiler_planner_lag,
-                planner_response=planner_response,
-                agent_info_generator_output_item=sample,
-            )
+        pddl_generator_output = PddlGeneratorOutput(
+            description=sample.describe(),
+            pddl_domain=trim_pddl_str(pddl.domain, pddl_start_key),
+            pddl_problem=trim_pddl_str(pddl.problem, pddl_start_key),
+            list_of_plans=planner_response.list_of_plans,
+            prettified_plans=CodeLikePrint.pretty_print(planner_response, show_output=False) if should_plan else "",
+            prettified_optimal_plan_forward=(
+                VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=flow)
+                if len(planner_response.list_of_plans) > 0
+                else "no plan"
+            ),
+            sample_hash=get_hash({"pddl": (pddl.domain + pddl.problem)}),
+            agent_info_generator_input=agent_info_generator_input.model_copy(deep=True),
+            compiler_planner_lag_millisecond=compiler_planner_lag,
+            planner_response=planner_response,
+            agent_info_generator_output_item=sample,
         )
+        pddl_generator_output.set_tags()
+        pddl_generator_outputs.append(pddl_generator_output)
 
     return pddl_generator_outputs

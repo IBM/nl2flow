@@ -1,6 +1,5 @@
 from collections import deque
 from copy import deepcopy
-from math import ceil
 from types import ModuleType
 from typing import Any, Deque, Dict, List, Optional, Set, Tuple
 from profiler.data_types.agent_info_data_types import (
@@ -129,11 +128,11 @@ def get_variables(
     num_variables = len(variable_names)
 
     # mappable
-    num_slot_fillable_variables = ceil(num_variables * proportion_slot_fillable_variables)
+    num_slot_fillable_variables = int(round(num_variables * proportion_slot_fillable_variables))
     slot_fillable_variable_names = set(random.sample(variable_names, num_slot_fillable_variables))
 
     # mappable
-    num_mappable_variables = ceil(num_variables * proportion_mappable_variables)
+    num_mappable_variables = int(round(num_variables * proportion_mappable_variables))
     mappable_variable_names = set(random.sample(variable_names, num_mappable_variables))
 
     variable_types = get_variable_types(num_variables, num_var_types, random)
@@ -225,7 +224,7 @@ def get_agent_infos_with_coupled_agents(
     agent_infos = deepcopy(agent_infos_input)
     num_used_variables = num_input_parameters * 2
     variables_remaining_deque = deque(variable_infos[num_used_variables:][:])
-    num_coupled_agents = int(ceil(len(agent_infos) * proportion_coupled_agents))
+    num_coupled_agents = int(round(len(agent_infos) * proportion_coupled_agents))
 
     # postions of items used for coupling agents
     # Tuple[agent_index, "in" or "out", item_index]
