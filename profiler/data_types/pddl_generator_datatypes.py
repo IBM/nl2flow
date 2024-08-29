@@ -71,8 +71,8 @@ class PddlGeneratorOutput(BaseModel):
             objects_in_memory=(
                 True
                 if (
-                    len(self.agent_info_generator_output_item.available_data)
-                    and self.agent_info_generator_input.should_objects_known_in_memory > 0
+                    len(self.agent_info_generator_output_item.available_data) > 0
+                    and self.agent_info_generator_input.should_objects_known_in_memory
                 )
                 else False
             ),
