@@ -30,6 +30,7 @@ def generate_dataset_with_info_generator(
             goals=set(sample.goal_agent_ids),
             available_data=sample.available_data,
             slot_filler_option=agent_info_generator_input.slot_filler_option,
+            should_objects_known_in_memory=sample.agent_info_generator_input.should_objects_known_in_memory,
         )
         pddl, _ = flow.compile_to_pddl()
 

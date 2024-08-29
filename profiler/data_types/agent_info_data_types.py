@@ -171,6 +171,7 @@ class AgentInfoUnitModel(BaseModel):
     goal_agent_ids: List[str]
     mappings: List[Tuple[str, str, float]]
     available_data: List[Tuple[str, Optional[str]]]  # variable name, variable type
+    should_objects_known_in_memory: Optional[bool]
 
     def shuffle_information(self) -> None:
         if len(self.available_agents) > 0:
@@ -239,7 +240,9 @@ class AgentInfoUnitModel(BaseModel):
         return SimplePlanningModel(
             actions=self.get_simple_action_models(),
             mappings=list(map(lambda mapping: (mapping[0], mapping[1]), self.mappings)),
-            available_data=list(map(lambda dat: dat[0], self.available_data)),
+            available_data=(
+                list(map(lambda dat: dat[0], self.available_data)) if self.should_objects_known_in_memory else []
+            ),
             askable_parameters=askable_parameters,
             unaskable_parameters=unaskable_parameters,
             goal_action_ids=deepcopy(self.goal_agent_ids),

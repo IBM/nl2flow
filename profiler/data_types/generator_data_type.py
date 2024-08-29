@@ -28,6 +28,8 @@ class AgentInfoGeneratorInputCheck(BaseModel):
     num_agents: int
     # The number of variables
     num_var: int
+    # # Object state in memory
+    should_objects_known_in_memory: Optional[bool] = True
     # The number of input parameters for an agent (action)
     # The number of output parameters for an agent is equal to The number of input parameters for an agent
     num_input_parameters: int
@@ -59,6 +61,8 @@ class AgentInfoGeneratorInput(BaseModel):
     num_agents: int
     # The number of variables
     num_var: int
+    # Object state in memory
+    should_objects_known_in_memory: Optional[bool] = False
     # The number of input parameters for an agent (action)
     # The number of output parameters for an agent is equal to The number of input parameters for an agent
     num_input_parameters: int
@@ -164,6 +168,8 @@ class AgentInfoGeneratorInputBatch(BaseModel):
     num_agents: List[int] = [3]
     # The number of variables
     num_var: List[int] = [6]
+    # Object state in memory
+    should_objects_known_in_memory: List[Optional[bool]] = [False]
     # The number of input parameters for an agent (action)
     # The number of output parameters for an agent is equal to The number of input parameters for an agent
     num_input_parameters: List[int] = [2]

@@ -30,6 +30,7 @@ def test_get_simple_planning_model_json_str() -> None:
         goal_agent_ids=goal_agent_ids,
         mappings=mappings,
         available_data=available_data,
+        should_objects_known_in_memory=True,
     )
     json_str = agent_info_unit_model.get_simple_planning_model_json_str()
     expected_json_str = (

@@ -297,7 +297,9 @@ def get_concise_goals_description(simple_planning_model: SimplePlanningModel) ->
     return "goals: " + ", ".join(simple_planning_model.goal_action_ids)
 
 
-def get_concise_description(simple_planning_model: SimplePlanningModel) -> str:
+def get_concise_description(
+    simple_planning_model: SimplePlanningModel, should_objects_known_in_memory: Optional[bool]
+) -> str:
     description: List[str] = []
     if len(simple_planning_model.actions) > 0:
         description.append(
@@ -307,7 +309,7 @@ def get_concise_description(simple_planning_model: SimplePlanningModel) -> str:
     if len(simple_planning_model.mappings) > 0:
         description.append(map_description[:])
         description.append(get_concise_mapping_description(simple_planning_model=simple_planning_model))
-    if len(simple_planning_model.available_data) > 0:
+    if len(simple_planning_model.available_data) > 0 and should_objects_known_in_memory:
         description.append(get_concise_available_data_description(simple_planning_model=simple_planning_model))
     if len(simple_planning_model.askable_parameters) > 0:
         description.append(ask_description[:])

@@ -55,7 +55,7 @@ class TestInfo2FlowConverter:
 
     def test_get_available_data_for_flow(self) -> None:
         available_data: List[Tuple[str, Optional[str]]] = [("a", None), ("b", None)]
-        memory_items = get_available_data_for_flow(available_data)
+        memory_items = get_available_data_for_flow(available_data=available_data, should_objects_known_in_memory=True)
         assert len(memory_items) == 2
 
     def test_get_flow_from_agent_infos(self) -> None:
@@ -67,7 +67,13 @@ class TestInfo2FlowConverter:
         mappings = [("a", "b", 1.0)]
         available_data: List[Tuple[str, Optional[str]]] = [("a", None), ("b", None)]
         goals = {"k"}
-        flow = get_flow_from_agent_infos([agent_info], mappings, goals, available_data)
+        flow = get_flow_from_agent_infos(
+            available_agents=[agent_info],
+            mappings=mappings,
+            goals=goals,
+            available_data=available_data,
+            should_objects_known_in_memory=True,
+        )
         assert flow is not None
         pddl, _ = flow.compile_to_pddl()
         assert pddl is not None

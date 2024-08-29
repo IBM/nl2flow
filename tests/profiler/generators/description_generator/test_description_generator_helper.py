@@ -220,14 +220,17 @@ class TestDescriptionGeneratorHelper:
         goal_agent_ids = [available_agents[0].agent_id]
         mappings = [("x", "k", 1.0)]
         available_data = [("b", None)]
+        should_objects_known_in_memory = True
         agent_info_unit_model = AgentInfoUnitModel(
             available_agents=available_agents,
             goal_agent_ids=goal_agent_ids,
             mappings=mappings,
             available_data=available_data,
+            should_objects_known_in_memory=should_objects_known_in_memory,
         )
         description_str = get_concise_description(
-            simple_planning_model=agent_info_unit_model.get_simple_planning_model()
+            simple_planning_model=agent_info_unit_model.get_simple_planning_model(),
+            should_objects_known_in_memory=should_objects_known_in_memory,
         )
 
         assert len(description_str) > 0
