@@ -21,6 +21,7 @@ def get_sample_description(
     mappings: List[Tuple[str, str, float]],
     available_data: List[Tuple[str, Optional[str]]],
     slot_option: Optional[SlotOptions] = None,
+    should_objects_known_in_memory: Optional[bool] = True,
 ) -> str:
     descriptions: list[str] = list()
     # system
@@ -37,7 +38,7 @@ def get_sample_description(
 
         descriptions.append(" ".join(parts))
     # known values
-    if len(available_data) > 0:
+    if len(available_data) > 0 and should_objects_known_in_memory:
         descriptions.append(get_description_available_data(available_data))
     # field mappings
     if len(mappings) > 0:

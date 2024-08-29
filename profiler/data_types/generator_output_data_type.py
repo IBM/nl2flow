@@ -47,6 +47,7 @@ class AgentInfoGeneratorOutputItem(BaseModel):
             goal_agent_ids=self.goal_agent_ids,
             mappings=self.mappings,
             available_data=self.available_data,
+            should_objects_known_in_memory=self.agent_info_generator_input.should_objects_known_in_memory,
         )
 
         if planning_input_description_mode == PlanningInputDescriptionMode.JSON:
@@ -54,15 +55,18 @@ class AgentInfoGeneratorOutputItem(BaseModel):
 
         if planning_input_description_mode == PlanningInputDescriptionMode.CONCISE:
             return get_concise_description(  # type: ignore
-                simple_planning_model=agent_info_unit_model.get_simple_planning_model()
+                simple_planning_model=agent_info_unit_model.get_simple_planning_model(),
+                should_objects_known_in_memory=self.agent_info_generator_input.should_objects_known_in_memory,
             )
 
         # VERBOSE
         return get_sample_description(  # type: ignore
-            self.available_agents,
-            self.goal_agent_ids,
-            self.mappings,
-            self.available_data,
+            available_agents=self.available_agents,
+            goal_agent_ids=self.goal_agent_ids,
+            mappings=self.mappings,
+            available_data=self.available_data,
+            slot_option=None,
+            should_objects_known_in_memory=self.agent_info_generator_input.should_objects_known_in_memory,
         )
 
     def get_core_fields(self) -> AgentInfoGeneratorOutputItemCore:

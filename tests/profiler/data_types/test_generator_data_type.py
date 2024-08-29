@@ -6,6 +6,7 @@ class TestGeneratorDataType:
         setting = AgentInfoGeneratorInputCheck(
             num_agents=1,
             num_var=2,
+            should_objects_known_in_memory=True,
             num_input_parameters=2,
             num_samples=2,
             num_goal_agents=2,

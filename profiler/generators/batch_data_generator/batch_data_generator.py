@@ -49,6 +49,7 @@ def get_pddl_generator_output_batch(
         generator_input_setting_hash = AgentInfoGeneratorInputCheck(
             num_agents=agent_info_generator_input.num_agents,
             num_var=agent_info_generator_input.num_var,
+            should_objects_known_in_memory=agent_info_generator_input.should_objects_known_in_memory,
             num_input_parameters=agent_info_generator_input.num_input_parameters,
             num_samples=agent_info_generator_input.num_samples,
             num_goal_agents=agent_info_generator_input.num_goal_agents,

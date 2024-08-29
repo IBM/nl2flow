@@ -75,13 +75,15 @@ def get_data_mappers_for_flow(mappings: List[Tuple[str, str, float]]) -> List[Ma
     )
 
 
-def get_available_data_for_flow(available_data: List[Tuple[str, Optional[str]]]) -> List[MemoryItem]:
+def get_available_data_for_flow(
+    available_data: List[Tuple[str, Optional[str]]], should_objects_known_in_memory: bool
+) -> List[MemoryItem]:
     return list(
         map(
             lambda signature_item: MemoryItem(
                 item_id=signature_item[0],
                 item_type=signature_item[1],
-                item_state=MemoryState.KNOWN,
+                item_state=MemoryState.KNOWN if should_objects_known_in_memory else MemoryState.UNKNOWN,
             ),
             available_data,
         )
@@ -95,11 +97,14 @@ def get_flow_from_agent_infos(
     available_data: List[Tuple[str, Optional[str]]],
     flow_name: str = "default_name",
     slot_filler_option: Optional[SlotOptions] = None,
+    should_objects_known_in_memory: bool = True,
 ) -> Flow:
     flow = Flow(flow_name)
     flow.add(
         get_operators_for_flow(available_agents)
-        + get_available_data_for_flow(available_data)
+        + get_available_data_for_flow(
+            available_data=available_data, should_objects_known_in_memory=should_objects_known_in_memory
+        )
         + get_data_mappers_for_flow(mappings)
         + get_slot_fillers_for_flow(available_agents)
         + [get_goals_for_flow(goals)]
