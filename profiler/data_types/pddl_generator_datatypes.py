@@ -68,6 +68,13 @@ class PddlGeneratorOutput(BaseModel):
             ),
             enable_maps=(True if len(self.agent_info_generator_output_item.mappings) > 0 else False),
             multiple_goals=(True if len(self.agent_info_generator_output_item.goal_agent_ids) > 1 else False),
-            objects_in_memory=(True if len(self.agent_info_generator_output_item.available_data) > 0 else False),
+            objects_in_memory=(
+                True
+                if (
+                    len(self.agent_info_generator_output_item.available_data) > 0
+                    and self.agent_info_generator_input.should_objects_known_in_memory
+                )
+                else False
+            ),
             length_of_sequence=(len(self.list_of_plans[0].plan) if len(self.list_of_plans) > 0 else 0),
         )
