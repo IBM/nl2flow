@@ -1,11 +1,10 @@
 from copy import deepcopy
 from types import ModuleType
-from typing import Any, Dict, Generator, List, Set
+from typing import Any, Dict, Generator, List
 from nl2flow.plan.planner import Planner
 from profiler.data_types.generator_data_type import (
     AgentInfoGeneratorInput,
     AgentInfoGeneratorInputBatch,
-    AgentInfoGeneratorInputCheck,
 )
 from profiler.data_types.pddl_generator_datatypes import PddlGeneratorOutput
 from profiler.generators.dataset_generator.dataset_generator import generate_dataset_with_info_generator
@@ -44,40 +43,20 @@ def get_agent_info_generator_inputs(
 def get_pddl_generator_output_batch(
     batch_input: AgentInfoGeneratorInputBatch, planner: Planner, random: ModuleType, should_plan: bool = True
 ) -> Generator[List[PddlGeneratorOutput], None, None]:
-    used_settings: Set[int] = set()
     for agent_info_generator_input in get_agent_info_generator_inputs(batch_input):
-        generator_input_setting_hash = AgentInfoGeneratorInputCheck(
-            num_agents=agent_info_generator_input.num_agents,
-            num_var=agent_info_generator_input.num_var,
-            should_objects_known_in_memory=agent_info_generator_input.should_objects_known_in_memory,
-            num_input_parameters=agent_info_generator_input.num_input_parameters,
-            num_samples=agent_info_generator_input.num_samples,
-            num_goal_agents=agent_info_generator_input.num_goal_agents,
-            num_coupled_agents=int(
-                agent_info_generator_input.num_agents * agent_info_generator_input.proportion_coupled_agents
-            ),
-            num_slot_fillable_variables=int(
-                agent_info_generator_input.num_var * agent_info_generator_input.proportion_slot_fillable_variables
-            ),
-            num_mappable_variables=int(
-                agent_info_generator_input.num_var * agent_info_generator_input.proportion_mappable_variables
-            ),
-            num_var_types=agent_info_generator_input.num_var_types,
-            slot_filler_option=agent_info_generator_input.slot_filler_option,
-            name_generator=agent_info_generator_input.name_generator,
-            error_message=agent_info_generator_input.error_message,
-        ).__hash__()
-        if generator_input_setting_hash in used_settings:
-            continue
-        used_settings.add(generator_input_setting_hash)
-        try:
-            pddl_generator_outputs = generate_dataset_with_info_generator(
-                agent_info_generator_input=agent_info_generator_input,
-                planner=planner,
-                random=random,
-                should_plan=should_plan,
-            )
-            if pddl_generator_outputs is not None:
-                yield pddl_generator_outputs
-        except Exception as e:
-            print(e)
+        pddl_generator_outputs_batch: List[PddlGeneratorOutput] = []
+        for _ in range(agent_info_generator_input.num_samples):
+            random_agent_info_generator_input = agent_info_generator_input.get_random_obj()
+
+            try:
+                pddl_generator_outputs = generate_dataset_with_info_generator(
+                    agent_info_generator_input=random_agent_info_generator_input,
+                    planner=planner,
+                    random=random,
+                    should_plan=should_plan,
+                )
+                if pddl_generator_outputs is not None:
+                    pddl_generator_outputs_batch.extend(pddl_generator_outputs)
+            except Exception as e:
+                print(e)
+        yield pddl_generator_outputs_batch

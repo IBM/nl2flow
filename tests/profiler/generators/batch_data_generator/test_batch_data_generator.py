@@ -32,3 +32,21 @@ class TestBatchDataGenerator:
         )
         res = list(get_pddl_generator_output_batch(agent_info_generator_input_batch, planner=PLANNER, random=random))
         assert len(res) == 4
+
+    def test_get_pddl_generator_output_batch_random(self) -> None:
+        agent_info_generator_input_batch = AgentInfoGeneratorInputBatch(
+            num_agents=[4],
+            num_var=[5],
+            num_input_parameters=[2],
+            num_samples=[1],
+            num_goal_agents=[-1],  # random value generation request
+            proportion_coupled_agents=[0.75],
+            proportion_slot_fillable_variables=[-1.0],  # random value generation request
+            proportion_mappable_variables=[-1.0],  # random value generation request
+            num_var_types=[0],
+            slot_filler_option=[None],
+            name_generator=[NameGenerator.NUMBER],
+            error_message=[None],
+        )
+        res = list(get_pddl_generator_output_batch(agent_info_generator_input_batch, planner=PLANNER, random=random))
+        assert len(res) > 0
