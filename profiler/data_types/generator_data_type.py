@@ -1,4 +1,6 @@
+from __future__ import annotations
 from enum import Enum
+import random
 from typing import List, Optional
 from pydantic import BaseModel, field_validator, model_validator
 from nl2flow.compile.options import SlotOptions
@@ -21,39 +23,6 @@ class VariableInfo(BaseModel):
     mappable: bool
     slot_fillable: bool
     variable_type: Optional[str] = None
-
-
-class AgentInfoGeneratorInputCheck(BaseModel):
-    # The number of available agents
-    num_agents: int
-    # The number of variables
-    num_var: int
-    # # Object state in memory
-    should_objects_known_in_memory: Optional[bool] = True
-    # The number of input parameters for an agent (action)
-    # The number of output parameters for an agent is equal to The number of input parameters for an agent
-    num_input_parameters: int
-    # The number of input data sets to a planner
-    num_samples: int
-    # The number of goal agents in available agents
-    num_goal_agents: int
-    # The number of coupled agents
-    num_coupled_agents: int
-    # The number of slot-fillable variables
-    num_slot_fillable_variables: int
-    # The number of mappable variables
-    num_mappable_variables: int
-    # the number of types for variables
-    num_var_types: int = 0
-    # slot-filler type
-    slot_filler_option: Optional[SlotOptions] = None
-    # Name generator
-    name_generator: NameGenerator = NameGenerator.NUMBER
-    # error_message
-    error_message: Optional[str] = None
-
-    def __hash__(self) -> int:
-        return hash((type(self),) + tuple(self.__dict__.values()))
 
 
 class AgentInfoGeneratorInput(BaseModel):
@@ -133,6 +102,8 @@ class AgentInfoGeneratorInput(BaseModel):
 
     @model_validator(mode="after")
     def check_num_goal_agents_less_than_or_equal_to_num_agents(self):  # type: ignore
+        if self.num_goal_agents == -1:  # random multiple goals generation
+            return self
         if self.num_goal_agents > self.num_agents:
             raise ValueError("num_goal_agents should be less than or equal to num_agents")
         elif self.num_goal_agents <= 0:
@@ -150,17 +121,36 @@ class AgentInfoGeneratorInput(BaseModel):
 
     @model_validator(mode="after")
     def check_proportion_slot_fillable_variable_greater_than_equal_zero_and_less_than_equal_one(self):  # type: ignore
+        if self.proportion_slot_fillable_variables == -1.0:  # random slot generation
+            return self
         if self.proportion_slot_fillable_variables < 0 or self.proportion_slot_fillable_variables > 1:
             raise ValueError("proportion_slot_fillable_variables should be between 0 (inclusive) and 1 (inclusive)")
         return self
 
     @model_validator(mode="after")
     def check_proportion_mappable_variables_greater_than_equal_to_zero_and_less_than_equal_one(self):  # type: ignore
+        if self.proportion_mappable_variables == -1.0:  # random mapping generation
+            return self
         if self.proportion_mappable_variables < 0 or self.proportion_mappable_variables > 1:
             raise ValueError("proportion_mappable_variables should be between 0 (inclusive) and 1 (inclusive)")
         if int(round(self.num_var * self.proportion_mappable_variables)) == 1:
             raise ValueError("proportion_mappable_variables should not make the number of mappable variables one")
         return self
+
+    def get_random_obj(self) -> AgentInfoGeneratorInput:
+        obj: AgentInfoGeneratorInput = self.model_copy(deep=True)
+        obj.num_samples = 1
+        if obj.num_goal_agents == -1:  # random multiple goals generation
+            obj.num_goal_agents = 1 if self.num_agents <= 1 else random.randint(2, obj.num_agents)
+        if obj.proportion_slot_fillable_variables == -1.0:
+            obj.proportion_slot_fillable_variables = (
+                0.0 if (self.num_var == 0) else (random.randint(1, self.num_var) / self.num_var)
+            )
+        if obj.proportion_mappable_variables == -1.0:
+            obj.proportion_mappable_variables = (
+                0.0 if (self.num_var <= 1) else (random.randint(2, self.num_var) / self.num_var)
+            )
+        return obj
 
 
 class AgentInfoGeneratorInputBatch(BaseModel):
