@@ -49,4 +49,4 @@ class TestBatchDataGenerator:
             error_message=[None],
         )
         res = list(get_pddl_generator_output_batch(agent_info_generator_input_batch, planner=PLANNER, random=random))
-        assert len(res) >= 0
+        assert len(res) > 0
