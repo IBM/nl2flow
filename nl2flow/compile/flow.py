@@ -17,11 +17,8 @@ from nl2flow.compile.options import (
 
 
 class Flow:
-    def __init__(
-        self,
-        name: str,
-    ):
-        self._flow_definition = FlowDefinition(name=name)
+    def __init__(self, name: str, validate: bool = True):
+        self._flow_definition = FlowDefinition(name=name, validate_assignment=validate)
         self._mapping_option: Set[MappingOptions] = {MappingOptions.relaxed}
         self._confirm_option: Set[ConfirmOptions] = set()
         self._variable_life_cycle: Set[LifeCycleOptions] = set()

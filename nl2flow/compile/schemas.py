@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Set, List, Dict, Optional, Union, Any
 from collections import Counter
 from re import findall
-from pydantic import BaseModel, field_validator, model_validator, ConfigDict
+from pydantic import BaseModel, field_validator, model_validator
 from pydantic_core.core_schema import FieldValidationInfo
 from nl2flow.compile.utils import string_transform, revert_string_transform, Transform
 from nl2flow.compile.options import (
@@ -246,8 +246,6 @@ class ClassicalPlanReference(BaseModel):
 
 
 class FlowDefinition(BaseModel):
-    model_config = ConfigDict(validate_assignment=True)
-
     name: str
     type_hierarchy: List[TypeItem] = []
     operators: List[OperatorDefinition] = []
@@ -262,6 +260,12 @@ class FlowDefinition(BaseModel):
     starts_with: Optional[str] = None
     ends_with: Optional[str] = None
     reference: Optional[ClassicalPlanReference] = None
+
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**data)
+        self.model_config["validate_assignment"] = data.get(
+            "validate_assignment", self.model_config.get("validate_assignment", True)
+        )
 
     @classmethod
     def transform(cls, flow: FlowDefinition, transforms: List[Transform]) -> FlowDefinition:

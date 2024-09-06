@@ -1,6 +1,7 @@
 from tests.testing import BaseTestAgents
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.options import GoalType
+from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import (
     TypeItem,
     MemoryItem,
@@ -23,6 +24,22 @@ class TestDuplicates(BaseTestAgents):
 
         with pytest.raises(Exception):
             self.flow.add([agent_1, agent_2])
+
+    def test_relaxed_assignment(self) -> None:
+        agent_1 = Operator("Agent")
+        agent_2 = Operator("Agent")
+
+        flow_definition = self.flow.flow_definition
+
+        new_flow = Flow(name="Test Validated Assignment")
+        new_flow.flow_definition = flow_definition
+
+        with pytest.raises(Exception):
+            self.flow.add([agent_1, agent_2])
+
+        new_flow = Flow(name="Test Relaxed Assignment", validate=False)
+        new_flow.flow_definition = flow_definition
+        new_flow.add([agent_1, agent_2])
 
     def test_duplicate_types(self) -> None:
         with pytest.raises(Exception):
