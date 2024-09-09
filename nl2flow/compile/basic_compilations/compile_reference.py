@@ -1,6 +1,6 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from tarski.syntax import land, Atom
+from tarski.syntax import land, Atom, Tautology
 from typing import Any, Optional
 
 from nl2flow.compile.schemas import Step, Constraint
@@ -82,7 +82,7 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
                 ),
             )
 
-    if compilation.problem.goal is None:
+    if compilation.problem.goal is None or isinstance(compilation.problem.goal, Tautology):
         new_goal = land(*token_predicates, flat=True)
 
     else:
