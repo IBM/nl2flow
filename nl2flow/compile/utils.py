@@ -15,6 +15,7 @@ def string_transform(item: Optional[str], reference: List[Transform], hashit: bo
             transform = f"hash_{str(abs(hash(item)))}"
         else:
             transform = re.sub(r"\s+", "_", item.lower())
+            transform = re.sub(r"\"", "_", transform)
 
         if transform and transform == revert_string_transform(transform, reference) and transform != item:
             reference.append(
