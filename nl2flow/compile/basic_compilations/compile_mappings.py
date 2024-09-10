@@ -72,7 +72,6 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value]),
             compilation.is_mappable(x, y),
             neg(compilation.not_mappable(x, y)),
-            neg(compilation.mapped_to(x, y)),
             neg(compilation.new_item(y)),
         ]
 
@@ -128,7 +127,6 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
 
             precondition_list = [
                 compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value]),
-                neg(compilation.mapped_to(x, y)),
                 neg(compilation.mapped(x)),
                 neg(compilation.not_mappable(x, y)),
                 neg(compilation.new_item(y)),

@@ -52,6 +52,11 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
         precondition_list = [p for p in cached_predicates[:index]]
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
 
+        for i in range(index):
+            shadow_token_predicate_name = f"token_{i}"
+            shadow_token_predicate = getattr(compilation, shadow_token_predicate_name)()
+            precondition_list.append(shadow_token_predicate)
+
         compilation.problem.action(
             f"{RestrictedOperations.TOKENIZE.value}_{index}",
             parameters=[],
@@ -59,7 +64,7 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             effects=effect_list,
             cost=iofs.AdditiveActionCost(
                 compilation.problem.language.constant(
-                    CostOptions.ZERO.value,
+                    CostOptions.EDIT.value,
                     compilation.problem.language.get_sort("Integer"),
                 )
             ),

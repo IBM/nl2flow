@@ -38,11 +38,6 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
 
-    mapped_items = kwargs.get("mapped_items", dict())
-    step.parameters = [
-        Parameter(item_id=mapped_items.get(p.item_id, p.item_id), item_type=p.item_type) for p in step.parameters
-    ]
-
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):
             step_predicate = compilation.has_asked(compilation.constant_map[step.parameters[0].item_id])
