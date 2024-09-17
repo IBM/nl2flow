@@ -2,11 +2,10 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, Atom, Tautology
 from typing import Any, Optional
-
 from nl2flow.compile.schemas import Step, Constraint
-from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
-from nl2flow.compile.options import RestrictedOperations, BasicOperations, CostOptions
+from nl2flow.compile.options import RestrictedOperations, CostOptions
 from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
 
 
 def compile_reference(compilation: Any, **kwargs: Any) -> None:
@@ -14,11 +13,13 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
 
     cached_predicates = list()
     token_predicates = list()
-    mapped_items = dict()
+    # mapped_items = dict()
+    # del_predicates = []
 
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
+            # del_predicates = []
 
             if isinstance(item, Step):
                 indices_of_interest = []
@@ -29,12 +30,22 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
 
                 index_of_operation = indices_of_interest.index(index)
 
-                if item.name == BasicOperations.MAPPER.value:
-                    mapped_items[item.parameters[1].item_id] = item.parameters[0].item_id
+                # if item.name == BasicOperations.MAPPER.value:
+                # if item.parameters[1].item_id in mapped_items:
+                # del_predicates = [
+                #     compilation.mapped_to(
+                #         compilation.constant_map[item.parameters[0].item_id],
+                #         compilation.constant_map[item.parameters[1].item_id]
+                #     ),
+                #     compilation.known(
+                #         compilation.constant_map[item.parameters[1].item_id],
+                #         compilation.constant_map[MemoryState.KNOWN.value],
+                #     ),
+                # ]
 
-                step_predicate = get_predicate_from_step(
-                    compilation, item, index_of_operation, mapped_items=mapped_items, **kwargs
-                )
+                # mapped_items[item.parameters[1].item_id] = item.parameters[0].item_id
+
+                step_predicate = get_predicate_from_step(compilation, item, index_of_operation, **kwargs)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)
@@ -51,6 +62,9 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
 
         precondition_list = [p for p in cached_predicates[:index]]
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
+
+        # for del_p in del_predicates:
+        #     effect_list.append(fs.DelEffect(del_p))
 
         for i in range(index):
             shadow_token_predicate_name = f"token_{i}"
