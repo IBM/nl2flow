@@ -8,8 +8,12 @@ from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
 
 
+def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
+    pass
+
+
 def compile_reference(compilation: Any, **kwargs: Any) -> None:
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
 
     cached_predicates = list()
     token_predicates = list()
@@ -84,7 +88,7 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             ),
         )
 
-        if debug_flag == SolutionQuality.OPTIMAL:
+        if report_type == SolutionQuality.OPTIMAL:
             precondition_list = []
             effect_list = [fs.AddEffect(token_predicate)]
 

@@ -2,7 +2,7 @@ from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant
 from nl2flow.compile.schemas import Parameter, MemoryItem, Constraint, Step
 from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from typing import Any, Optional, Set
 
 
@@ -36,7 +36,7 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
 
 def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs: Any) -> Optional[Any]:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):

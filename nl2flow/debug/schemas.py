@@ -2,12 +2,17 @@ from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.schemas import Step, ClassicalPlanReference, Constraint
 from typing import List, Optional, Union
 from pydantic import BaseModel
-from enum import Enum
+from enum import Enum, auto
 
 
 class DiffAction(str, Enum):
     ADD = "+"
     DELETE = "-"
+
+
+class DebugFlag(str, Enum):
+    DIRECT = auto()
+    TOKENIZE = auto()
 
 
 class SolutionQuality(str, Enum):

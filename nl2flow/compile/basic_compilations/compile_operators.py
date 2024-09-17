@@ -11,7 +11,7 @@ from nl2flow.compile.basic_compilations.utils import (
 
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
 from nl2flow.compile.schemas import FlowDefinition, OperatorDefinition, Parameter
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
     TypeOptions,
     LifeCycleOptions,
@@ -27,7 +27,7 @@ from nl2flow.compile.options import (
 def compile_operators(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     list_of_actions: List[OperatorDefinition] = flow_definition.operators
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
@@ -47,7 +47,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         del_effect_list = list()
         type_list = list()
 
-        if debug_flag:
+        if debug_flag == DebugFlag.TOKENIZE:
             precondition_list.append(compilation.ready_for_token())
             del_effect_list.append(compilation.ready_for_token())
 

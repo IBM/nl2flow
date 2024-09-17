@@ -3,7 +3,7 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import List, Set, Dict, Any, Optional
 
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.basic_compilations.utils import (
     get_type_of_constant,
     is_this_a_datum,
@@ -120,7 +120,7 @@ def get_goodness_map(compilation: Any, no_edit: bool = False) -> Dict[str, float
 def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     if SlotOptions.ordered in slot_options:
         not_slots = get_not_slots(compilation)
@@ -165,7 +165,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
                         ),
                     ]
 
-                    if debug_flag:
+                    if debug_flag == DebugFlag.TOKENIZE:
                         precondition_list.append(compilation.ready_for_token())
                         add_effect_list.append(compilation.has_asked(compilation.constant_map[slot]))
                         del_effect_list.append(compilation.ready_for_token())
@@ -202,7 +202,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
             ),
         ]
 
-        if debug_flag:
+        if debug_flag == DebugFlag.TOKENIZE:
             precondition_list.append(compilation.ready_for_token())
             add_effect_list.append(compilation.has_asked(x))
             del_effect_list.append(compilation.ready_for_token())
@@ -220,7 +220,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
 def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     not_slots = get_not_slots(compilation)
     source_map = get_item_source_map(compilation)
@@ -282,7 +282,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         for s in slot_list[:index_of_current_slot]
                     ]
 
-                    if debug_flag:
+                    if debug_flag == DebugFlag.TOKENIZE:
                         precondition_list.append(compilation.ready_for_token())
                         add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
                         del_effect_list.append(compilation.ready_for_token())
@@ -301,7 +301,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         ),
                     )
             else:
-                if debug_flag:
+                if debug_flag == DebugFlag.TOKENIZE:
                     precondition_list.append(compilation.ready_for_token())
                     add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
                     del_effect_list.append(compilation.ready_for_token())
@@ -324,7 +324,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
 def compile_all_together(compilation: Any, **kwargs: Any) -> None:
     slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     not_slots = get_not_slots(compilation)
     source_map = get_item_source_map(compilation)
@@ -377,7 +377,7 @@ def compile_all_together(compilation: Any, **kwargs: Any) -> None:
                         ]
                     )
 
-                    if debug_flag:
+                    if debug_flag == DebugFlag.TOKENIZE:
                         add_effect_list.append(compilation.has_asked(compilation.constant_map[constant]))
 
                     if SlotOptions.last_resort in slot_options and constant not in not_slots_as_last_resort:
@@ -391,7 +391,7 @@ def compile_all_together(compilation: Any, **kwargs: Any) -> None:
 
                     slot_cost += int((2 - goodness_map[constant]) * CostOptions.INTERMEDIATE.value)
 
-            if debug_flag:
+            if debug_flag == DebugFlag.TOKENIZE:
                 precondition_list.append(compilation.ready_for_token())
                 del_effect_list.append(compilation.ready_for_token())
 

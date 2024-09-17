@@ -6,7 +6,7 @@ from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.schemas import ClassicalPlan
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.schemas import ClassicalPlanReference
-from nl2flow.debug.schemas import Report, SolutionQuality, StepDiff, DiffAction
+from nl2flow.debug.schemas import Report, SolutionQuality, StepDiff, DiffAction, DebugFlag
 from nl2flow.printers.codelike import CodeLikePrint
 from nl2flow.printers.driver import Printer
 
@@ -22,7 +22,8 @@ class Debugger(ABC):
     def debug(
         self,
         list_of_tokens: List[str],
-        debug: SolutionQuality,
+        report_type: SolutionQuality,
+        debug_flag: DebugFlag = DebugFlag.TOKENIZE,
         timeout: int = TIMEOUT,
         printer: Printer = CodeLikePrint(),
         **kwargs: Any,
@@ -78,7 +79,8 @@ class BasicDebugger(Debugger):
     def debug(
         self,
         list_of_tokens: List[str],
-        debug: SolutionQuality,
+        report_type: SolutionQuality,
+        debug_flag: DebugFlag = DebugFlag.TOKENIZE,
         timeout: int = TIMEOUT,
         printer: Printer = CodeLikePrint(),
         **kwargs: Any,
@@ -88,9 +90,9 @@ class BasicDebugger(Debugger):
         reference_plan: ClassicalPlanReference = printer.parse_tokens(list_of_tokens, **kwargs)
         self.flow.add(reference_plan)
 
-        planner_response = self.flow.plan_it(PLANNER, debug_flag=debug)
+        planner_response = self.flow.plan_it(PLANNER, debug_flag, report_type)
         new_report = Report(
-            report_type=debug.value,
+            report_type=report_type.value,
             planner_response=planner_response,
             reference=reference_plan,
         )

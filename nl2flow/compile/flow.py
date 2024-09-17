@@ -3,7 +3,7 @@ from nl2flow.plan.schemas import PlannerResponse
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
 from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, ClassicalPlanReference, Transform
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import SolutionQuality, DebugFlag
 from nl2flow.compile.options import (
     CompileOptions,
     SlotOptions,
@@ -174,16 +174,18 @@ class Flow:
     def plan_it(
         self,
         planner: Any,
-        debug_flag: Optional[SolutionQuality] = None,
+        debug_flag: Optional[DebugFlag] = None,
+        report_type: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> PlannerResponse:
-        pddl, transforms = self.compile_to_pddl(debug_flag, compilation_type)
+        pddl, transforms = self.compile_to_pddl(debug_flag, report_type, compilation_type)
         parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms)
         return parsed_plans
 
     def compile_to_pddl(
         self,
-        debug_flag: Optional[SolutionQuality] = None,
+        debug_flag: Optional[DebugFlag] = None,
+        report_type: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
     ) -> Tuple[PDDL, List[Transform]]:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
@@ -199,6 +201,7 @@ class Flow:
             goal_type=self.goal_type,
             lookahead=self.lookahead,
             debug_flag=debug_flag,
+            report_type=report_type,
         )
 
         return pddl, transforms

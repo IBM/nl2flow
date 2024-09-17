@@ -3,7 +3,7 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Set, Any, Optional
 
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.schemas import FlowDefinition, MemoryItem
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum, add_memory_item_to_constant_map
 from nl2flow.compile.options import (
@@ -20,7 +20,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     for constant in compilation.constant_map:
         if is_this_a_datum(compilation, constant) and MappingOptions.prohibit_direct not in mapping_options:
@@ -103,7 +103,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             ),
         )
 
-        if debug_flag:
+        if debug_flag == DebugFlag.TOKENIZE:
             precondition_list.append(compilation.ready_for_token())
             effect_list.append(fs.DelEffect(compilation.ready_for_token()))
 
@@ -118,7 +118,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
 
 def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     for typing in compilation.type_map:
         if typing not in [t.value for t in TypeOptions]:
@@ -161,7 +161,7 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
                 ),
             )
 
-            if debug_flag:
+            if debug_flag == DebugFlag.TOKENIZE:
                 precondition_list.append(compilation.ready_for_token())
                 effect_list.append(fs.DelEffect(compilation.ready_for_token()))
 

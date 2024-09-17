@@ -4,7 +4,7 @@ from tarski.theories import Theory
 from tarski.io import FstripsWriter
 from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Any, Tuple, Optional
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.schemas import (
     FlowDefinition,
     PDDL,
@@ -15,7 +15,7 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
-from nl2flow.compile.basic_compilations.compile_reference import compile_reference
+from nl2flow.compile.basic_compilations.compile_reference import compile_reference, compile_reference_basic
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
@@ -104,9 +104,56 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
-        debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
-        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        self.construct_state_predicates(**kwargs)
+
+        debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+
+        compile_operators(self, **kwargs)
+        compile_confirmation(self, **kwargs)
+        add_extra_objects(self, **kwargs)
+
+        if len(slot_options) > 1:
+            compile_new_object_maps(self, **kwargs)
+            get_goodness_map(self)
+
+        if SlotOptions.higher_cost in slot_options:
+            compile_higher_cost_slots(self, **kwargs)
+
+        if SlotOptions.last_resort in slot_options:
+            compile_last_resort_slots(self, **kwargs)
+
+        if SlotOptions.all_together in slot_options:
+            compile_all_together(self, **kwargs)
+
+        compile_declared_mappings(self, **kwargs)
+
+        if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
+            compile_typed_mappings(self, **kwargs)
+
+        compile_goals(self, **kwargs)
+        compile_manifest_constraints(self)
+        compile_history(self, **kwargs)
+
+        if debug_flag == DebugFlag.TOKENIZE:
+            compile_reference(self, **kwargs)
+        elif debug_flag == DebugFlag.DIRECT:
+            compile_reference_basic(self, **kwargs)
+        else:
+            pass
+
+        self.init.set(self.cost(), 0)
+        self.problem.init = self.init
+
+        writer = FstripsWriter(self.problem)
+        domain = writer.print_domain(constant_objects=list(self.constant_map.values())).replace(" :numeric-fluents", "")
+        problem = writer.print_instance(constant_objects=list(self.constant_map.values()))
+
+        return PDDL(domain=domain, problem=problem), self.cached_transforms
+
+    def construct_state_predicates(self, **kwargs: Any) -> None:
+        debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
         reserved_types = [
             TypeOptions.ROOT,
@@ -138,7 +185,7 @@ class ClassicPDDL(Compilation):
                     ),
                 )
 
-        if debug_flag:
+        if debug_flag == DebugFlag.TOKENIZE:
             self.ready_for_token = self.lang.predicate("ready_for_token")
             self.has_asked = self.lang.predicate(
                 "has_asked",
@@ -244,41 +291,3 @@ class ClassicPDDL(Compilation):
 
         if NL2FlowOptions.allow_retries in optimization_options:
             add_retry_states(self)
-
-        compile_operators(self, **kwargs)
-        compile_confirmation(self, **kwargs)
-        add_extra_objects(self, **kwargs)
-
-        if len(slot_options) > 1:
-            compile_new_object_maps(self, **kwargs)
-            get_goodness_map(self)
-
-        if SlotOptions.higher_cost in slot_options:
-            compile_higher_cost_slots(self, **kwargs)
-
-        if SlotOptions.last_resort in slot_options:
-            compile_last_resort_slots(self, **kwargs)
-
-        if SlotOptions.all_together in slot_options:
-            compile_all_together(self, **kwargs)
-
-        compile_declared_mappings(self, **kwargs)
-
-        if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
-            compile_typed_mappings(self, **kwargs)
-
-        compile_goals(self, **kwargs)
-        compile_manifest_constraints(self)
-        compile_history(self, **kwargs)
-
-        if debug_flag:
-            compile_reference(self, **kwargs)
-
-        self.init.set(self.cost(), 0)
-        self.problem.init = self.init
-
-        writer = FstripsWriter(self.problem)
-        domain = writer.print_domain(constant_objects=list(self.constant_map.values())).replace(" :numeric-fluents", "")
-        problem = writer.print_instance(constant_objects=list(self.constant_map.values()))
-
-        return PDDL(domain=domain, problem=problem), self.cached_transforms
