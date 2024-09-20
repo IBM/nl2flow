@@ -1,15 +1,147 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from tarski.syntax import land, Atom, Tautology
-from typing import Any, Optional
-from nl2flow.compile.schemas import Step, Constraint
-from nl2flow.compile.options import RestrictedOperations, CostOptions
+from tarski.syntax import land, neg, Atom, Tautology
+from typing import Any, Optional, Set, List
+from nl2flow.compile.schemas import Step, Constraint, Parameter, OperatorDefinition
+from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.debug.schemas import SolutionQuality
-from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
+from nl2flow.compile.options import (
+    BasicOperations,
+    MemoryState,
+    LifeCycleOptions,
+    RestrictedOperations,
+    CostOptions,
+    NL2FlowOptions,
+)
+from nl2flow.compile.basic_compilations.compile_history import (
+    get_predicate_from_constraint,
+    get_predicate_from_step,
+    get_index_of_interest,
+)
+
+
+def get_token_predicate(compilation: Any, index: int) -> Any:
+    token_predicate_name = f"token_{index}"
+    return getattr(compilation, token_predicate_name)()
 
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
-    pass
+    report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
+    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
+
+    if report_type != SolutionQuality.SOUND:
+        raise NotImplementedError
+
+    if NL2FlowOptions.multi_instance in optimization_options:
+        raise NotImplementedError
+
+    goal_predicates = set()
+    token_predicates = set()
+
+    for index, step in enumerate(compilation.flow_definition.reference.plan):
+        pre_token_predicate = get_token_predicate(compilation, index)
+        post_token_predicate = get_token_predicate(compilation, index + 1)
+
+        token_predicates.add(post_token_predicate)
+
+        precondition_list = [pre_token_predicate]
+        add_effect_list = [post_token_predicate]
+        del_effect_list: List[Any] = []
+
+        compilation.problem.action(
+            f"{RestrictedOperations.UNTOKENIZE.value}_{index}_{step.name}",
+            parameters=[],
+            precondition=land(*precondition_list, flat=True),
+            effects=[fs.AddEffect(add) for add in add_effect_list],
+            cost=iofs.AdditiveActionCost(
+                compilation.problem.language.constant(
+                    CostOptions.HIGH.value,
+                    compilation.problem.language.get_sort("Integer"),
+                )
+            ),
+        )
+
+        if isinstance(step, Step):
+            if step.name == BasicOperations.SLOT_FILLER.value:
+                raise NotImplementedError
+
+            elif step.name == BasicOperations.MAPPER.value:
+                step_predicate = get_predicate_from_step(compilation, step, **kwargs)
+
+                if step_predicate:
+                    goal_predicates.add(step_predicate)
+
+            elif step.name == BasicOperations.CONFIRM.value:
+                raise NotImplementedError
+
+            else:
+                index_of_operation = get_index_of_interest(compilation, step, index)
+                step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
+
+                if step_predicate:
+                    goal_predicates.add(step_predicate)
+
+                    precondition_list.append(neg(step_predicate))
+                    add_effect_list.append(step_predicate)
+
+                    operator: OperatorDefinition = next(
+                        filter(lambda x: x.name == step.name, compilation.flow_definition.operators)
+                    )
+
+                    outputs = operator.outputs[0]
+                    for o_output in outputs.outcomes:
+                        for param in o_output.parameters:
+                            add_to_condition_list_pre_check(compilation, param)
+
+                            if isinstance(param, Parameter):
+                                param = param.item_id
+
+                            del_effect_list.append(compilation.mapped(compilation.constant_map[param]))
+                            add_effect_list.extend(
+                                [
+                                    compilation.free(compilation.constant_map[param]),
+                                    compilation.known(
+                                        compilation.constant_map[param],
+                                        compilation.constant_map[MemoryState.UNCERTAIN.value]
+                                        if LifeCycleOptions.confirm_on_determination in variable_life_cycle
+                                        else compilation.constant_map[MemoryState.KNOWN.value],
+                                    ),
+                                ]
+                            )
+
+                compilation.problem.action(
+                    f"{RestrictedOperations.TOKENIZE.value}_{index}_{step.name}",
+                    parameters=[],
+                    precondition=land(*precondition_list, flat=True),
+                    effects=[fs.AddEffect(add) for add in add_effect_list]
+                    + [fs.DelEffect(del_e) for del_e in del_effect_list],
+                    cost=iofs.AdditiveActionCost(
+                        compilation.problem.language.constant(
+                            CostOptions.ZERO.value,
+                            compilation.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
+
+        elif isinstance(step, Constraint):
+            raise NotImplementedError
+        else:
+            raise ValueError(f"Invalid reference object: {step}")
+
+    if compilation.problem.goal is None or isinstance(compilation.problem.goal, Tautology):
+        new_goal = land(*token_predicates, flat=True)
+
+    else:
+        if isinstance(compilation.problem.goal, Atom):
+            sub_formulas = [compilation.problem.goal]
+        else:
+            sub_formulas = list(compilation.problem.goal.subformulas)
+
+        sub_formulas.extend(token_predicates)
+        new_goal = land(*sub_formulas, flat=True)
+
+    compilation.problem.goal = new_goal
 
 
 def compile_reference(compilation: Any, **kwargs: Any) -> None:
@@ -17,38 +149,13 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
 
     cached_predicates = list()
     token_predicates = list()
-    # mapped_items = dict()
-    # del_predicates = []
 
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
-            # del_predicates = []
 
             if isinstance(item, Step):
-                indices_of_interest = []
-
-                for i, r in enumerate(compilation.flow_definition.reference.plan):
-                    if isinstance(r, Step) and r.name == item.name:
-                        indices_of_interest.append(i)
-
-                index_of_operation = indices_of_interest.index(index)
-
-                # if item.name == BasicOperations.MAPPER.value:
-                # if item.parameters[1].item_id in mapped_items:
-                # del_predicates = [
-                #     compilation.mapped_to(
-                #         compilation.constant_map[item.parameters[0].item_id],
-                #         compilation.constant_map[item.parameters[1].item_id]
-                #     ),
-                #     compilation.known(
-                #         compilation.constant_map[item.parameters[1].item_id],
-                #         compilation.constant_map[MemoryState.KNOWN.value],
-                #     ),
-                # ]
-
-                # mapped_items[item.parameters[1].item_id] = item.parameters[0].item_id
-
+                index_of_operation = get_index_of_interest(compilation, item, index)
                 step_predicate = get_predicate_from_step(compilation, item, index_of_operation, **kwargs)
 
             elif isinstance(item, Constraint):
@@ -60,15 +167,11 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             if step_predicate:
                 cached_predicates.append(step_predicate)
 
-        token_predicate_name = f"token_{index}"
-        token_predicate = getattr(compilation, token_predicate_name)()
+        token_predicate = get_token_predicate(compilation, index)
         token_predicates.append(token_predicate)
 
         precondition_list = [p for p in cached_predicates[:index]]
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
-
-        # for del_p in del_predicates:
-        #     effect_list.append(fs.DelEffect(del_p))
 
         for i in range(index):
             shadow_token_predicate_name = f"token_{i}"

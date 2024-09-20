@@ -108,3 +108,13 @@ def compile_history(compilation: Any, **kwargs: Any) -> None:
         constraint_predicate = get_predicate_from_constraint(compilation, constraint)
         if constraint_predicate:
             compilation.init.add(constraint_predicate)
+
+
+def get_index_of_interest(compilation: Any, step: Step, current_index: int) -> int:
+    indices_of_interest = []
+
+    for i, r in enumerate(compilation.flow_definition.reference.plan):
+        if isinstance(r, Step) and r.name == step.name:
+            indices_of_interest.append(i)
+
+    return indices_of_interest.index(current_index)

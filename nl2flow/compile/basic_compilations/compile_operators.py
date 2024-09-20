@@ -220,7 +220,6 @@ def add_multi_instance_properties(
         )
 
         add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list))
-        # add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
 
 
 def add_enabler_action_for_operator(
