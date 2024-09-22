@@ -15,7 +15,12 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
-from nl2flow.compile.basic_compilations.compile_reference import compile_reference, compile_reference_basic
+from nl2flow.compile.basic_compilations.compile_reference import (
+    compile_reference,
+    compile_reference_basic,
+    set_token_predicate,
+)
+
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
     compile_last_resort_slots,
@@ -23,10 +28,12 @@ from nl2flow.compile.basic_compilations.compile_slots import (
     compile_new_object_maps,
     get_goodness_map,
 )
+
 from nl2flow.compile.basic_compilations.compile_mappings import (
     compile_typed_mappings,
     compile_declared_mappings,
 )
+
 from nl2flow.compile.basic_compilations.compile_goals import compile_goals
 from nl2flow.compile.basic_compilations.compile_history import compile_history
 from nl2flow.compile.basic_compilations.compile_constraints import compile_manifest_constraints
@@ -187,9 +194,7 @@ class ClassicPDDL(Compilation):
 
         if debug_flag:
             for index in range(len(self.flow_definition.reference.plan) + 1):
-                token_predicate_name = f"token_{index}"
-                token_predicate = self.lang.predicate(token_predicate_name)
-                setattr(self, token_predicate_name, token_predicate)
+                set_token_predicate(self, index)
 
             if debug_flag == DebugFlag.DIRECT:
                 token_predicate_name = f"token_{0}"

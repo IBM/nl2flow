@@ -20,9 +20,72 @@ from nl2flow.compile.basic_compilations.compile_history import (
 )
 
 
+def get_token_predicate_name(index: int) -> str:
+    return f"token_{index}"
+
+
+def set_token_predicate(compilation: Any, index: int) -> Any:
+    token_predicate_name = get_token_predicate_name(index)
+    token_predicate = compilation.lang.predicate(token_predicate_name)
+    setattr(compilation, token_predicate_name, token_predicate)
+
+    return token_predicate
+
+
 def get_token_predicate(compilation: Any, index: int) -> Any:
-    token_predicate_name = f"token_{index}"
-    return getattr(compilation, token_predicate_name)()
+    token_predicate_name = get_token_predicate_name(index)
+    attr = getattr(compilation, token_predicate_name, None)
+
+    if attr:
+        return attr()
+    else:
+        return set_token_predicate(compilation, index)()
+
+
+def add_surrogate_goal(
+    compilation: Any,
+    goal_predicates: Set[Any],
+    post_token_predicate: Any,
+    target: Any,
+    index: int,
+) -> None:
+    add_to_condition_list_pre_check(compilation, target.name)
+
+    new_index = 100 * (index + 1)
+    token_predicate = get_token_predicate(compilation, index=new_index)
+    goal_predicates.add(token_predicate)
+
+    precondition_list = [post_token_predicate, compilation.been_used(target)]
+    add_effect_list = [token_predicate]
+
+    compilation.problem.action(
+        f"{RestrictedOperations.TOKENIZE.value}_{new_index}",
+        parameters=[],
+        precondition=land(*precondition_list, flat=True),
+        effects=[fs.AddEffect(add) for add in add_effect_list],
+        cost=iofs.AdditiveActionCost(
+            compilation.problem.language.constant(
+                CostOptions.ZERO.value,
+                compilation.problem.language.get_sort("Integer"),
+            )
+        ),
+    )
+
+    precondition_list = [post_token_predicate]
+    add_effect_list = [token_predicate]
+
+    compilation.problem.action(
+        f"{RestrictedOperations.UNTOKENIZE.value}_{new_index}",
+        parameters=[],
+        precondition=land(*precondition_list, flat=True),
+        effects=[fs.AddEffect(add) for add in add_effect_list],
+        cost=iofs.AdditiveActionCost(
+            compilation.problem.language.constant(
+                CostOptions.HIGH.value,
+                compilation.problem.language.get_sort("Integer"),
+            )
+        ),
+    )
 
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
@@ -37,13 +100,12 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
     goal_predicates = set()
-    token_predicates = set()
 
     for index, step in enumerate(compilation.flow_definition.reference.plan):
         pre_token_predicate = get_token_predicate(compilation, index)
         post_token_predicate = get_token_predicate(compilation, index + 1)
 
-        token_predicates.add(post_token_predicate)
+        goal_predicates.add(post_token_predicate)
 
         precondition_list = [pre_token_predicate]
         add_effect_list = [post_token_predicate]
@@ -77,10 +139,13 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 source = compilation.constant_map[step.parameters[0].item_id]
                 target = compilation.constant_map[step.parameters[1].item_id]
 
+                add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
+
                 precondition_list.extend(
                     [
                         compilation.known(source, compilation.constant_map[MemoryState.KNOWN.value]),
                         compilation.is_mappable(source, target),
+                        compilation.been_used(target),
                         neg(compilation.not_mappable(source, target)),
                         neg(compilation.new_item(source)),
                     ]
@@ -125,6 +190,10 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                         filter(lambda x: x.name == step.name, compilation.flow_definition.operators)
                     )
 
+                    for param in step.parameters:
+                        add_to_condition_list_pre_check(compilation, param.item_id)
+                        add_effect_list.append(compilation.been_used(compilation.constant_map[param.item_id]))
+
                     outputs = operator.outputs[0]
                     for o_output in outputs.outcomes:
                         for param in o_output.parameters:
@@ -166,7 +235,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
             raise ValueError(f"Invalid reference object: {step}")
 
     if compilation.problem.goal is None or isinstance(compilation.problem.goal, Tautology):
-        new_goal = land(*token_predicates, flat=True)
+        new_goal = land(*goal_predicates, flat=True)
 
     else:
         if isinstance(compilation.problem.goal, Atom):
@@ -174,7 +243,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         else:
             sub_formulas = list(compilation.problem.goal.subformulas)
 
-        sub_formulas.extend(token_predicates)
+        sub_formulas.extend(goal_predicates)
         new_goal = land(*sub_formulas, flat=True)
 
     compilation.problem.goal = new_goal
@@ -210,8 +279,7 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
 
         for i in range(index):
-            shadow_token_predicate_name = f"token_{i}"
-            shadow_token_predicate = getattr(compilation, shadow_token_predicate_name)()
+            shadow_token_predicate = get_token_predicate(compilation, i)
             precondition_list.append(shadow_token_predicate)
 
         compilation.problem.action(
