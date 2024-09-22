@@ -88,6 +88,7 @@ class FDDerivedPlanner(ABC):
                         parameters=action_split[1:],
                         flow_object=flow_object,
                         transforms=transforms,
+                        debug_flag=debug_flag,
                     )
                 else:
                     raise ValueError("Could not parse action name.")

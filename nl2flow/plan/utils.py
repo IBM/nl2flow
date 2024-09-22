@@ -3,6 +3,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform, string_transform
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.plan.schemas import ClassicalPlan, Action
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
     BasicOperations,
     RestrictedOperations,
@@ -87,7 +88,11 @@ def find_goal(name: str, flow_object: Flow) -> Optional[GoalItem]:
 
 
 def parse_action(
-    action_name: str, parameters: List[str], flow_object: Flow, transforms: List[Transform]
+    action_name: str,
+    parameters: List[str],
+    flow_object: Flow,
+    transforms: List[Transform],
+    debug_flag: DebugFlag,
 ) -> Optional[Union[Action, Constraint]]:
     if RestrictedOperations.is_restricted(action_name):
         return None
@@ -138,7 +143,10 @@ def parse_action(
         operator: Optional[OperatorDefinition] = next(filter_for_operators, None)
 
         if operator is None:
-            return operator
+            if debug_flag:
+                return None
+            else:
+                raise ValueError(f"Tried to parse unknown operation: {action_name}, parameters: {parameters}")
 
         else:
             new_action = Action(
