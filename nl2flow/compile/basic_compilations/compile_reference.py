@@ -63,6 +63,8 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         )
 
         if isinstance(step, Step):
+            action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
+
             if step.name == BasicOperations.SLOT_FILLER.value:
                 raise NotImplementedError
 
@@ -71,6 +73,40 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
 
                 if step_predicate:
                     goal_predicates.add(step_predicate)
+
+                source = compilation.constant_map[step.parameters[0].item_id]
+                target = compilation.constant_map[step.parameters[1].item_id]
+
+                precondition_list.extend(
+                    [
+                        compilation.known(source, compilation.constant_map[MemoryState.KNOWN.value]),
+                        compilation.is_mappable(source, target),
+                        neg(compilation.not_mappable(source, target)),
+                        neg(compilation.new_item(source)),
+                    ]
+                )
+
+                add_effect_list.extend(
+                    [
+                        compilation.known(
+                            target,
+                            compilation.constant_map[MemoryState.UNCERTAIN.value]
+                            if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
+                            else compilation.constant_map[MemoryState.KNOWN.value],
+                        ),
+                        compilation.mapped_to(source, target),
+                        compilation.mapped(source),
+                    ]
+                )
+
+                del_effect_list.extend(
+                    [
+                        compilation.been_used(target),
+                        compilation.not_usable(target),
+                    ]
+                )
+
+                action_name = f"{action_name}----{step.parameters[0].item_id}----{step.parameters[1].item_id}"
 
             elif step.name == BasicOperations.CONFIRM.value:
                 raise NotImplementedError
@@ -110,19 +146,19 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                                 ]
                             )
 
-                compilation.problem.action(
-                    f"{RestrictedOperations.TOKENIZE.value}_{index}_{step.name}",
-                    parameters=[],
-                    precondition=land(*precondition_list, flat=True),
-                    effects=[fs.AddEffect(add) for add in add_effect_list]
-                    + [fs.DelEffect(del_e) for del_e in del_effect_list],
-                    cost=iofs.AdditiveActionCost(
-                        compilation.problem.language.constant(
-                            CostOptions.ZERO.value,
-                            compilation.problem.language.get_sort("Integer"),
-                        )
-                    ),
-                )
+            compilation.problem.action(
+                action_name,
+                parameters=[],
+                precondition=land(*precondition_list, flat=True),
+                effects=[fs.AddEffect(add) for add in add_effect_list]
+                + [fs.DelEffect(del_e) for del_e in del_effect_list],
+                cost=iofs.AdditiveActionCost(
+                    compilation.problem.language.constant(
+                        CostOptions.ZERO.value,
+                        compilation.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
 
         elif isinstance(step, Constraint):
             raise NotImplementedError

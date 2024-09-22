@@ -185,17 +185,24 @@ class ClassicPDDL(Compilation):
                     ),
                 )
 
-        if debug_flag == DebugFlag.TOKENIZE:
-            self.ready_for_token = self.lang.predicate("ready_for_token")
-            self.has_asked = self.lang.predicate(
-                "has_asked",
-                self.type_map[TypeOptions.ROOT.value],
-            )
-
+        if debug_flag:
             for index in range(len(self.flow_definition.reference.plan) + 1):
                 token_predicate_name = f"token_{index}"
                 token_predicate = self.lang.predicate(token_predicate_name)
                 setattr(self, token_predicate_name, token_predicate)
+
+            if debug_flag == DebugFlag.DIRECT:
+                token_predicate_name = f"token_{0}"
+                init_predicate = getattr(self, token_predicate_name)()
+
+                self.init.add(init_predicate)
+
+            if debug_flag == DebugFlag.TOKENIZE:
+                self.ready_for_token = self.lang.predicate("ready_for_token")
+                self.has_asked = self.lang.predicate(
+                    "has_asked",
+                    self.type_map[TypeOptions.ROOT.value],
+                )
 
         self.has_done = self.lang.predicate(
             "has_done",
