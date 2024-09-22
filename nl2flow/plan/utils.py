@@ -134,18 +134,22 @@ def parse_action(
         return Constraint(constraint=constraint, truth_value=truth_value)
 
     else:
-        operator: OperatorDefinition = next(
-            filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
-        )
-        new_action = Action(
-            name=operator.name,
-            parameters=[revert_string_transform(p, transforms) for p in parameters],
-            inputs=unpack_list_of_signature_items(operator.inputs),
-        )
+        filter_for_operators = filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
+        operator: Optional[OperatorDefinition] = next(filter_for_operators, None)
 
-        if isinstance(operator.outputs, Outcome):
-            new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)
+        if operator is None:
+            return operator
+
         else:
-            raise NotImplementedError("Only working on classical operators at the moment.")
+            new_action = Action(
+                name=operator.name,
+                parameters=[revert_string_transform(p, transforms) for p in parameters],
+                inputs=unpack_list_of_signature_items(operator.inputs),
+            )
 
-        return new_action
+            if isinstance(operator.outputs, Outcome):
+                new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)
+            else:
+                raise NotImplementedError("Only working on classical operators at the moment.")
+
+            return new_action
