@@ -34,25 +34,27 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         return None
 
 
-def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwargs: Any) -> Optional[Any]:
+def get_predicate_from_step(
+    compilation: Any, step: Step, repeat_index: int = 0, operator_index: int = 1, **kwargs: Any
+) -> Optional[Any]:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     try:
         if step.name.startswith(BasicOperations.SLOT_FILLER.value):
-            step_predicate = compilation.has_asked(compilation.constant_map[step.parameters[0].item_id])
+            step_predicate = compilation.has_asked(compilation.constant_map[step.parameter(0)])
             return step_predicate
 
         elif step.name.startswith(BasicOperations.MAPPER.value):
             step_predicate = compilation.mapped_to(
-                compilation.constant_map[step.parameters[0].item_id],
-                compilation.constant_map[step.parameters[1].item_id],
+                compilation.constant_map[step.parameter(0)],
+                compilation.constant_map[step.parameter(1)],
             )
             return step_predicate
 
         elif step.name.startswith(BasicOperations.CONFIRM.value):
             step_predicate = compilation.known(
-                compilation.constant_map[step.parameters[0].item_id],
+                compilation.constant_map[step.parameter(0)],
                 compilation.constant_map[MemoryState.KNOWN.value],
             )
             return step_predicate
@@ -76,8 +78,11 @@ def get_predicate_from_step(compilation: Any, step: Step, index: int = 0, **kwar
             )
 
             if NL2FlowOptions.allow_retries in optimization_options:
-                num_try = index + 1
+                num_try = repeat_index + 1
                 parameter_names.append(f"try_level_{num_try}")
+
+            if NL2FlowOptions.label_production in optimization_options:
+                parameter_names.append(f"var_{operator_index}")
 
             step_predicate_parameterized = (
                 None

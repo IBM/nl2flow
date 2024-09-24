@@ -70,13 +70,16 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                     parameter_list.append(x)
                     type_list.append(type_of_param)
 
-                    precondition_list.append(compilation.mapped_to(x, compilation.constant_map[param]))
                     add_effect_list.append(compilation.been_used(x))
-
-                    if NL2FlowOptions.multi_instance in optimization_options:
-                        precondition_list.append(neg(compilation.not_usable(x)))
+                    precondition_list.extend(
+                        [
+                            compilation.mapped_to(x, compilation.constant_map[param]),
+                            neg(compilation.not_usable(x)),
+                        ]
+                    )
 
                 compilation.init.add(compilation.been_used(compilation.constant_map[param]))
+
                 add_effect_list.append(compilation.been_used(compilation.constant_map[param]))
                 precondition_list.append(
                     compilation.known(
@@ -107,11 +110,8 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                 constraint_predicate = compile_constraints(compilation, constraint, **kwargs)
                 precondition_list.append(constraint_predicate)
 
-        if (
-            NL2FlowOptions.allow_retries in optimization_options
-            or NL2FlowOptions.multi_instance in optimization_options
-        ):
-            add_multi_instance_properties(
+        if optimization_options:
+            add_advanced_properties(
                 compilation, operator, parameter_list, type_list, precondition_list, add_effect_list, **kwargs
             )
 
@@ -146,6 +146,14 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                     ]
                 )
 
+                if NL2FlowOptions.label_production in optimization_options:
+                    add_effect_list.append(
+                        compilation.label_tag(
+                            compilation.constant_map[param],
+                            parameter_list[-1],
+                        ),
+                    )
+
             for constraint in o_output.constraints:
                 constraint_predicate = compile_constraints(compilation, constraint, **kwargs)
                 add_effect_list.append(constraint_predicate)
@@ -162,7 +170,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
         )
 
 
-def add_multi_instance_properties(
+def add_advanced_properties(
     compilation: Any,
     operator: OperatorDefinition,
     parameter_list: List[Any],
@@ -180,6 +188,9 @@ def add_multi_instance_properties(
 
     if NL2FlowOptions.allow_retries in optimization_options:
         has_done_parameters.append(compilation.type_map[TypeOptions.RETRY.value])
+
+    if NL2FlowOptions.label_production in optimization_options:
+        has_done_parameters.append(compilation.type_map[TypeOptions.LABEL.value])
 
     new_has_done_predicate = compilation.lang.predicate(
         new_has_done_predicate_name,
@@ -213,6 +224,14 @@ def add_multi_instance_properties(
 
         add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
         parameter_list.extend([pre_level, post_level])
+
+    elif NL2FlowOptions.label_production in optimization_options:
+        label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+
+        precondition_list.append(neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, label_level)))
+        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, label_level))
+
+        parameter_list.append(label_level)
 
     else:
         precondition_list.append(

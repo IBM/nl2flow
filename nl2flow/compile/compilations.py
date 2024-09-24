@@ -19,6 +19,7 @@ from nl2flow.compile.basic_compilations.compile_reference import (
     compile_reference,
     compile_reference_basic,
     set_token_predicate,
+    get_token_predicate,
 )
 
 from nl2flow.compile.basic_compilations.compile_slots import (
@@ -46,6 +47,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.options import (
+    MAX_LABELS,
     NL2FlowOptions,
     SlotOptions,
     MappingOptions,
@@ -105,6 +107,7 @@ class ClassicPDDL(Compilation):
         self.done_goal_pre: Any = None
         self.done_goal_post: Any = None
         self.has_asked: Any = None
+        self.label_tag: Any = None
         self.ready_for_token: Any = None
 
         self.type_map: Dict[str, Any] = dict()
@@ -168,6 +171,7 @@ class ClassicPDDL(Compilation):
             TypeOptions.HAS_DONE,
             TypeOptions.STATUS,
             TypeOptions.MEMORY,
+            TypeOptions.LABEL,
         ]
 
         if NL2FlowOptions.allow_retries in optimization_options:
@@ -192,15 +196,26 @@ class ClassicPDDL(Compilation):
                     ),
                 )
 
+        if NL2FlowOptions.label_production in optimization_options:
+            for label in range(1, MAX_LABELS + 1):
+                add_memory_item_to_constant_map(
+                    self, MemoryItem(item_id=f"var_{label}", item_type=TypeOptions.LABEL.value)
+                )
+
+            self.label_tag = self.lang.predicate(
+                "label_tag",
+                self.type_map[TypeOptions.ROOT.value],
+                self.type_map[TypeOptions.LABEL.value],
+            )
+
         if debug_flag:
-            for index in range(len(self.flow_definition.reference.plan) + 1):
-                set_token_predicate(self, index)
+            if self.flow_definition.reference is not None:
+                for index in range(len(self.flow_definition.reference.plan) + 1):
+                    set_token_predicate(self, index)
 
             if debug_flag == DebugFlag.DIRECT:
-                token_predicate_name = f"token_{0}"
-                init_predicate = getattr(self, token_predicate_name)()
-
-                self.init.add(init_predicate)
+                init_token = get_token_predicate(self, index=0)
+                self.init.add(init_token)
 
             if debug_flag == DebugFlag.TOKENIZE:
                 self.ready_for_token = self.lang.predicate("ready_for_token")

@@ -31,13 +31,19 @@ class Parameter(BaseModel):
 
 class Step(BaseModel):
     name: str
+    label: Optional[str] = None
     parameters: List[Union[Parameter, str]] = []
+
+    def parameter(self, index: int) -> str:
+        parameter = self.parameters[index]
+        return parameter if isinstance(parameter, str) else parameter.item_id
 
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
         parameters = [p if isinstance(p, Parameter) else Parameter(item_id=p) for p in step.parameters]
         return Step(
             name=string_transform(step.name, transforms),
+            label=string_transform(step.label, transforms),
             parameters=[p.transform(p, transforms) for p in parameters],
         )
 

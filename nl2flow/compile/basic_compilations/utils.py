@@ -72,6 +72,7 @@ def is_this_a_datum_type(type_name: str) -> bool:
         TypeOptions.HAS_DONE.value,
         TypeOptions.RETRY.value,
         TypeOptions.STATUS.value,
+        TypeOptions.LABEL.value,
     ]
 
 

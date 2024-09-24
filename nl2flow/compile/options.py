@@ -4,11 +4,13 @@ LOOKAHEAD: int = 1
 RETRY: int = 1
 MAX_RETRY: int = 5
 SLOT_GOODNESS: float = 0.5
+MAX_LABELS: int = 7
 
 
 class NL2FlowOptions(enum.Enum):
     multi_instance = "MULTI_INSTANCE"
     allow_retries = "ALLOW_RETRIES"
+    label_production = "LABELS"
 
 
 class RestrictedOperations(enum.Enum):
@@ -41,6 +43,7 @@ class CompileOptions(enum.Enum):
 
 
 class TypeOptions(enum.Enum):
+    LABEL = "label"
     RETRY = "num-retries"
     HAS_DONE = "has-done-state"
     MEMORY = "datum-state"

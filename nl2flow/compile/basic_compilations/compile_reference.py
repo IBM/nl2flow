@@ -100,6 +100,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
     goal_predicates = set()
+    operator_index = 0
 
     for index, step in enumerate(compilation.flow_definition.reference.plan):
         pre_token_predicate = get_token_predicate(compilation, index)
@@ -136,8 +137,8 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 if step_predicate:
                     goal_predicates.add(step_predicate)
 
-                source = compilation.constant_map[step.parameters[0].item_id]
-                target = compilation.constant_map[step.parameters[1].item_id]
+                source = compilation.constant_map[step.parameter(0)]
+                target = compilation.constant_map[step.parameter(1)]
 
                 add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
 
@@ -171,14 +172,15 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                     ]
                 )
 
-                action_name = f"{action_name}----{step.parameters[0].item_id}----{step.parameters[1].item_id}"
+                action_name = f"{action_name}----{step.parameter(0)}----{step.parameter(1)}"
 
             elif step.name == BasicOperations.CONFIRM.value:
                 raise NotImplementedError
 
             else:
-                index_of_operation = get_index_of_interest(compilation, step, index)
-                step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
+                operator_index += 1
+                repeat_index = get_index_of_interest(compilation, step, index)
+                step_predicate = get_predicate_from_step(compilation, step, repeat_index, operator_index, **kwargs)
 
                 if step_predicate:
                     goal_predicates.add(step_predicate)
@@ -190,9 +192,9 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                         filter(lambda x: x.name == step.name, compilation.flow_definition.operators)
                     )
 
-                    for param in step.parameters:
-                        add_to_condition_list_pre_check(compilation, param.item_id)
-                        add_effect_list.append(compilation.been_used(compilation.constant_map[param.item_id]))
+                    for i, param in enumerate(step.parameters):
+                        add_to_condition_list_pre_check(compilation, step.parameter(i))
+                        add_effect_list.append(compilation.been_used(compilation.constant_map[step.parameter(i)]))
 
                     outputs = operator.outputs[0]
                     for o_output in outputs.outcomes:
@@ -254,14 +256,18 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
 
     cached_predicates = list()
     token_predicates = list()
+    operator_index = 0
 
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
 
             if isinstance(item, Step):
-                index_of_operation = get_index_of_interest(compilation, item, index)
-                step_predicate = get_predicate_from_step(compilation, item, index_of_operation, **kwargs)
+                if not BasicOperations.is_basic(item.name):
+                    operator_index += 1
+
+                repeat_index = get_index_of_interest(compilation, item, index)
+                step_predicate = get_predicate_from_step(compilation, item, repeat_index, operator_index, **kwargs)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)
