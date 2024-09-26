@@ -4,7 +4,7 @@ from tarski.syntax import land, neg
 from typing import List, Set, Dict, Any, Optional
 
 from nl2flow.debug.schemas import DebugFlag
-from nl2flow.compile.basic_compilations.compile_reference import get_token_predicate_name
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate_name
 from nl2flow.compile.basic_compilations.utils import (
     get_type_of_constant,
     is_this_a_datum,

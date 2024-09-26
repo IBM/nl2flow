@@ -15,13 +15,13 @@ from nl2flow.compile.schemas import (
 
 from nl2flow.compile.basic_compilations.compile_operators import compile_operators
 from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
-from nl2flow.compile.basic_compilations.compile_reference import (
-    compile_reference,
-    compile_reference_basic,
+from nl2flow.compile.basic_compilations.compile_references.utils import (
     set_token_predicate,
     get_token_predicate,
     get_token_predicate_name,
 )
+from nl2flow.compile.basic_compilations.compile_references.compile_reference_tokenize import compile_reference_tokenize
+from nl2flow.compile.basic_compilations.compile_references.compile_reference_basic import compile_reference_basic
 
 from nl2flow.compile.basic_compilations.compile_slots import (
     compile_higher_cost_slots,
@@ -147,7 +147,7 @@ class ClassicPDDL(Compilation):
         compile_history(self, **kwargs)
 
         if debug_flag == DebugFlag.TOKENIZE:
-            compile_reference(self, **kwargs)
+            compile_reference_tokenize(self, **kwargs)
         elif debug_flag == DebugFlag.DIRECT:
             compile_reference_basic(self, **kwargs)
         else:
