@@ -20,8 +20,8 @@ from nl2flow.compile.basic_compilations.compile_history import (
 )
 
 
-def get_token_predicate_name(index: int) -> str:
-    return f"token_{index}"
+def get_token_predicate_name(index: int, token: str = "token") -> str:
+    return f"{token}_{index}"
 
 
 def set_token_predicate(compilation: Any, index: int) -> Any:
@@ -127,6 +127,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
 
         if isinstance(step, Step):
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
+            step_label = step.label or get_token_predicate_name(index=0, token="var")
 
             if step.name == BasicOperations.SLOT_FILLER.value:
                 raise NotImplementedError
@@ -145,6 +146,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 precondition_list.extend(
                     [
                         compilation.known(source, compilation.constant_map[MemoryState.KNOWN.value]),
+                        compilation.label_tag(source, compilation.constant_map[step_label]),
                         compilation.is_mappable(source, target),
                         compilation.been_used(target),
                         neg(compilation.not_mappable(source, target)),
@@ -160,6 +162,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                             if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
                             else compilation.constant_map[MemoryState.KNOWN.value],
                         ),
+                        compilation.label_tag(target, compilation.constant_map[step_label]),
                         compilation.mapped_to(source, target),
                         compilation.mapped(source),
                     ]
@@ -208,6 +211,9 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                             add_effect_list.extend(
                                 [
                                     compilation.free(compilation.constant_map[param]),
+                                    compilation.label_tag(
+                                        compilation.constant_map[param], compilation.constant_map[step_label]
+                                    ),
                                     compilation.known(
                                         compilation.constant_map[param],
                                         compilation.constant_map[MemoryState.UNCERTAIN.value]

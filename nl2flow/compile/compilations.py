@@ -20,6 +20,7 @@ from nl2flow.compile.basic_compilations.compile_reference import (
     compile_reference_basic,
     set_token_predicate,
     get_token_predicate,
+    get_token_predicate_name,
 )
 
 from nl2flow.compile.basic_compilations.compile_slots import (
@@ -197,9 +198,12 @@ class ClassicPDDL(Compilation):
                 )
 
         if NL2FlowOptions.label_production in optimization_options:
-            for label in range(1, MAX_LABELS + 1):
+            for label in range(0, MAX_LABELS + 1):
                 add_memory_item_to_constant_map(
-                    self, MemoryItem(item_id=f"var_{label}", item_type=TypeOptions.LABEL.value)
+                    self,
+                    MemoryItem(
+                        item_id=get_token_predicate_name(index=label, token="var"), item_type=TypeOptions.LABEL.value
+                    ),
                 )
 
             self.label_tag = self.lang.predicate(
@@ -315,6 +319,14 @@ class ClassicPDDL(Compilation):
                         self.constant_map[memory_item.item_state.value],
                     )
                 )
+
+                if NL2FlowOptions.label_production in optimization_options:
+                    self.init.add(
+                        self.label_tag(
+                            self.constant_map[memory_item.item_id],
+                            self.constant_map[get_token_predicate_name(index=0, token="var")],
+                        )
+                    )
 
         if NL2FlowOptions.allow_retries in optimization_options:
             add_retry_states(self)
