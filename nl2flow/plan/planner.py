@@ -1,11 +1,12 @@
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import Transform, revert_string_transform
+from nl2flow.compile.utils import Transform, revert_string_transform, revert_string_transforms
 from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items
 from nl2flow.compile.schemas import PDDL
 from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
+    PARAMETER_DELIMITER,
     RestrictedOperations,
     SlotOptions,
     MappingOptions,
@@ -76,6 +77,14 @@ class FDDerivedPlanner(ABC):
                 action_split = action.split()
                 name_token = action_split[0]
 
+                if PARAMETER_DELIMITER in name_token:
+                    temp_split = name_token.split(PARAMETER_DELIMITER)
+                    name_token = temp_split[0]
+                    parameters = temp_split[1:]
+
+                else:
+                    parameters = action_split[1:]
+
                 if debug_flag == DebugFlag.DIRECT:
                     if name_token.startswith(RestrictedOperations.TOKENIZE.value):
                         name_token = name_token.split("//")[-1]
@@ -85,7 +94,7 @@ class FDDerivedPlanner(ABC):
                 if action_name is not None:
                     new_action = parse_action(
                         action_name=action_name,
-                        parameters=action_split[1:],
+                        parameters=revert_string_transforms(parameters, transforms),
                         flow_object=flow_object,
                         transforms=transforms,
                         debug_flag=debug_flag,

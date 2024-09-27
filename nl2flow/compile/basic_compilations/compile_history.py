@@ -82,7 +82,7 @@ def get_predicate_from_step(
                 parameter_names.append(f"try_level_{num_try}")
 
             if NL2FlowOptions.label_production in optimization_options:
-                parameter_names.append(f"var_{operator_index}")
+                parameter_names.append(f"var{operator_index}")
 
             step_predicate_parameterized = (
                 None

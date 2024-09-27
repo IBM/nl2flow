@@ -15,6 +15,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.options import (
+    PARAMETER_DELIMITER,
     SLOT_GOODNESS,
     LOOKAHEAD,
     NL2FlowOptions,
@@ -180,7 +181,7 @@ def compile_higher_cost_slots(compilation: Any, **kwargs: Any) -> None:
                         del_effect_list.append(compilation.ready_for_token())
 
                     compilation.problem.action(
-                        f"{BasicOperations.SLOT_FILLER.value}--for-{operator.name}----{slot}",
+                        f"{BasicOperations.SLOT_FILLER.value}--for-{operator.name}{PARAMETER_DELIMITER}{slot}",
                         parameters=[],
                         precondition=land(*precondition_list, flat=True),
                         effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
@@ -308,7 +309,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                         del_effect_list.append(compilation.ready_for_token())
 
                     compilation.problem.action(
-                        f"{BasicOperations.SLOT_FILLER.value}--last-resort--for-{operator_name}----{constant}",
+                        f"{BasicOperations.SLOT_FILLER.value}--last-resort--for-{operator_name}{PARAMETER_DELIMITER}{constant}",
                         parameters=[],
                         precondition=land(*precondition_list + extra_preconditions, flat=True),
                         effects=[fs.AddEffect(add_e) for add_e in add_effect_list]
@@ -327,7 +328,7 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                     del_effect_list.append(compilation.ready_for_token())
 
                 compilation.problem.action(
-                    f"{BasicOperations.SLOT_FILLER.value}--last-resort----{constant}",
+                    f"{BasicOperations.SLOT_FILLER.value}--last-resort{PARAMETER_DELIMITER}{constant}",
                     parameters=[],
                     precondition=land(*precondition_list, flat=True),
                     effects=[fs.AddEffect(add) for add in add_effect_list]
@@ -425,7 +426,7 @@ def compile_all_together(compilation: Any, **kwargs: Any) -> None:
                 del_effect_list.append(compilation.ready_for_token())
 
             compilation.problem.action(
-                f"{BasicOperations.SLOT_FILLER.value}--for-{operator.name}----{'----'.join(params)}",
+                f"{BasicOperations.SLOT_FILLER.value}--for-{operator.name}{PARAMETER_DELIMITER}{PARAMETER_DELIMITER.join(params)}",
                 parameters=[],
                 precondition=land(*precondition_list, flat=True),
                 effects=[fs.AddEffect(add_e) for add_e in add_effect_list]

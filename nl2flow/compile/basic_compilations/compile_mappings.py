@@ -163,7 +163,7 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
             ]
 
             compilation.problem.action(
-                f"{BasicOperations.MAPPER.value}----{typing}--free-alt",
+                f"{BasicOperations.MAPPER.value}--{typing}-free-alt",
                 parameters=parameter_list,
                 precondition=land(*precondition_list, compilation.free(x), flat=True),
                 effects=effect_list + [fs.AddEffect(compilation.free(y))],
@@ -187,7 +187,7 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
                 effect_list.append(fs.AddEffect(compilation.label_tag(y, label_param)))
 
             compilation.problem.action(
-                f"{BasicOperations.MAPPER.value}----{typing}",
+                f"{BasicOperations.MAPPER.value}--{typing}",
                 parameters=parameter_list,
                 precondition=land(*precondition_list, flat=True),
                 effects=effect_list,

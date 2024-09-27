@@ -2,7 +2,7 @@ from typing import Any
 
 
 def get_token_predicate_name(index: int, token: str = "token") -> str:
-    return f"{token}_{index}"
+    return f"{token}{index}"
 
 
 def set_token_predicate(compilation: Any, index: int) -> Any:

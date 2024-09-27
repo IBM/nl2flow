@@ -6,6 +6,7 @@ from nl2flow.compile.schemas import Step, Constraint, Parameter, OperatorDefinit
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
+    PARAMETER_DELIMITER,
     BasicOperations,
     MemoryState,
     LifeCycleOptions,
@@ -225,7 +226,9 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 raise NotImplementedError
 
             elif step.name == BasicOperations.MAPPER.value:
-                action_name = f"{action_name}----{step.parameter(0)}----{step.parameter(1)}"
+                action_name = (
+                    f"{action_name}{PARAMETER_DELIMITER}{step.parameter(0)}{PARAMETER_DELIMITER}{step.parameter(1)}"
+                )
                 add_instantiated_map(
                     compilation,
                     step,
@@ -256,7 +259,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 )
 
             if step.label:
-                action_name = f"{action_name}----{step.label}"
+                action_name = f"{action_name}{PARAMETER_DELIMITER}{step.label}"
 
             compilation.problem.action(
                 action_name,
