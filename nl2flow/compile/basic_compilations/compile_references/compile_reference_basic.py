@@ -9,7 +9,6 @@ from nl2flow.compile.options import (
     PARAMETER_DELIMITER,
     BasicOperations,
     MemoryState,
-    LifeCycleOptions,
     RestrictedOperations,
     CostOptions,
     NL2FlowOptions,
@@ -79,8 +78,6 @@ def add_instantiated_map(
     post_token_predicate: Any,
     **kwargs: Any,
 ) -> Optional[Any]:
-    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-
     for item in step.parameters[:2]:
         add_to_condition_list_pre_check(compilation, item)
 
@@ -115,9 +112,7 @@ def add_instantiated_map(
         [
             compilation.known(
                 target,
-                compilation.constant_map[MemoryState.UNCERTAIN.value]
-                if LifeCycleOptions.confirm_on_mapping in variable_life_cycle
-                else compilation.constant_map[MemoryState.KNOWN.value],
+                compilation.constant_map[MemoryState.KNOWN.value],
             ),
             compilation.mapped_to(source, target),
             compilation.mapped(source),
@@ -144,7 +139,6 @@ def add_instantiated_operation(
     del_effect_list: List[Any],
     **kwargs: Any,
 ) -> Optional[Any]:
-    variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     repeat_index = get_index_of_interest(compilation, step, index)
     step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
 
@@ -190,9 +184,7 @@ def add_instantiated_operation(
                         compilation.free(compilation.constant_map[param]),
                         compilation.known(
                             compilation.constant_map[param],
-                            compilation.constant_map[MemoryState.UNCERTAIN.value]
-                            if LifeCycleOptions.confirm_on_determination in variable_life_cycle
-                            else compilation.constant_map[MemoryState.KNOWN.value],
+                            compilation.constant_map[MemoryState.KNOWN.value],
                         ),
                     ]
                 )
