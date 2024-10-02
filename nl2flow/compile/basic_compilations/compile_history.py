@@ -34,9 +34,7 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         return None
 
 
-def get_predicate_from_step(
-    compilation: Any, step: Step, repeat_index: int = 0, operator_index: int = 1, **kwargs: Any
-) -> Optional[Any]:
+def get_predicate_from_step(compilation: Any, step: Step, repeat_index: int = 0, **kwargs: Any) -> Optional[Any]:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
@@ -77,12 +75,12 @@ def get_predicate_from_step(
                 else []
             )
 
+            if NL2FlowOptions.label_production in optimization_options and step.label is not None:
+                parameter_names.append(step.label)
+
             if NL2FlowOptions.allow_retries in optimization_options:
                 num_try = repeat_index + 1
                 parameter_names.append(f"try_level_{num_try}")
-
-            if NL2FlowOptions.label_production in optimization_options:
-                parameter_names.append(f"var{operator_index}")
 
             step_predicate_parameterized = (
                 None

@@ -150,7 +150,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                     add_effect_list.append(
                         compilation.label_tag(
                             compilation.constant_map[param],
-                            parameter_list[-1],
+                            parameter_list[0],
                         ),
                     )
 
@@ -186,11 +186,11 @@ def add_advanced_properties(
     if NL2FlowOptions.multi_instance in optimization_options:
         has_done_parameters = [compilation.type_map[type_name] for type_name in type_list]
 
-    if NL2FlowOptions.allow_retries in optimization_options:
-        has_done_parameters.append(compilation.type_map[TypeOptions.RETRY.value])
-
     if NL2FlowOptions.label_production in optimization_options:
         has_done_parameters.append(compilation.type_map[TypeOptions.LABEL.value])
+
+    if NL2FlowOptions.allow_retries in optimization_options:
+        has_done_parameters.append(compilation.type_map[TypeOptions.RETRY.value])
 
     new_has_done_predicate = compilation.lang.predicate(
         new_has_done_predicate_name,
@@ -199,19 +199,35 @@ def add_advanced_properties(
 
     setattr(compilation, new_has_done_predicate_name, new_has_done_predicate)
 
+    if NL2FlowOptions.label_production in optimization_options:
+        label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+        parameter_list.append(label_level)
+
     if NL2FlowOptions.allow_retries in optimization_options:
         pre_level = compilation.lang.variable("pre_level", compilation.type_map[TypeOptions.RETRY.value])
         post_level = compilation.lang.variable("post_level", compilation.type_map[TypeOptions.RETRY.value])
 
-        precondition_list.extend(
-            [
-                getattr(compilation, new_has_done_predicate_name)(*parameter_list, pre_level),
-                neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level)),
-                compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
-            ]
-        )
+        if NL2FlowOptions.label_production in optimization_options:
+            precondition_list.extend(
+                [
+                    getattr(compilation, new_has_done_predicate_name)(*parameter_list, pre_level),
+                    neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level)),
+                    compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
+                ]
+            )
 
-        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level))
+            add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level))
+
+        else:
+            precondition_list.extend(
+                [
+                    getattr(compilation, new_has_done_predicate_name)(*parameter_list, pre_level),
+                    neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level)),
+                    compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
+                ]
+            )
+
+            add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level))
 
         for try_level in range(operator.max_try):
             compilation.init.add(
@@ -224,14 +240,6 @@ def add_advanced_properties(
 
         add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
         parameter_list.extend([pre_level, post_level])
-
-    elif NL2FlowOptions.label_production in optimization_options:
-        label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
-
-        precondition_list.append(neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, label_level)))
-        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, label_level))
-
-        parameter_list.append(label_level)
 
     else:
         precondition_list.append(

@@ -150,8 +150,6 @@ class ClassicPDDL(Compilation):
             compile_reference_tokenize(self, **kwargs)
         elif debug_flag == DebugFlag.DIRECT:
             compile_reference_basic(self, **kwargs)
-        else:
-            pass
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init

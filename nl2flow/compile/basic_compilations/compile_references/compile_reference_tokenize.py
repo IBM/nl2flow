@@ -4,11 +4,8 @@ from tarski.syntax import land, Atom, Tautology
 from typing import Any, Optional
 from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.debug.schemas import SolutionQuality
-from nl2flow.compile.options import (
-    BasicOperations,
-    RestrictedOperations,
-    CostOptions,
-)
+from nl2flow.compile.options import RestrictedOperations, CostOptions
+from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
 from nl2flow.compile.basic_compilations.compile_history import (
     get_predicate_from_constraint,
@@ -22,18 +19,17 @@ def compile_reference_tokenize(compilation: Any, **kwargs: Any) -> None:
 
     cached_predicates = list()
     token_predicates = list()
-    operator_index = 0
 
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
 
             if isinstance(item, Step):
-                if not BasicOperations.is_basic(item.name):
-                    operator_index += 1
+                for param in item.parameters:
+                    add_to_condition_list_pre_check(compilation, param)
 
                 repeat_index = get_index_of_interest(compilation, item, index)
-                step_predicate = get_predicate_from_step(compilation, item, repeat_index, operator_index, **kwargs)
+                step_predicate = get_predicate_from_step(compilation, item, repeat_index, **kwargs)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)

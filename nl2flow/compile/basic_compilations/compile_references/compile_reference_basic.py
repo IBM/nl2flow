@@ -2,7 +2,7 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg, Atom, Tautology
 from typing import Any, Optional, Set, List
-from nl2flow.compile.schemas import Step, Constraint, Parameter, OperatorDefinition
+from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
@@ -13,6 +13,7 @@ from nl2flow.compile.options import (
     RestrictedOperations,
     CostOptions,
     NL2FlowOptions,
+    TypeOptions,
 )
 from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
 from nl2flow.compile.basic_compilations.compile_history import (
@@ -77,8 +78,12 @@ def add_instantiated_map(
     del_effect_list: List[Any],
     post_token_predicate: Any,
     **kwargs: Any,
-) -> None:
+) -> Optional[Any]:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
+
+    for item in step.parameters[:2]:
+        add_to_condition_list_pre_check(compilation, item)
+
     step_predicate = get_predicate_from_step(compilation, step, **kwargs)
 
     if step_predicate:
@@ -126,21 +131,22 @@ def add_instantiated_map(
         ]
     )
 
+    return step_predicate
+
 
 def add_instantiated_operation(
     compilation: Any,
     step: Step,
     index: int,
-    operator_index: int,
     goal_predicates: Set[Any],
     precondition_list: List[Any],
     add_effect_list: List[Any],
     del_effect_list: List[Any],
     **kwargs: Any,
-) -> None:
+) -> Optional[Any]:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
     repeat_index = get_index_of_interest(compilation, step, index)
-    step_predicate = get_predicate_from_step(compilation, step, repeat_index, operator_index, **kwargs)
+    step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
 
     if step_predicate:
         goal_predicates.add(step_predicate)
@@ -155,6 +161,20 @@ def add_instantiated_operation(
         for i, param in enumerate(step.parameters):
             add_to_condition_list_pre_check(compilation, step.parameter(i))
             add_effect_list.append(compilation.been_used(compilation.constant_map[step.parameter(i)]))
+
+        for o_input in operator.inputs:
+            for param in o_input.parameters:
+                add_to_condition_list_pre_check(compilation, param)
+
+                if isinstance(param, Parameter):
+                    param = param.item_id
+
+                precondition_list.append(
+                    compilation.known(
+                        compilation.constant_map[param],
+                        compilation.constant_map[MemoryState.KNOWN.value],
+                    )
+                )
 
         outputs = operator.outputs[0]
         for o_output in outputs.outcomes:
@@ -182,6 +202,8 @@ def add_instantiated_operation(
                         compilation.label_tag(compilation.constant_map[param], compilation.constant_map[step.label])
                     )
 
+    return step_predicate
+
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
     report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
@@ -194,7 +216,6 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
     goal_predicates = set()
-    operator_index = 0
 
     for index, step in enumerate(compilation.flow_definition.reference.plan):
         pre_token_predicate = get_token_predicate(compilation, index)
@@ -222,6 +243,11 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         if isinstance(step, Step):
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
 
+            if step.label and step.label not in compilation.constant_map:
+                add_to_condition_list_pre_check(
+                    compilation, MemoryItem(item_id=step.label, item_type=TypeOptions.LABEL.value)
+                )
+
             if step.name == BasicOperations.SLOT_FILLER.value:
                 raise NotImplementedError
 
@@ -229,7 +255,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 action_name = (
                     f"{action_name}{PARAMETER_DELIMITER}{step.parameter(0)}{PARAMETER_DELIMITER}{step.parameter(1)}"
                 )
-                add_instantiated_map(
+                step_predicate = add_instantiated_map(
                     compilation,
                     step,
                     index,
@@ -245,12 +271,10 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 raise NotImplementedError
 
             else:
-                operator_index += 1
-                add_instantiated_operation(
+                step_predicate = add_instantiated_operation(
                     compilation,
                     step,
                     index,
-                    operator_index,
                     goal_predicates,
                     precondition_list,
                     add_effect_list,
@@ -261,19 +285,20 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
             if step.label:
                 action_name = f"{action_name}{PARAMETER_DELIMITER}{step.label}"
 
-            compilation.problem.action(
-                action_name,
-                parameters=[],
-                precondition=land(*precondition_list, flat=True),
-                effects=[fs.AddEffect(add) for add in add_effect_list]
-                + [fs.DelEffect(del_e) for del_e in del_effect_list],
-                cost=iofs.AdditiveActionCost(
-                    compilation.problem.language.constant(
-                        CostOptions.ZERO.value,
-                        compilation.problem.language.get_sort("Integer"),
-                    )
-                ),
-            )
+            if step_predicate:
+                compilation.problem.action(
+                    action_name,
+                    parameters=[],
+                    precondition=land(*precondition_list, flat=True),
+                    effects=[fs.AddEffect(add) for add in add_effect_list]
+                    + [fs.DelEffect(del_e) for del_e in del_effect_list],
+                    cost=iofs.AdditiveActionCost(
+                        compilation.problem.language.constant(
+                            CostOptions.UNIT.value + len(step.parameters),
+                            compilation.problem.language.get_sort("Integer"),
+                        )
+                    ),
+                )
 
         elif isinstance(step, Constraint):
             raise NotImplementedError
