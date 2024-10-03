@@ -29,7 +29,11 @@ def string_transform(item: Optional[str], reference: List[Transform], hashit: bo
         return item
 
 
-def revert_string_transform(item: str, reference: List[Transform]) -> Optional[str]:
+def revert_string_transforms(list_of_strings: List[str], reference: List[Transform]) -> List[str]:
+    return [revert_string_transform(item, reference) for item in list_of_strings]
+
+
+def revert_string_transform(item: str, reference: List[Transform]) -> str:
     og_items = list(filter(lambda x: item == x.target, reference))
 
     if not og_items:

@@ -136,7 +136,7 @@ def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Se
 
 def compile_goals(compilation: Any, **kwargs: Any) -> None:
     goal_type: GoalOptions = kwargs["goal_type"]
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
 
     list_of_goal_items: List[GoalItems] = compilation.flow_definition.goal_items
     goal_predicates: Set[Any]
@@ -148,7 +148,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
             for goal_item in goal_items.goals:
                 compile_goal_item(compilation, goal_item, goal_predicates, **kwargs)
 
-        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+        if report_type is None or report_type != SolutionQuality.SOUND:
             compilation.problem.goal = land(*goal_predicates, flat=True)
 
     elif goal_type == GoalOptions.OR_AND:
@@ -170,7 +170,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
                 ),
             )
 
-        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+        if report_type is None or report_type != SolutionQuality.SOUND:
             compilation.problem.goal = compilation.done_goal_post()
             compilation.problem.action(
                 f"{RestrictedOperations.GOAL.value}",
@@ -215,7 +215,7 @@ def compile_goals(compilation: Any, **kwargs: Any) -> None:
                     ),
                 )
 
-        if debug_flag is None or debug_flag != SolutionQuality.SOUND:
+        if report_type is None or report_type != SolutionQuality.SOUND:
             compilation.problem.goal = land(*goal_predicates, flat=True)
 
     else:

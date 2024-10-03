@@ -101,7 +101,7 @@ class TestBasic:
         incomplete_unsound_tokens.remove("assert $a > 10")
         incomplete_unsound_tokens.remove("y = agent_b(a)")
 
-        report = self.debugger.debug(incomplete_unsound_tokens, debug=SolutionQuality.SOUND)
+        report = self.debugger.debug(incomplete_unsound_tokens, report_type=SolutionQuality.SOUND)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
@@ -113,11 +113,11 @@ class TestBasic:
         incomplete_sound_tokens = deepcopy(self.tokens)
         incomplete_sound_tokens.remove("agent_d(y)")
 
-        report = self.debugger.debug(incomplete_sound_tokens, debug=SolutionQuality.SOUND)
+        report = self.debugger.debug(incomplete_sound_tokens, report_type=SolutionQuality.SOUND)
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "No edits"
         assert report.determination, "Reference plan is sound"
 
-        report = self.debugger.debug(incomplete_sound_tokens, debug=SolutionQuality.VALID)
+        report = self.debugger.debug(incomplete_sound_tokens, report_type=SolutionQuality.VALID)
 
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
@@ -132,15 +132,15 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.SOUND)
+        report = self.debugger.debug(valid_suboptimal_tokens, report_type=SolutionQuality.SOUND)
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "No edits"
         assert report.determination, "Reference plan is sound"
 
-        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.VALID)
+        report = self.debugger.debug(valid_suboptimal_tokens, report_type=SolutionQuality.VALID)
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "No edits"
         assert report.determination, "Reference plan is valid"
 
-        report = self.debugger.debug(valid_suboptimal_tokens, debug=SolutionQuality.OPTIMAL)
+        report = self.debugger.debug(valid_suboptimal_tokens, report_type=SolutionQuality.OPTIMAL)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
@@ -150,7 +150,7 @@ class TestBasic:
         assert report.determination is False, "Reference plan is not optimal"
 
     def test_optimal_plan(self) -> None:
-        report = self.debugger.debug(self.tokens, debug=SolutionQuality.OPTIMAL)
+        report = self.debugger.debug(self.tokens, report_type=SolutionQuality.OPTIMAL)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
@@ -167,7 +167,7 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL)
+        report = self.debugger.debug(alternative_tokens, report_type=SolutionQuality.OPTIMAL)
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
@@ -181,7 +181,7 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, show_output=False)
+        report = self.debugger.debug(alternative_tokens, report_type=SolutionQuality.OPTIMAL, show_output=False)
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 0, "0 edits"
         assert report.determination, "Reference plan is optimal"
 
@@ -194,7 +194,7 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(alternative_tokens, debug=SolutionQuality.OPTIMAL, collapse_maps=True)
+        report = self.debugger.debug(alternative_tokens, report_type=SolutionQuality.OPTIMAL, collapse_maps=True)
 
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
@@ -215,7 +215,7 @@ class TestBasic:
             "agent_d(y)",
         ]
 
-        report = self.debugger.debug(messed_up_tokens, debug=SolutionQuality.SOUND)
+        report = self.debugger.debug(messed_up_tokens, report_type=SolutionQuality.SOUND)
 
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
@@ -234,7 +234,7 @@ class TestBasic:
         ]
 
         for mode in SolutionQuality:
-            report = self.debugger.debug(alternative_tokens, debug=mode, printer=CustomPrint())
+            report = self.debugger.debug(alternative_tokens, report_type=mode, printer=CustomPrint())
             diff_string = "\n".join(report.plan_diff_str)
             print(f"\n\n{diff_string}")
 

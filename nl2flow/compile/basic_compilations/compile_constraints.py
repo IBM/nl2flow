@@ -2,7 +2,7 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Any, Optional
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map, get_type_of_constant
 from nl2flow.compile.schemas import Constraint, MemoryItem
 from nl2flow.compile.options import (
@@ -42,7 +42,7 @@ def compile_manifest_constraints(compilation: Any) -> None:
 
 
 def compile_constraints(compilation: Any, constraint: Constraint, **kwargs: Any) -> Any:
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     new_constraint_variable = f"status_{constraint.constraint}"
     constraint_parameters = constraint.get_variable_references_from_constraint(
@@ -127,7 +127,7 @@ def compile_constraints(compilation: Any, constraint: Constraint, **kwargs: Any)
             )
 
             if operator_name not in compilation.problem.actions:
-                if debug_flag:
+                if debug_flag == DebugFlag.TOKENIZE:
                     precondition_list.append(compilation.ready_for_token())
                     del_effect_list.append(compilation.ready_for_token())
 

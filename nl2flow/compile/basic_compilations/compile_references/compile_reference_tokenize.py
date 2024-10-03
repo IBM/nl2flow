@@ -2,39 +2,34 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, Atom, Tautology
 from typing import Any, Optional
-
 from nl2flow.compile.schemas import Step, Constraint
-from nl2flow.compile.basic_compilations.compile_history import get_predicate_from_constraint, get_predicate_from_step
-from nl2flow.compile.options import RestrictedOperations, BasicOperations, CostOptions
 from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.compile.options import RestrictedOperations, CostOptions
+from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
+from nl2flow.compile.basic_compilations.compile_history import (
+    get_predicate_from_constraint,
+    get_predicate_from_step,
+    get_index_of_interest,
+)
 
 
-def compile_reference(compilation: Any, **kwargs: Any) -> None:
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+def compile_reference_tokenize(compilation: Any, **kwargs: Any) -> None:
+    report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
 
     cached_predicates = list()
     token_predicates = list()
-    mapped_items = dict()
 
     for index in range(len(compilation.flow_definition.reference.plan) + 1):
         if index < len(compilation.flow_definition.reference.plan):
             item = compilation.flow_definition.reference.plan[index]
 
             if isinstance(item, Step):
-                indices_of_interest = []
+                for param in item.parameters:
+                    add_to_condition_list_pre_check(compilation, param)
 
-                for i, r in enumerate(compilation.flow_definition.reference.plan):
-                    if isinstance(r, Step) and r.name == item.name:
-                        indices_of_interest.append(i)
-
-                index_of_operation = indices_of_interest.index(index)
-
-                if item.name == BasicOperations.MAPPER.value:
-                    mapped_items[item.parameters[1].item_id] = item.parameters[0].item_id
-
-                step_predicate = get_predicate_from_step(
-                    compilation, item, index_of_operation, mapped_items=mapped_items, **kwargs
-                )
+                repeat_index = get_index_of_interest(compilation, item, index)
+                step_predicate = get_predicate_from_step(compilation, item, repeat_index, **kwargs)
 
             elif isinstance(item, Constraint):
                 step_predicate = get_predicate_from_constraint(compilation, item)
@@ -45,12 +40,15 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             if step_predicate:
                 cached_predicates.append(step_predicate)
 
-        token_predicate_name = f"token_{index}"
-        token_predicate = getattr(compilation, token_predicate_name)()
+        token_predicate = get_token_predicate(compilation, index)
         token_predicates.append(token_predicate)
 
         precondition_list = [p for p in cached_predicates[:index]]
         effect_list = [fs.AddEffect(compilation.ready_for_token()), fs.AddEffect(token_predicate)]
+
+        for i in range(index):
+            shadow_token_predicate = get_token_predicate(compilation, i)
+            precondition_list.append(shadow_token_predicate)
 
         compilation.problem.action(
             f"{RestrictedOperations.TOKENIZE.value}_{index}",
@@ -59,13 +57,13 @@ def compile_reference(compilation: Any, **kwargs: Any) -> None:
             effects=effect_list,
             cost=iofs.AdditiveActionCost(
                 compilation.problem.language.constant(
-                    CostOptions.ZERO.value,
+                    CostOptions.EDIT.value,
                     compilation.problem.language.get_sort("Integer"),
                 )
             ),
         )
 
-        if debug_flag == SolutionQuality.OPTIMAL:
+        if report_type == SolutionQuality.OPTIMAL:
             precondition_list = []
             effect_list = [fs.AddEffect(token_predicate)]
 

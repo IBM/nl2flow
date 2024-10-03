@@ -3,12 +3,13 @@ from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Set, Any, Optional
 
-from nl2flow.debug.schemas import SolutionQuality
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.schemas import FlowDefinition, MemoryItem
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum, add_memory_item_to_constant_map
 from nl2flow.compile.options import (
     TypeOptions,
     LifeCycleOptions,
+    NL2FlowOptions,
     MappingOptions,
     BasicOperations,
     CostOptions,
@@ -20,7 +21,8 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
     flow_definition: FlowDefinition = compilation.flow_definition
     mapping_options: Set[MappingOptions] = set(kwargs["mapping_options"])
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     for constant in compilation.constant_map:
         if is_this_a_datum(compilation, constant) and MappingOptions.prohibit_direct not in mapping_options:
@@ -68,11 +70,12 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
         x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])
         y = compilation.lang.variable("y", compilation.type_map[TypeOptions.ROOT.value])
 
+        parameter_list = [x, y]
+
         precondition_list = [
             compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value]),
             compilation.is_mappable(x, y),
             neg(compilation.not_mappable(x, y)),
-            neg(compilation.mapped_to(x, y)),
             neg(compilation.new_item(y)),
         ]
 
@@ -93,7 +96,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
 
         compilation.problem.action(
             f"{BasicOperations.MAPPER.value}--free-alt",
-            parameters=[x, y],
+            parameters=parameter_list,
             precondition=land(*precondition_list, compilation.free(x), flat=True),
             effects=effect_list + [fs.AddEffect(compilation.free(y))],
             cost=iofs.AdditiveActionCost(
@@ -104,13 +107,20 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             ),
         )
 
-        if debug_flag:
+        if debug_flag == DebugFlag.TOKENIZE:
             precondition_list.append(compilation.ready_for_token())
             effect_list.append(fs.DelEffect(compilation.ready_for_token()))
 
+        if NL2FlowOptions.label_production in optimization_options:
+            label_param = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+            parameter_list.append(label_param)
+
+            precondition_list.append(compilation.label_tag(x, label_param))
+            effect_list.append(fs.AddEffect(compilation.label_tag(y, label_param)))
+
         compilation.problem.action(
             BasicOperations.MAPPER.value,
-            parameters=[x, y],
+            parameters=parameter_list,
             precondition=land(*precondition_list, flat=True),
             effects=effect_list,
             cost=iofs.AdditiveActionCost(compilation.map_affinity(x, y)),
@@ -119,16 +129,18 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
 
 def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
     variable_life_cycle: Set[LifeCycleOptions] = set(kwargs["variable_life_cycle"])
-    debug_flag: Optional[SolutionQuality] = kwargs.get("debug_flag", None)
+    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
 
     for typing in compilation.type_map:
         if typing not in [t.value for t in TypeOptions]:
             x = compilation.lang.variable("x", compilation.type_map[typing])
             y = compilation.lang.variable("y", compilation.type_map[typing])
 
+            parameter_list = [x, y]
+
             precondition_list = [
                 compilation.known(x, compilation.constant_map[MemoryState.KNOWN.value]),
-                neg(compilation.mapped_to(x, y)),
                 neg(compilation.mapped(x)),
                 neg(compilation.not_mappable(x, y)),
                 neg(compilation.new_item(y)),
@@ -151,8 +163,8 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
             ]
 
             compilation.problem.action(
-                f"{BasicOperations.MAPPER.value}----{typing}--free-alt",
-                parameters=[x, y],
+                f"{BasicOperations.MAPPER.value}--{typing}-free-alt",
+                parameters=parameter_list,
                 precondition=land(*precondition_list, compilation.free(x), flat=True),
                 effects=effect_list + [fs.AddEffect(compilation.free(y))],
                 cost=iofs.AdditiveActionCost(
@@ -163,13 +175,20 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
                 ),
             )
 
-            if debug_flag:
+            if debug_flag == DebugFlag.TOKENIZE:
                 precondition_list.append(compilation.ready_for_token())
                 effect_list.append(fs.DelEffect(compilation.ready_for_token()))
 
+            if NL2FlowOptions.label_production in optimization_options:
+                label_param = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+                parameter_list.append(label_param)
+
+                precondition_list.append(compilation.label_tag(x, label_param))
+                effect_list.append(fs.AddEffect(compilation.label_tag(y, label_param)))
+
             compilation.problem.action(
-                f"{BasicOperations.MAPPER.value}----{typing}",
-                parameters=[x, y],
+                f"{BasicOperations.MAPPER.value}--{typing}",
+                parameters=parameter_list,
                 precondition=land(*precondition_list, flat=True),
                 effects=effect_list,
                 cost=iofs.AdditiveActionCost(

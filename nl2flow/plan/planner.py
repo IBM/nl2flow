@@ -1,17 +1,20 @@
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.utils import Transform, revert_string_transform
+from nl2flow.compile.utils import Transform, revert_string_transform, revert_string_transforms
 from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items
 from nl2flow.compile.schemas import PDDL
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
+    PARAMETER_DELIMITER,
+    RestrictedOperations,
     SlotOptions,
     MappingOptions,
     ConfirmOptions,
 )
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Set
+from typing import Any, List, Set, Optional
 from copy import deepcopy
 
 
@@ -63,6 +66,7 @@ class FDDerivedPlanner(ABC):
         list_of_plans = list()
 
         flow_object: Flow = kwargs["flow"]
+        debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
         transforms: List[Transform] = kwargs.get("transforms", [])
 
         for plan in raw_plans:
@@ -71,14 +75,29 @@ class FDDerivedPlanner(ABC):
 
             for action in actions:
                 action_split = action.split()
-                action_name = revert_string_transform(action_split[0], transforms)
+                name_token = action_split[0]
+
+                if PARAMETER_DELIMITER in name_token:
+                    temp_split = name_token.split(PARAMETER_DELIMITER)
+                    name_token = temp_split[0]
+                    parameters = temp_split[1:]
+
+                else:
+                    parameters = action_split[1:]
+
+                if debug_flag == DebugFlag.DIRECT:
+                    if name_token.startswith(RestrictedOperations.TOKENIZE.value):
+                        name_token = name_token.split("//")[-1]
+
+                action_name = revert_string_transform(name_token, transforms)
 
                 if action_name is not None:
                     new_action = parse_action(
                         action_name=action_name,
-                        parameters=action_split[1:],
+                        parameters=revert_string_transforms(parameters, transforms),
                         flow_object=flow_object,
                         transforms=transforms,
+                        debug_flag=debug_flag,
                     )
                 else:
                     raise ValueError("Could not parse action name.")

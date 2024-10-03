@@ -43,7 +43,7 @@ class TestLLMParsing:
 
         llm_plan = ["v__2 = a__0(v__0)", "v__1 = a__1(v__2)"]
 
-        report = self.debugger.debug(llm_plan, debug=SolutionQuality.VALID)
+        report = self.debugger.debug(llm_plan, report_type=SolutionQuality.VALID)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
@@ -64,6 +64,6 @@ class TestLLMParsing:
 
         llm_plan = ["ask(v__0)", "v__2 = a__0(v__0)", "a__1(v__2)"]
 
-        report = self.debugger.debug(llm_plan, debug=SolutionQuality.VALID)
+        report = self.debugger.debug(llm_plan, report_type=SolutionQuality.VALID)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")

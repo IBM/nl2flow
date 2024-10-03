@@ -3,6 +3,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform, string_transform
 from nl2flow.compile.basic_compilations.utils import unpack_list_of_signature_items
 from nl2flow.plan.schemas import ClassicalPlan, Action
+from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
     BasicOperations,
     RestrictedOperations,
@@ -87,65 +88,59 @@ def find_goal(name: str, flow_object: Flow) -> Optional[GoalItem]:
 
 
 def parse_action(
-    action_name: str, parameters: List[str], flow_object: Flow, transforms: List[Transform]
+    action_name: str,
+    parameters: List[str],
+    flow_object: Flow,
+    transforms: List[Transform],
+    debug_flag: DebugFlag,
 ) -> Optional[Union[Action, Constraint]]:
     if RestrictedOperations.is_restricted(action_name):
         return None
 
-    elif action_name.startswith(BasicOperations.SLOT_FILLER.value):
-        new_action = Action(name=BasicOperations.SLOT_FILLER.value)
+    which_basic = BasicOperations.which_basic(action_name)
 
-        temp = action_name.split("----")
-        if temp[1:] and not parameters:
-            parameters = temp[1:]
+    if which_basic:
+        if which_basic == BasicOperations.CONSTRAINT:
+            new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
+            action_split_for_id = new_action_name.split("_to_")
 
-        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
-        return new_action
+            constraint = revert_string_transform(action_split_for_id[0], transforms)
+            assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
 
-    elif action_name.startswith(BasicOperations.CONFIRM.value):
-        new_action = Action(name=BasicOperations.CONFIRM.value)
-        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
-        return new_action
+            action_split_for_truth_value = action_split_for_id[1].split("_with_")
 
-    elif action_name.startswith(BasicOperations.MAPPER.value):
-        new_action = Action(name=BasicOperations.MAPPER.value)
+            truth_value = None
+            for v in ConstraintState:
+                if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
+                    truth_value = v.value
 
-        temp = action_name.split("----")
-        if temp[1:] and not parameters:
-            parameters = temp[1:]
+            return Constraint(constraint=constraint, truth_value=truth_value)
 
-        new_action.inputs = [revert_string_transform(param, transforms) for param in parameters]
-        return new_action
-
-    elif action_name.startswith(BasicOperations.CONSTRAINT.value):
-        new_action_name = action_name.replace(f"{BasicOperations.CONSTRAINT.value}_", "", 1)
-        action_split_for_id = new_action_name.split("_to_")
-
-        constraint = revert_string_transform(action_split_for_id[0], transforms)
-        assert constraint, ValueError(f"Failed to parse constraint id from {action_name}")
-
-        action_split_for_truth_value = action_split_for_id[1].split("_with_")
-
-        truth_value = None
-        for v in ConstraintState:
-            if string_transform(str(v.value), transforms) == action_split_for_truth_value[0]:
-                truth_value = v.value
-
-        return Constraint(constraint=constraint, truth_value=truth_value)
+        else:
+            new_action = Action(name=which_basic.value)
+            new_action.inputs = parameters
+            return new_action
 
     else:
-        operator: OperatorDefinition = next(
-            filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
-        )
-        new_action = Action(
-            name=operator.name,
-            parameters=[revert_string_transform(p, transforms) for p in parameters],
-            inputs=unpack_list_of_signature_items(operator.inputs),
-        )
+        filter_for_operators = filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
+        operator: Optional[OperatorDefinition] = next(filter_for_operators, None)
 
-        if isinstance(operator.outputs, Outcome):
-            new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)
+        if operator is None:
+            if debug_flag:
+                return None
+            else:
+                raise ValueError(f"Tried to parse unknown operation: {action_name}, parameters: {parameters}")
+
         else:
-            raise NotImplementedError("Only working on classical operators at the moment.")
+            new_action = Action(
+                name=operator.name,
+                parameters=parameters,
+                inputs=unpack_list_of_signature_items(operator.inputs),
+            )
 
-        return new_action
+            if isinstance(operator.outputs, Outcome):
+                new_action.outputs = unpack_list_of_signature_items(operator.outputs.outcomes)
+            else:
+                raise NotImplementedError("Only working on classical operators at the moment.")
+
+            return new_action
