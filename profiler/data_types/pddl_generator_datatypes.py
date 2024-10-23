@@ -15,7 +15,7 @@ class PlanningDatumTag(BaseModel):
     enable_slotting_cost: bool = False
     enable_maps: bool = False
     enable_mapping_cost: bool = False
-    number_of_goals: bool = False
+    number_of_goals: int = 1
     operators_as_goal: bool = True
     objects_as_goal: bool = False
     or_goals: bool = False
