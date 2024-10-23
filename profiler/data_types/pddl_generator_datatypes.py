@@ -15,7 +15,7 @@ class PlanningDatumTag(BaseModel):
     enable_slotting_cost: bool = False
     enable_maps: bool = False
     enable_mapping_cost: bool = False
-    multiple_goals: bool = False
+    number_of_goals: int = 1
     operators_as_goal: bool = True
     objects_as_goal: bool = False
     or_goals: bool = False
@@ -67,7 +67,7 @@ class PddlGeneratorOutput(BaseModel):
                 else False
             ),
             enable_maps=(True if len(self.agent_info_generator_output_item.mappings) > 0 else False),
-            multiple_goals=(True if len(self.agent_info_generator_output_item.goal_agent_ids) > 1 else False),
+            number_of_goals=len(self.agent_info_generator_output_item.goal_agent_ids),
             objects_in_memory=(
                 True
                 if (
