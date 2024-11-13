@@ -70,6 +70,7 @@ class MappingItem(BaseModel):
 
 class MemoryItem(Parameter):
     item_state: MemoryState = MemoryState.UNKNOWN
+    label: Optional[str] = None
 
     @classmethod
     def transform(cls, memory_item: MemoryItem, transforms: List[Transform]) -> MemoryItem:
@@ -77,6 +78,7 @@ class MemoryItem(Parameter):
             item_id=string_transform(memory_item.item_id, transforms),
             item_type=string_transform(memory_item.item_type, transforms),
             item_state=memory_item.item_state,
+            label=string_transform(memory_item.label, transforms),
         )
 
 

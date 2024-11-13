@@ -322,7 +322,7 @@ class ClassicPDDL(Compilation):
                     self.init.add(
                         self.label_tag(
                             self.constant_map[memory_item.item_id],
-                            self.constant_map[get_token_predicate_name(index=0, token="var")],
+                            self.constant_map[memory_item.label or get_token_predicate_name(index=0, token="var")],
                         )
                     )
 
