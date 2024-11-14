@@ -196,6 +196,11 @@ class ClassicPDDL(Compilation):
                 )
 
         if NL2FlowOptions.label_production in optimization_options:
+            add_memory_item_to_constant_map(
+                self,
+                MemoryItem(item_id=get_token_predicate_name(index=0, token="varm"), item_type=TypeOptions.LABEL.value),
+            )
+
             for label in range(0, MAX_LABELS + 1):
                 add_memory_item_to_constant_map(
                     self,
