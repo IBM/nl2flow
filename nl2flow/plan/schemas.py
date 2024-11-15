@@ -33,6 +33,13 @@ class PlannerResponse(RawPlannerResult):
     list_of_plans: List[ClassicalPlan] = []
     is_parse_error: Optional[bool] = None
 
+    @property
+    def best_plan(self) -> Optional[ClassicalPlan]:
+        if self.list_of_plans:
+            return self.list_of_plans[0]
+
+        return None
+
     @classmethod
     def initialize_from_raw_plans(cls, raw_planner_result: RawPlannerResult) -> PlannerResponse:
         return PlannerResponse(

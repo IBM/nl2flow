@@ -170,6 +170,11 @@ def add_instantiated_operation(
                     )
                 )
 
+        if step.label:
+            add_effect_list.append(
+                compilation.assigned_to(compilation.constant_map[step.name], compilation.constant_map[step.label])
+            )
+
         outputs = operator.outputs[0]
         for o_output in outputs.outcomes:
             for param in o_output.parameters:

@@ -109,6 +109,7 @@ class ClassicPDDL(Compilation):
         self.done_goal_post: Any = None
         self.has_asked: Any = None
         self.label_tag: Any = None
+        self.assigned_to: Any = None
         self.ready_for_token: Any = None
 
         self.type_map: Dict[str, Any] = dict()
@@ -196,6 +197,12 @@ class ClassicPDDL(Compilation):
                 )
 
         if NL2FlowOptions.label_production in optimization_options:
+            self.assigned_to = self.lang.predicate(
+                "assigned_to",
+                self.type_map[TypeOptions.OPERATOR.value],
+                self.type_map[TypeOptions.LABEL.value],
+            )
+
             add_memory_item_to_constant_map(
                 self,
                 MemoryItem(item_id=get_token_predicate_name(index=0, token="varm"), item_type=TypeOptions.LABEL.value),

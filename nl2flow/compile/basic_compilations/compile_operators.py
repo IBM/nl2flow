@@ -110,6 +110,17 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                 constraint_predicate = compile_constraints(compilation, constraint, **kwargs)
                 precondition_list.append(constraint_predicate)
 
+        if NL2FlowOptions.label_production in optimization_options:
+            label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+            parameter_list.append(label_level)
+
+            add_effect_list.append(
+                compilation.assigned_to(
+                    compilation.constant_map[operator.name],
+                    label_level,
+                )
+            )
+
         if optimization_options:
             add_advanced_properties(
                 compilation, operator, parameter_list, type_list, precondition_list, add_effect_list, **kwargs
@@ -181,13 +192,14 @@ def add_advanced_properties(
 ) -> None:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
     new_has_done_predicate_name = f"has_done_{operator.name}"
+
     has_done_parameters = []
+    local_parameters = (
+        parameter_list if NL2FlowOptions.label_production not in optimization_options else parameter_list[:-1]
+    )
 
     if NL2FlowOptions.multi_instance in optimization_options:
         has_done_parameters = [compilation.type_map[type_name] for type_name in type_list]
-
-    if NL2FlowOptions.label_production in optimization_options:
-        has_done_parameters.append(compilation.type_map[TypeOptions.LABEL.value])
 
     if NL2FlowOptions.allow_retries in optimization_options:
         has_done_parameters.append(compilation.type_map[TypeOptions.RETRY.value])
@@ -199,35 +211,19 @@ def add_advanced_properties(
 
     setattr(compilation, new_has_done_predicate_name, new_has_done_predicate)
 
-    if NL2FlowOptions.label_production in optimization_options:
-        label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
-        parameter_list.append(label_level)
-
     if NL2FlowOptions.allow_retries in optimization_options:
         pre_level = compilation.lang.variable("pre_level", compilation.type_map[TypeOptions.RETRY.value])
         post_level = compilation.lang.variable("post_level", compilation.type_map[TypeOptions.RETRY.value])
 
-        if NL2FlowOptions.label_production in optimization_options:
-            precondition_list.extend(
-                [
-                    getattr(compilation, new_has_done_predicate_name)(*parameter_list, pre_level),
-                    neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level)),
-                    compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
-                ]
-            )
+        precondition_list.extend(
+            [
+                getattr(compilation, new_has_done_predicate_name)(*local_parameters, pre_level),
+                neg(getattr(compilation, new_has_done_predicate_name)(*local_parameters, post_level)),
+                compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
+            ]
+        )
 
-            add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level))
-
-        else:
-            precondition_list.extend(
-                [
-                    getattr(compilation, new_has_done_predicate_name)(*parameter_list, pre_level),
-                    neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level)),
-                    compilation.connected(compilation.constant_map[operator.name], pre_level, post_level),
-                ]
-            )
-
-            add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list, post_level))
+        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*local_parameters, post_level))
 
         for try_level in range(operator.max_try):
             compilation.init.add(
@@ -238,15 +234,15 @@ def add_advanced_properties(
                 )
             )
 
-        add_enabler_action_for_operator(compilation, operator, parameter_list, new_has_done_predicate_name)
+        add_enabler_action_for_operator(compilation, operator, local_parameters, new_has_done_predicate_name)
         parameter_list.extend([pre_level, post_level])
 
     else:
         precondition_list.append(
-            neg(getattr(compilation, new_has_done_predicate_name)(*parameter_list)),
+            neg(getattr(compilation, new_has_done_predicate_name)(*local_parameters)),
         )
 
-        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*parameter_list))
+        add_effect_list.append(getattr(compilation, new_has_done_predicate_name)(*local_parameters))
 
 
 def add_enabler_action_for_operator(

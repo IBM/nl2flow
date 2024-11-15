@@ -1,6 +1,6 @@
-from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map
-from nl2flow.compile.schemas import Parameter, MemoryItem, Constraint, Step
-from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations, NL2FlowOptions
+from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
+from nl2flow.compile.schemas import Parameter, Constraint, Step
+from nl2flow.compile.options import MemoryState, HasDoneState, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
 from nl2flow.debug.schemas import DebugFlag
 from typing import Any, Optional, Set
@@ -16,10 +16,8 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         set_variables = list()
         for item in constraint_parameters:
             if item not in compilation.constant_map and is_this_a_datum(compilation, item):
-                add_memory_item_to_constant_map(
-                    compilation,
-                    MemoryItem(item_id=item, item_type=TypeOptions.ROOT.value),
-                )
+                add_to_condition_list_pre_check(compilation, item)
+
             set_variables.append(compilation.constant_map[item])
 
         constraint_predicate = getattr(compilation, new_constraint_variable)(
@@ -74,9 +72,6 @@ def get_predicate_from_step(compilation: Any, step: Step, repeat_index: int = 0,
                 if NL2FlowOptions.multi_instance in optimization_options
                 else []
             )
-
-            if NL2FlowOptions.label_production in optimization_options and step.label is not None:
-                parameter_names.append(step.label)
 
             if NL2FlowOptions.allow_retries in optimization_options:
                 num_try = repeat_index + 1
