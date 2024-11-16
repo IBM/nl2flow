@@ -75,7 +75,7 @@ class TestMappingsAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 6, "The plan should have 6 steps."
 
         step_1: Action = poi.plan[0]

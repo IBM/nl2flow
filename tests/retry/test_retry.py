@@ -46,7 +46,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 1 and poi.plan[0].name == "Basic Agent", "One step with the target agent."
 
         self.flow.add(Step(name="Basic Agent"))
@@ -72,7 +72,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert sum([int(poi.cost == p.cost) for p in plans.list_of_plans]) == 2, "Two plans possible."
 
         self.flow.add(Step(name="New Agent"))
@@ -80,7 +80,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert poi.plan[0].name == "Alternative Agent", "Alternative Agent used instead."
         assert sum([int(poi.cost == p.cost) for p in plans.list_of_plans]) == 1, "One plan possible."
 
@@ -96,7 +96,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert (
             len(poi.plan) == 2
             and poi.plan[0].name == BasicOperations.SLOT_FILLER.value
@@ -114,7 +114,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert (
             len(poi.plan) == 3
             and poi.plan[0].name == BasicOperations.SLOT_FILLER.value
@@ -126,7 +126,7 @@ class TestRetryBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2 and poi.plan[1].name == "Agent", "Two step plan with the target agent."
 
     @pytest.mark.skip(reason="Coming soon.")

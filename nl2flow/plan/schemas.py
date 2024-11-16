@@ -23,10 +23,18 @@ class RawPlannerResult(BaseModel):
     list_of_plans: List[RawPlan] = []
     error_running_planner: Optional[bool] = None
     is_no_solution: Optional[bool] = None
+    no_plan_needed: Optional[bool] = None
     is_timeout: Optional[bool] = None
     stderr: Optional[Any] = None
     planner_output: Optional[str] = None
     planner_error: Optional[str] = None
+
+    @property
+    def best_plan(self) -> Optional[RawPlan]:
+        if self.list_of_plans:
+            return self.list_of_plans[0]
+
+        return None
 
 
 class PlannerResponse(RawPlannerResult):
@@ -45,6 +53,7 @@ class PlannerResponse(RawPlannerResult):
         return PlannerResponse(
             error_running_planner=raw_planner_result.error_running_planner,
             is_no_solution=raw_planner_result.is_no_solution,
+            no_plan_needed=raw_planner_result.no_plan_needed,
             is_timeout=raw_planner_result.is_timeout,
             stderr=raw_planner_result.stderr,
         )

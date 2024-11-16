@@ -45,7 +45,7 @@ class TestTypingAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "Plan of length 4."
         assert BasicOperations.MAPPER.value in [action.name for action in poi.plan], "Mapper in the plan."
 
@@ -75,7 +75,7 @@ class TestTypingAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "Plan of length 4."
         assert "Fake Helper Agent" in [action.name for action in poi.plan], "Fake helper agent in the plan."
 
@@ -92,7 +92,7 @@ class TestTypingAdvanced(BaseTestAgents):
 
         is_helper_agent_there = False
         count = 0
-        optimal_cost = plans.list_of_plans[0].cost
+        optimal_cost = plans.best_plan.cost
         for plan_object in plans.list_of_plans:
             if plan_object.cost == optimal_cost:
                 count += 1

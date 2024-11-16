@@ -15,9 +15,9 @@ class TestExplainPrint:
     def test_explain_print(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = ExplainPrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = ExplainPrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
 
-        print(CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0]))
+        print(CodeLikePrint.pretty_print_plan(planner_response.best_plan))
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -44,9 +44,9 @@ class TestExplainPrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = ExplainPrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = ExplainPrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
 
-        print(CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0]))
+        print(CodeLikePrint.pretty_print_plan(planner_response.best_plan))
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -84,9 +84,9 @@ class TestExplainPrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = ExplainPrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = ExplainPrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
 
-        print(CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0]))
+        print(CodeLikePrint.pretty_print_plan(planner_response.best_plan))
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -114,9 +114,9 @@ class TestExplainPrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = ExplainPrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = ExplainPrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
 
-        print(CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0]))
+        print(CodeLikePrint.pretty_print_plan(planner_response.best_plan))
         print(pretty)
 
         pretty_split = pretty.split("\n")

@@ -44,7 +44,7 @@ def generate_dataset_with_info_generator(
             list_of_plans=planner_response.list_of_plans,
             prettified_plans=CodeLikePrint.pretty_print(planner_response, show_output=False) if should_plan else "",
             prettified_optimal_plan_forward=(
-                VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=flow)
+                VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=flow)
                 if len(planner_response.list_of_plans) > 0
                 else "no plan"
             ),

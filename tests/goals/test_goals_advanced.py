@@ -29,7 +29,7 @@ class TestGoalsAdvanced(BaseTestAgents):
         def check_this_plan() -> None:
             assert plans.list_of_plans, "There should be plans."
 
-            poi = plans.list_of_plans[0]
+            poi = plans.best_plan
             assert len(poi.plan) == 6, "Plan of six steps."
             assert (
                 poi.plan[0].name == BasicOperations.MAPPER.value

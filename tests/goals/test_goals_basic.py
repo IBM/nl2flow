@@ -19,18 +19,18 @@ from nl2flow.compile.schemas import (
 def plan_with_type_of_single_instance_same_as_direct_instance(
     plans: PlannerResponse,
 ) -> None:
-    assert plans.list_of_plans, "There should be plans."
+    poi = plans.best_plan
 
-    poi = plans.list_of_plans[0]
+    assert poi, "There should be plans."
     assert len(poi.plan) == 2, "There should be 2 step plan."
     assert poi.plan[0].name == BasicOperations.MAPPER.value, "Beginning with a map ..."
     assert poi.plan[1].name.startswith("Agent"), "... followed by the Agent."
 
 
 def separated_ands_should_be_same_as_combined_ands(plans: PlannerResponse) -> None:
-    assert plans.list_of_plans, "There should be plans."
+    poi = plans.best_plan
 
-    poi = plans.list_of_plans[0]
+    assert poi, "There should be plans."
     assert len(poi.plan) == 3, "There should be 3 step plan."
     assert poi.plan[0].name == BasicOperations.SLOT_FILLER.value, "Beginning with a slot fill ..."
     assert poi.plan[1].name == "Agent B", "... followed by Agent B ..."
@@ -72,7 +72,7 @@ class TestGoalsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "There should be a 2 step plan."
         assert poi.plan[0].name == BasicOperations.SLOT_FILLER.value, "Slot filler ..."
         assert poi.plan[1].name == target_agent_name, "... followed by the target agent."
@@ -124,7 +124,7 @@ class TestGoalsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "There should be 3 step plan."
 
         action_names = [operator.name for operator in poi.plan]
@@ -152,6 +152,6 @@ class TestGoalsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 1, "There should be 1 step plan ..."
         assert poi.plan[0].name == "Agent Y", "... with Agent Y."
