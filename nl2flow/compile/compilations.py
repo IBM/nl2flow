@@ -149,7 +149,7 @@ class ClassicPDDL(Compilation):
         compile_manifest_constraints(self)
         used_up_labels = compile_history(self, **kwargs)
 
-        if NL2FlowOptions.label_productiong in optimization_options:
+        if NL2FlowOptions.label_production in optimization_options:
             for label in range(0, MAX_LABELS + 1):
                 label_name = get_token_predicate_name(index=label, token="var")
                 if label_name not in used_up_labels:
