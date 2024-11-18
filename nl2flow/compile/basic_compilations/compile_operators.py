@@ -10,6 +10,7 @@ from nl2flow.compile.basic_compilations.utils import (
 )
 
 from nl2flow.compile.basic_compilations.compile_constraints import compile_constraints
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate_name
 from nl2flow.compile.schemas import FlowDefinition, OperatorDefinition, Parameter
 from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
@@ -114,6 +115,14 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
             label_level = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
             parameter_list.append(label_level)
 
+            precondition_list.extend(
+                [
+                    neg(label_level == compilation.constant_map[get_token_predicate_name(index=0, token="var")]),
+                    compilation.available(label_level),
+                ]
+            )
+
+            del_effect_list.append(compilation.available(label_level))
             add_effect_list.append(
                 compilation.assigned_to(
                     compilation.constant_map[operator.name],

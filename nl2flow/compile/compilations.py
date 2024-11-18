@@ -109,6 +109,7 @@ class ClassicPDDL(Compilation):
         self.done_goal_post: Any = None
         self.has_asked: Any = None
         self.label_tag: Any = None
+        self.available: Any = None
         self.assigned_to: Any = None
         self.ready_for_token: Any = None
 
@@ -145,12 +146,17 @@ class ClassicPDDL(Compilation):
 
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
-        compile_history(self, **kwargs)
+        used_up_labels = compile_history(self, **kwargs)
+
+        for label in range(0, MAX_LABELS + 1):
+            label_name = get_token_predicate_name(index=label, token="var")
+            if label_name not in used_up_labels:
+                self.init.add(self.available(self.constant_map[label_name]))
 
         if debug_flag == DebugFlag.TOKENIZE:
-            compile_reference_tokenize(self, **kwargs)
+            compile_reference_tokenize(self, flow_definition=self.flow_definition, **kwargs)
         elif debug_flag == DebugFlag.DIRECT:
-            compile_reference_basic(self, **kwargs)
+            compile_reference_basic(self, flow_definition=self.flow_definition, **kwargs)
 
         self.init.set(self.cost(), 0)
         self.problem.init = self.init
@@ -197,30 +203,37 @@ class ClassicPDDL(Compilation):
                 )
 
         if NL2FlowOptions.label_production in optimization_options:
+            self.available = self.lang.predicate(
+                "available",
+                self.type_map[TypeOptions.LABEL.value],
+            )
+
             self.assigned_to = self.lang.predicate(
                 "assigned_to",
                 self.type_map[TypeOptions.OPERATOR.value],
                 self.type_map[TypeOptions.LABEL.value],
             )
 
-            add_memory_item_to_constant_map(
-                self,
-                MemoryItem(item_id=get_token_predicate_name(index=0, token="varm"), item_type=TypeOptions.LABEL.value),
-            )
-
-            for label in range(0, MAX_LABELS + 1):
-                add_memory_item_to_constant_map(
-                    self,
-                    MemoryItem(
-                        item_id=get_token_predicate_name(index=label, token="var"), item_type=TypeOptions.LABEL.value
-                    ),
-                )
-
             self.label_tag = self.lang.predicate(
                 "label_tag",
                 self.type_map[TypeOptions.ROOT.value],
                 self.type_map[TypeOptions.LABEL.value],
             )
+
+            memory_label_name = get_token_predicate_name(index=0, token="varm")
+            add_memory_item_to_constant_map(
+                self,
+                MemoryItem(item_id=memory_label_name, item_type=TypeOptions.LABEL.value),
+            )
+
+            self.init.add(self.available(self.constant_map[memory_label_name]))
+
+            for label in range(0, MAX_LABELS + 1):
+                label_name = get_token_predicate_name(index=label, token="var")
+                add_memory_item_to_constant_map(
+                    self,
+                    MemoryItem(item_id=label_name, item_type=TypeOptions.LABEL.value),
+                )
 
         if debug_flag:
             if self.flow_definition.reference is not None:

@@ -1,9 +1,10 @@
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
-from nl2flow.compile.schemas import Parameter, Constraint, Step
+from nl2flow.compile.schemas import Parameter, Constraint, Step, FlowDefinition
 from nl2flow.compile.options import MemoryState, HasDoneState, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate_name
 from nl2flow.debug.schemas import DebugFlag
-from typing import Any, Optional, Set
+from typing import Any, Optional, Set, List
 
 
 def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> Optional[Any]:
@@ -92,12 +93,17 @@ def get_predicate_from_step(compilation: Any, step: Step, repeat_index: int = 0,
         return None
 
 
-def compile_history(compilation: Any, **kwargs: Any) -> None:
+def compile_history(compilation: Any, **kwargs: Any) -> List[str]:
+    used_up_labels: List[str] = []
+
     for index, step in enumerate(compilation.flow_definition.history):
         indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
 
         index_of_operation = indices_of_interest.index(index)
         step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
+
+        if step.label and step.label != get_token_predicate_name(index=0, token="var"):
+            used_up_labels.append(step.label)
 
         if step_predicate:
             compilation.init.add(step_predicate)
@@ -107,11 +113,21 @@ def compile_history(compilation: Any, **kwargs: Any) -> None:
         if constraint_predicate:
             compilation.init.add(constraint_predicate)
 
+    return used_up_labels
 
-def get_index_of_interest(compilation: Any, step: Step, current_index: int) -> int:
+
+def get_index_of_interest(compilation: Any, step: Step, flow_definition: FlowDefinition, current_index: int) -> int:
     indices_of_interest = []
 
-    for i, r in enumerate(compilation.flow_definition.reference.plan):
+    history = flow_definition.history
+    cached_history_length = len(history)
+
+    reference = compilation.flow_definition.reference.plan or []
+    current_index += cached_history_length
+
+    new_history = history + reference
+
+    for i, r in enumerate(new_history):
         if isinstance(r, Step) and r.name == step.name:
             indices_of_interest.append(i)
 

@@ -68,7 +68,7 @@ class TestMappingsBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        pretty_print = CodeLikePrint.pretty_print_plan(plans.best_plang, collapse_maps=True)
+        pretty_print = CodeLikePrint.pretty_print_plan(plans.best_plan, collapse_maps=True)
         print(pretty_print)
 
         assert pretty_print.split("\n") == [

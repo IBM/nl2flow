@@ -2,7 +2,7 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg, Atom, Tautology
 from typing import Any, Optional, Set, List
-from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition
+from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
@@ -139,7 +139,9 @@ def add_instantiated_operation(
     del_effect_list: List[Any],
     **kwargs: Any,
 ) -> Optional[Any]:
-    repeat_index = get_index_of_interest(compilation, step, index)
+    flow_definition: FlowDefinition = kwargs["flow_definition"]
+
+    repeat_index = get_index_of_interest(compilation, step, flow_definition, index)
     step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
 
     if step_predicate:
@@ -171,6 +173,8 @@ def add_instantiated_operation(
                 )
 
         if step.label:
+            precondition_list.append(compilation.available(compilation.constant_map[step.label]))
+            del_effect_list.append(compilation.available(compilation.constant_map[step.label]))
             add_effect_list.append(
                 compilation.assigned_to(compilation.constant_map[step.name], compilation.constant_map[step.label])
             )
@@ -198,6 +202,23 @@ def add_instantiated_operation(
                     add_effect_list.append(
                         compilation.label_tag(compilation.constant_map[param], compilation.constant_map[step.label])
                     )
+
+        # DOES NOT SCALE
+        # TODO: https://github.com/IBM/nl2flow/issues/130
+        # optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        # prev_step_predicate = get_predicate_from_step(compilation, step, repeat_index - 1, **kwargs)
+
+        # if NL2FlowOptions.allow_retries in optimization_options:
+        #     precondition_list.extend(
+        #         [
+        #             prev_step_predicate,
+        #             compilation.connected(
+        #                 compilation.constant_map[operator.name],
+        #                 compilation.constant_map[f"try_level_{repeat_index}"],
+        #                 compilation.constant_map[f"try_level_{repeat_index+1}"],
+        #             ),
+        #         ]
+        #     )
 
     return step_predicate
 
