@@ -121,6 +121,7 @@ class ClassicPDDL(Compilation):
 
         debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
         compile_operators(self, **kwargs)
         compile_confirmation(self, **kwargs)
@@ -148,10 +149,11 @@ class ClassicPDDL(Compilation):
         compile_manifest_constraints(self)
         used_up_labels = compile_history(self, **kwargs)
 
-        for label in range(0, MAX_LABELS + 1):
-            label_name = get_token_predicate_name(index=label, token="var")
-            if label_name not in used_up_labels:
-                self.init.add(self.available(self.constant_map[label_name]))
+        if NL2FlowOptions.label_productiong in optimization_options:
+            for label in range(0, MAX_LABELS + 1):
+                label_name = get_token_predicate_name(index=label, token="var")
+                if label_name not in used_up_labels:
+                    self.init.add(self.available(self.constant_map[label_name]))
 
         if debug_flag == DebugFlag.TOKENIZE:
             compile_reference_tokenize(self, flow_definition=self.flow_definition, **kwargs)
