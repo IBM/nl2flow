@@ -206,20 +206,21 @@ def add_instantiated_operation(
 
         # DOES NOT SCALE
         # TODO: https://github.com/IBM/nl2flow/issues/130
-        # optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-        # prev_step_predicate = get_predicate_from_step(compilation, step, repeat_index - 1, **kwargs)
-        #
-        # if NL2FlowOptions.allow_retries in optimization_options:
-        #     precondition_list.extend(
-        #         [
-        #             prev_step_predicate,
-        #             compilation.connected(
-        #                 compilation.constant_map[operator.name],
-        #                 compilation.constant_map[f"try_level_{repeat_index}"],
-        #                 compilation.constant_map[f"try_level_{repeat_index+1}"],
-        #             ),
-        #         ]
-        #     )
+        if operator.max_try > 1:
+            optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+            prev_step_predicate = get_predicate_from_step(compilation, step, repeat_index - 1, **kwargs)
+
+            if NL2FlowOptions.allow_retries in optimization_options:
+                precondition_list.extend(
+                    [
+                        prev_step_predicate,
+                        compilation.connected(
+                            compilation.constant_map[operator.name],
+                            compilation.constant_map[f"try_level_{repeat_index}"],
+                            compilation.constant_map[f"try_level_{repeat_index+1}"],
+                        ),
+                    ]
+                )
 
     return step_predicate
 
