@@ -117,7 +117,7 @@ class ClassicPDDL(Compilation):
         self.constant_map: Dict[str, Any] = dict()
 
     def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
-        self.construct_state_predicates(**kwargs)
+        used_labels_in_memory = self.construct_state_predicates(**kwargs)
 
         debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
@@ -147,12 +147,12 @@ class ClassicPDDL(Compilation):
 
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
-        used_up_labels = compile_history(self, **kwargs)
+        used_labels_in_history = compile_history(self, **kwargs)
 
         if NL2FlowOptions.label_production in optimization_options:
             for label in range(0, MAX_LABELS + 1):
                 label_name = get_token_predicate_name(index=label, token="var")
-                if label_name not in used_up_labels:
+                if label_name not in used_labels_in_history and label_name not in used_labels_in_memory:
                     self.init.add(self.available(self.constant_map[label_name]))
 
         if debug_flag == DebugFlag.TOKENIZE:
@@ -169,7 +169,7 @@ class ClassicPDDL(Compilation):
 
         return PDDL(domain=domain, problem=problem), self.cached_transforms
 
-    def construct_state_predicates(self, **kwargs: Any) -> None:
+    def construct_state_predicates(self, **kwargs: Any) -> List[str]:
         debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
         optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
@@ -205,37 +205,7 @@ class ClassicPDDL(Compilation):
                 )
 
         if NL2FlowOptions.label_production in optimization_options:
-            self.available = self.lang.predicate(
-                "available",
-                self.type_map[TypeOptions.LABEL.value],
-            )
-
-            self.assigned_to = self.lang.predicate(
-                "assigned_to",
-                self.type_map[TypeOptions.OPERATOR.value],
-                self.type_map[TypeOptions.LABEL.value],
-            )
-
-            self.label_tag = self.lang.predicate(
-                "label_tag",
-                self.type_map[TypeOptions.ROOT.value],
-                self.type_map[TypeOptions.LABEL.value],
-            )
-
-            memory_label_name = get_token_predicate_name(index=0, token="varm")
-            add_memory_item_to_constant_map(
-                self,
-                MemoryItem(item_id=memory_label_name, item_type=TypeOptions.LABEL.value),
-            )
-
-            self.init.add(self.available(self.constant_map[memory_label_name]))
-
-            for label in range(0, MAX_LABELS + 1):
-                label_name = get_token_predicate_name(index=label, token="var")
-                add_memory_item_to_constant_map(
-                    self,
-                    MemoryItem(item_id=label_name, item_type=TypeOptions.LABEL.value),
-                )
+            self.construct_labels()
 
         if debug_flag:
             if self.flow_definition.reference is not None:
@@ -334,6 +304,50 @@ class ClassicPDDL(Compilation):
         for type_item in self.flow_definition.type_hierarchy:
             add_type_item_to_type_map(self, type_item)
 
+        used_labels = self.construct_memory(**kwargs)
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            add_retry_states(self)
+
+        return used_labels
+
+    def construct_labels(self) -> None:
+        self.available = self.lang.predicate(
+            "available",
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        self.assigned_to = self.lang.predicate(
+            "assigned_to",
+            self.type_map[TypeOptions.OPERATOR.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        self.label_tag = self.lang.predicate(
+            "label_tag",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        memory_label_name = get_token_predicate_name(index=0, token="varm")
+        add_memory_item_to_constant_map(
+            self,
+            MemoryItem(item_id=memory_label_name, item_type=TypeOptions.LABEL.value),
+        )
+
+        self.init.add(self.available(self.constant_map[memory_label_name]))
+
+        for label in range(0, MAX_LABELS + 1):
+            label_name = get_token_predicate_name(index=label, token="var")
+            add_memory_item_to_constant_map(
+                self,
+                MemoryItem(item_id=label_name, item_type=TypeOptions.LABEL.value),
+            )
+
+    def construct_memory(self, **kwargs: Any) -> List[str]:
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        used_labels = [get_token_predicate_name(index=0, token="var")]
+
         for memory_item in self.flow_definition.memory_items:
             add_memory_item_to_constant_map(self, memory_item)
 
@@ -346,6 +360,9 @@ class ClassicPDDL(Compilation):
                 )
 
                 if NL2FlowOptions.label_production in optimization_options:
+                    if memory_item.label:
+                        used_labels.append(memory_item.label)
+
                     self.init.add(
                         self.label_tag(
                             self.constant_map[memory_item.item_id],
@@ -353,5 +370,4 @@ class ClassicPDDL(Compilation):
                         )
                     )
 
-        if NL2FlowOptions.allow_retries in optimization_options:
-            add_retry_states(self)
+        return used_labels

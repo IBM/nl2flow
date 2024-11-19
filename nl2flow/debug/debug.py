@@ -90,7 +90,7 @@ class BasicDebugger(Debugger):
         reference_plan: ClassicalPlanReference = printer.parse_tokens(list_of_tokens, **kwargs)
         self.flow.add(reference_plan)
 
-        planner_response = self.flow.plan_it(PLANNER, debug_flag, report_type)
+        planner_response = self.flow.plan_it(PLANNER, debug_flag, report_type, **kwargs)
         new_report = Report(
             report_type=report_type.value,
             planner_response=planner_response,

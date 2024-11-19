@@ -32,6 +32,7 @@ def add_surrogate_goal(
 
     new_index = 100 * (index + 1)
     token_predicate = get_token_predicate(compilation, index=new_index)
+
     goal_predicates.add(token_predicate)
 
     precondition_list = [post_token_predicate, compilation.been_used(target)]
@@ -207,7 +208,7 @@ def add_instantiated_operation(
         # TODO: https://github.com/IBM/nl2flow/issues/130
         # optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
         # prev_step_predicate = get_predicate_from_step(compilation, step, repeat_index - 1, **kwargs)
-
+        #
         # if NL2FlowOptions.allow_retries in optimization_options:
         #     precondition_list.extend(
         #         [
