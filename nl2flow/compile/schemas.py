@@ -33,10 +33,14 @@ class Step(BaseModel):
     name: str
     label: Optional[str] = None
     parameters: List[Union[Parameter, str]] = []
+    maps: List[str] = []
 
     def parameter(self, index: int) -> str:
         parameter = self.parameters[index]
         return parameter if isinstance(parameter, str) else parameter.item_id
+
+    def is_same_as(self, step: Step) -> bool:
+        return step.name == self.name and step.maps == self.maps
 
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
@@ -45,6 +49,7 @@ class Step(BaseModel):
             name=string_transform(step.name, transforms),
             label=string_transform(step.label, transforms),
             parameters=[p.transform(p, transforms) for p in parameters],
+            maps=step.maps,
         )
 
 

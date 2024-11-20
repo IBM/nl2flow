@@ -128,7 +128,10 @@ def get_index_of_interest(compilation: Any, step: Step, flow_definition: FlowDef
     new_history = history + reference
 
     for i, r in enumerate(new_history):
-        if isinstance(r, Step) and r.name == step.name:
+        if i == current_index:
             indices_of_interest.append(i)
 
-    return indices_of_interest.index(current_index)
+        if isinstance(r, Step) and step.name == r.name and not r.is_same_as(step):
+            indices_of_interest.append(i)
+
+    return indices_of_interest.index(current_index) if current_index in indices_of_interest else 0

@@ -177,9 +177,8 @@ class Flow:
         debug_flag: Optional[DebugFlag] = None,
         report_type: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
-        **kwargs: Any,
     ) -> PlannerResponse:
-        pddl, transforms = self.compile_to_pddl(debug_flag, report_type, compilation_type, **kwargs)
+        pddl, transforms = self.compile_to_pddl(debug_flag, report_type, compilation_type)
         parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms, debug_flag=debug_flag)
         return parsed_plans
 
@@ -188,7 +187,6 @@ class Flow:
         debug_flag: Optional[DebugFlag] = None,
         report_type: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
-        **kwargs: Any,
     ) -> Tuple[PDDL, List[Transform]]:
         if compilation_type.value != CompileOptions.CLASSICAL.value:
             raise NotImplementedError
@@ -204,7 +202,6 @@ class Flow:
             lookahead=self.lookahead,
             debug_flag=debug_flag,
             report_type=report_type,
-            is_hindsight=kwargs.get("is_hindsight", True),
         )
 
         return pddl, transforms
