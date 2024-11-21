@@ -84,9 +84,6 @@ def add_instantiated_map(
 
     step_predicate = get_predicate_from_step(compilation, step, **kwargs)
 
-    if step_predicate:
-        goal_predicates.add(step_predicate)
-
     source = compilation.constant_map[step.parameter(0)]
     target = compilation.constant_map[step.parameter(1)]
 
