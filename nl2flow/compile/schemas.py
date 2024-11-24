@@ -49,7 +49,7 @@ class Step(BaseModel):
             name=string_transform(step.name, transforms),
             label=string_transform(step.label, transforms),
             parameters=[p.transform(p, transforms) for p in parameters],
-            maps=step.maps,
+            maps=[string_transform(m, transforms) for m in step.maps],
         )
 
 
@@ -121,6 +121,7 @@ class ManifestConstraint(BaseModel):
 class GoalItem(BaseModel):
     goal_name: Union[str, Step, Constraint]
     goal_type: GoalType = GoalType.OPERATOR
+    delegate_maps: bool = False
 
     @classmethod
     def transform(cls, goal_item: GoalItem, transforms: List[Transform]) -> GoalItem:
@@ -128,6 +129,7 @@ class GoalItem(BaseModel):
         return GoalItem(
             goal_name=string_transform(goal, transforms) if isinstance(goal, str) else goal.transform(goal, transforms),
             goal_type=goal_item.goal_type,
+            delegate_maps=goal_item.delegate_maps,
         )
 
 

@@ -44,41 +44,58 @@ def get_orphaned_items(compilation: Any, goal_items: List[str]) -> List[str]:
     return list_of_orphans
 
 
-def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
+def compile_step_goal(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
+    if isinstance(goal_item.goal_name, Step):
+        goal_step = goal_item.goal_name
+    else:
+        return
+
+    new_goal_predicate = f"has_done_{goal_step.name}"
+    new_goal_parameters = (
+        []
+        if NL2FlowOptions.multi_instance not in optimization_options or goal_item.delegate_maps is True
+        else [
+            compilation.constant_map[p.item_id] if isinstance(p, Parameter) else compilation.constant_map[p]
+            for p in goal_step.parameters
+        ]
+    )
+
+    if NL2FlowOptions.allow_retries in optimization_options:
+        try_level = 1
+        for historical_step in compilation.flow_definition.history:
+            try_level += int(goal_step == historical_step)
+
+        try_level_parameter = compilation.constant_map[f"try_level_{try_level}"]
+        new_goal_parameters.append(try_level_parameter)
+
+    if new_goal_parameters:
+        goal_predicates.add(getattr(compilation, new_goal_predicate)(*new_goal_parameters))
+    else:
+        goal_predicates.add(
+            compilation.has_done(
+                compilation.constant_map[goal_step.name],
+                compilation.constant_map[HasDoneState.present.value],
+            )
+        )
+
+    if goal_item.delegate_maps:
+        for index, param in enumerate(goal_step.parameters):
+            goal_predicates.add(
+                compilation.mapped_to(
+                    compilation.constant_map[goal_step.maps[index]],
+                    compilation.constant_map[param],
+                )
+            )
+
+
+def compile_goal_item(compilation: Any, goal_item: GoalItem, goal_predicates: Set[Any], **kwargs: Any) -> None:
     if goal_item.goal_type == GoalType.OPERATOR:
         goal = goal_item.goal_name
 
         if isinstance(goal, Step):
-            new_goal_predicate = f"has_done_{goal.name}"
-            new_goal_parameters = (
-                []
-                if NL2FlowOptions.multi_instance not in optimization_options
-                else [
-                    compilation.constant_map[p.item_id] if isinstance(p, Parameter) else compilation.constant_map[p]
-                    for p in goal.parameters
-                ]
-            )
-
-            if NL2FlowOptions.allow_retries in optimization_options:
-                try_level = 1
-                for historical_step in compilation.flow_definition.history:
-                    try_level += int(goal == historical_step)
-
-                try_level_parameter = compilation.constant_map[f"try_level_{try_level}"]
-                new_goal_parameters.append(try_level_parameter)
-
-            if new_goal_parameters:
-                goal_predicates.add(getattr(compilation, new_goal_predicate)(*new_goal_parameters))
-            else:
-                goal_predicates.add(
-                    compilation.has_done(
-                        compilation.constant_map[goal.name],
-                        compilation.constant_map[HasDoneState.present.value],
-                    )
-                )
-
+            compile_step_goal(compilation, goal_item, goal_predicates, **kwargs)
         elif isinstance(goal, str):
             goal_predicates.add(
                 compilation.has_done(

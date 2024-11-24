@@ -4,7 +4,6 @@ from tarski.syntax import land, neg, Atom, Tautology
 from typing import Any, Optional, Set, List
 from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
-from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import (
     PARAMETER_DELIMITER,
     BasicOperations,
@@ -223,11 +222,7 @@ def add_instantiated_operation(
 
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
-    report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-
-    if report_type != SolutionQuality.SOUND:
-        raise NotImplementedError
 
     if NL2FlowOptions.multi_instance in optimization_options:
         raise NotImplementedError
