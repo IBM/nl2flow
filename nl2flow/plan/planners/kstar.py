@@ -36,6 +36,14 @@ class Kstar(Planner, FDDerivedPlanner):
             result.is_timeout = planner_result.get("timeout_triggered", None)
             result.planner_output = planner_result.get("planner_output")
             result.planner_error = planner_result.get("planner_error")
+
+            if (
+                result.error_running_planner is False
+                and result.is_no_solution is False
+                and result.is_timeout is not True
+            ):
+                result.no_plan_needed = result.best_plan is None or result.best_plan.actions == []
+
             return result
 
     def raw_plan(self, pddl: PDDL) -> RawPlannerResult:
@@ -64,6 +72,12 @@ class Kstar(Planner, FDDerivedPlanner):
         # noinspection PyBroadException
         try:
             planner_response.list_of_plans = self.parse(raw_planner_result.list_of_plans, **kwargs)
+
+            if planner_response.no_plan_needed is not True:
+                planner_response.no_plan_needed = (
+                    planner_response.best_plan is not None and planner_response.best_plan.plan == []
+                )
+
             planner_response.is_parse_error = (
                 len(planner_response.list_of_plans) == 0 and planner_response.is_no_solution is False
             )
@@ -72,6 +86,7 @@ class Kstar(Planner, FDDerivedPlanner):
             return planner_response
 
         except Exception as error:
+            planner_response.no_plan_needed = None
             planner_response.is_parse_error = True
             planner_response.stderr = error
             return planner_response

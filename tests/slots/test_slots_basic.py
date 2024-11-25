@@ -10,9 +10,9 @@ from collections import Counter
 def fallback_and_last_resort_tests_should_look_the_same(
     plans: PlannerResponse,
 ) -> None:
-    assert plans.list_of_plans, "There should be plans."
+    poi = plans.best_plan
 
-    poi = plans.list_of_plans[0]
+    assert poi, "There should be plans."
     assert len(poi.plan) == 3, "There should be 3 steps in the plan."
 
     step_1: Action = poi.plan[0]
@@ -36,9 +36,9 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        assert plans.list_of_plans, "There should be plans."
+        poi = plans.best_plan
 
-        poi = plans.list_of_plans[0]
+        assert poi, "There should be plans."
         assert len(poi.plan) == 3, "There should be 3 steps."
 
         assert Counter(["AccountID", "Email"]) == Counter(
@@ -53,7 +53,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.add(SlotProperty(slot_name="AccountID", slot_desirability=0))
 
         plans = self.get_plan()
-        assert not plans.list_of_plans, "There should be no plans."
+        assert not plans.best_plan, "There should be no plans."
 
     def test_not_slot_fillable_fallback(self) -> None:
         goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
@@ -90,7 +90,7 @@ class TestSlotFillerBasic(BaseTestAgents):
         self.flow.slot_options.add(SlotOptions.last_resort)
 
         plans = self.get_plan()
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "There should be 3 steps in the plan."
 
         step_1: Action = poi.plan[0]

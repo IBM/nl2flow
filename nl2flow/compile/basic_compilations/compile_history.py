@@ -1,9 +1,10 @@
-from nl2flow.compile.basic_compilations.utils import add_memory_item_to_constant_map
-from nl2flow.compile.schemas import Parameter, MemoryItem, Constraint, Step
-from nl2flow.compile.options import MemoryState, HasDoneState, TypeOptions, BasicOperations, NL2FlowOptions
+from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
+from nl2flow.compile.schemas import Parameter, Constraint, Step, FlowDefinition
+from nl2flow.compile.options import MemoryState, HasDoneState, BasicOperations, NL2FlowOptions
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate_name
 from nl2flow.debug.schemas import DebugFlag
-from typing import Any, Optional, Set
+from typing import Any, Optional, Set, List
 
 
 def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> Optional[Any]:
@@ -16,10 +17,8 @@ def get_predicate_from_constraint(compilation: Any, constraint: Constraint) -> O
         set_variables = list()
         for item in constraint_parameters:
             if item not in compilation.constant_map and is_this_a_datum(compilation, item):
-                add_memory_item_to_constant_map(
-                    compilation,
-                    MemoryItem(item_id=item, item_type=TypeOptions.ROOT.value),
-                )
+                add_to_condition_list_pre_check(compilation, item)
+
             set_variables.append(compilation.constant_map[item])
 
         constraint_predicate = getattr(compilation, new_constraint_variable)(
@@ -75,9 +74,6 @@ def get_predicate_from_step(compilation: Any, step: Step, repeat_index: int = 0,
                 else []
             )
 
-            if NL2FlowOptions.label_production in optimization_options and step.label is not None:
-                parameter_names.append(step.label)
-
             if NL2FlowOptions.allow_retries in optimization_options:
                 num_try = repeat_index + 1
                 parameter_names.append(f"try_level_{num_try}")
@@ -97,12 +93,17 @@ def get_predicate_from_step(compilation: Any, step: Step, repeat_index: int = 0,
         return None
 
 
-def compile_history(compilation: Any, **kwargs: Any) -> None:
+def compile_history(compilation: Any, **kwargs: Any) -> List[str]:
+    used_up_labels: List[str] = []
+
     for index, step in enumerate(compilation.flow_definition.history):
         indices_of_interest = [i for i, h in enumerate(compilation.flow_definition.history) if h.name == step.name]
 
         index_of_operation = indices_of_interest.index(index)
         step_predicate = get_predicate_from_step(compilation, step, index_of_operation, **kwargs)
+
+        if step.label and step.label != get_token_predicate_name(index=0, token="var"):
+            used_up_labels.append(step.label)
 
         if step_predicate:
             compilation.init.add(step_predicate)
@@ -112,12 +113,25 @@ def compile_history(compilation: Any, **kwargs: Any) -> None:
         if constraint_predicate:
             compilation.init.add(constraint_predicate)
 
+    return used_up_labels
 
-def get_index_of_interest(compilation: Any, step: Step, current_index: int) -> int:
+
+def get_index_of_interest(compilation: Any, step: Step, flow_definition: FlowDefinition, current_index: int) -> int:
     indices_of_interest = []
 
-    for i, r in enumerate(compilation.flow_definition.reference.plan):
-        if isinstance(r, Step) and r.name == step.name:
+    history = flow_definition.history
+    cached_history_length = len(history)
+
+    reference = compilation.flow_definition.reference.plan or []
+    current_index += cached_history_length
+
+    new_history = history + reference
+
+    for i, r in enumerate(new_history):
+        if i == current_index:
             indices_of_interest.append(i)
 
-    return indices_of_interest.index(current_index)
+        if isinstance(r, Step) and step.name == r.name and not r.is_same_as(step):
+            indices_of_interest.append(i)
+
+    return indices_of_interest.index(current_index) if current_index in indices_of_interest else 0

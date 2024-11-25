@@ -85,7 +85,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         index_of_map = [action.name for action in poi.plan].index(BasicOperations.MAPPER.value)
 
         assert index_of_map > 0, "There should be a rogue mapping action"
@@ -97,7 +97,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 5, "A plan of length 5 full of slot fills and no mapping."
 
         first_four_action_names = [action.name for action in poi.plan[: len(poi.plan) - 1]]
@@ -121,7 +121,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         for action in poi.plan:
             if action.name == BasicOperations.MAPPER.value:
                 assert action.inputs[0] == "item12321", "Item item12321 mapped twice"
@@ -135,7 +135,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         assert len(poi.plan) == 5, "A plan of length 5."
 
         first_four_action_names = [action.name for action in poi.plan[: len(poi.plan) - 1]]
@@ -159,7 +159,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         assert len(poi.plan) == 5, "A plan of length 5."
 
         first_four_action_names = [action.name for action in poi.plan]
@@ -190,7 +190,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "A plan of length 4."
         assert all(
             action.name == BasicOperations.SLOT_FILLER.value for action in poi.plan[: len(poi.plan) - 1]
@@ -212,7 +212,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         assert len(poi.plan) == 6, "A plan of length 6."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
@@ -261,7 +261,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         assert len(poi.plan) == 8, "A plan of length 8."
         assert [action.name for action in poi.plan[: len(poi.plan) - 1]].count(
             "Filename Producer Agent"
@@ -298,8 +298,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         self.flow.add(goal)
 
         planner_response = self.get_plan()
-        best_plan = planner_response.list_of_plans[0]
-        collapse_maps_print = CodeLikePrint.pretty_print_plan(best_plan, collapse_maps=True)
+        collapse_maps_print = CodeLikePrint.pretty_print_plan(planner_response.best_plan, collapse_maps=True)
 
         print(collapse_maps_print)
         assert collapse_maps_print.split("\n") == [
@@ -321,7 +320,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
         planner_response = self.get_plan()
         self.multi_email_and_typed_goal_test_should_be_same(planner_response)
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         action_names = [action.name for action in poi.plan]
 
         assert len(action_names) == 18, "Plan of length 18."
@@ -330,7 +329,7 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
         planner_response = self.get_plan()
 
-        poi = planner_response.list_of_plans[0]
+        poi = planner_response.best_plan
         action_names = [action.name for action in poi.plan]
 
         assert len(action_names) == 16, "Plan of length 16."
@@ -347,9 +346,9 @@ class TestMappingsMultiInstance(BaseTestAgents):
 
     @staticmethod
     def multi_email_and_typed_goal_test_should_be_same(planner_response: PlannerResponse) -> None:
-        assert planner_response.list_of_plans, "There should be plans."
+        poi = planner_response.best_plan
+        assert poi, "There should be plans."
 
-        poi = planner_response.list_of_plans[0]
         action_names = [action.name for action in poi.plan]
 
         assert action_names.count(BasicOperations.MAPPER.value) == 3, "Three maps."

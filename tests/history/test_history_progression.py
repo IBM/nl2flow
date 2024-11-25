@@ -22,9 +22,9 @@ from nl2flow.compile.schemas import (
 
 
 def basic_plan_with_two_steps(planner_response: PlannerResponse) -> None:
-    assert planner_response.list_of_plans, "There should be plans."
+    poi = planner_response.best_plan
 
-    poi = planner_response.list_of_plans[0]
+    assert poi, "There should be plans."
     assert len(poi.plan) == 2, "There should be 2 step plan."
 
     first_step = poi.plan[0]
@@ -58,7 +58,8 @@ class TestHistoryProgression(BaseTestAgents):
         self.flow.add(MemoryItem(item_id="list of errors", item_state=MemoryState.KNOWN))
 
         plans = self.get_plan()
-        poi = plans.list_of_plans[0]
+
+        poi = plans.best_plan
         assert len(poi.plan) == 1, "There should be 1 step plan."
         assert poi.plan[0].name == "Fix Errors", "First and (originally final) step is the goal action."
 
@@ -82,7 +83,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Account Agent", "Acquires email from Account Agent."
         assert poi.plan[1].name == BasicOperations.MAPPER.value, "Followed by a mapping step."
@@ -92,7 +93,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "There should be 3 step plan."
 
         step_1 = poi.plan[0]
@@ -123,7 +124,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "There should be 2 step plan."
 
         step_0 = poi.plan[0]
@@ -148,7 +149,7 @@ class TestHistoryProgression(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Account Agent", "Acquires email from Account Agent."
         assert poi.plan[1].name == BasicOperations.MAPPER.value, "Followed by a mapping step."

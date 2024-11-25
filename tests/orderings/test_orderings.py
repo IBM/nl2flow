@@ -58,7 +58,7 @@ class TestOrderings(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Agent Y", "Starts with Agent Y."
 
@@ -77,7 +77,7 @@ class TestOrderings(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[3].name == "Another Agent", "Ends with Another Agent."
 
@@ -101,7 +101,7 @@ class TestOrderings(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert poi.plan[0].name == "Agent Y", "Starts with Agent Y."
         assert poi.plan[3].name == "Another Agent", "Ends with Another Agent."
@@ -128,7 +128,7 @@ class TestOrderings(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 step plan."
         assert {poi.plan[0].name, poi.plan[1].name} == {BasicOperations.SLOT_FILLER.value}, "Two slot fills."
         assert "Agent Y" not in [o.name for o in poi.plan], "No Agent Y."
@@ -155,6 +155,6 @@ class TestOrderings(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "There should be 3 step plan."
         assert poi.plan[0].name == "Agent X", "Agent X only."

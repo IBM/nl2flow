@@ -17,7 +17,11 @@ from nl2flow.compile.schemas import (
 
 
 def number_of_optimal_plans(plans: PlannerResponse) -> int:
-    return len([plan for plan in plans.list_of_plans if plan.cost == plans.list_of_plans[0].cost])
+    return (
+        0
+        if plans.best_plan is None
+        else len([plan for plan in plans.list_of_plans if plan.cost == plans.best_plan.cost])
+    )
 
 
 def set_up_agents(test_class: BaseTestAgents) -> None:

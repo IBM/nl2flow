@@ -46,7 +46,7 @@ class TestCodeLikePrint:
     def test_prettified_plan(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0])
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.best_plan)
         print(pretty)
 
         if "Agent 1" in pretty:
@@ -113,7 +113,7 @@ class TestCodeLikePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0], show_output=False)
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.best_plan, show_output=False)
 
         assert pretty.strip().split("\n") == [
             "[0] ask(b)",
@@ -132,7 +132,7 @@ class TestCodeLikePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0], show_output=False, start_at=1)
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.best_plan, show_output=False, start_at=1)
 
         assert pretty.strip().split("\n") == [
             "[1] ask(b)",
@@ -151,7 +151,7 @@ class TestCodeLikePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = CodeLikePrint.pretty_print_plan(planner_response.list_of_plans[0], line_numbers=False)
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.best_plan, line_numbers=False)
 
         assert pretty.strip().split("\n") == [
             "ask(b)",
@@ -170,9 +170,7 @@ class TestCodeLikePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = CodeLikePrint.pretty_print_plan(
-            planner_response.list_of_plans[0], line_numbers=False, show_output=False
-        )
+        pretty = CodeLikePrint.pretty_print_plan(planner_response.best_plan, line_numbers=False, show_output=False)
 
         assert pretty.strip().split("\n") == [
             "ask(b)",
@@ -192,7 +190,7 @@ class TestCodeLikePrint:
 
         planner_response = self.flow.plan_it(PLANNER)
         pretty = CodeLikePrint.pretty_print_plan(
-            planner_response.list_of_plans[0], line_numbers=False, show_output=False, collapse_maps=True
+            planner_response.best_plan, line_numbers=False, show_output=False, collapse_maps=True
         )
 
         assert pretty.strip().split("\n") == [
@@ -224,3 +222,15 @@ class TestCodeLikePrint:
 
         assert parse_parameters(signature="agent_a(b,c)") == ("agent_a", ["b", "c"])
         assert parse_parameters(signature="3a-1(b-2,c3)") == ("3a-1", ["b-2", "c3"])
+
+        assert parse_parameters(signature='a("b,",c)') == ("a", ['"b, "', "c"])
+        assert parse_parameters(signature='a("b,", "x", c)') == ("a", ['"b, "', '"x"', "c"])
+        assert parse_parameters(signature='a(a, "b,","x",c)') == ("a", ["a", '"b, "', '"x"', "c"])
+
+        assert parse_parameters(signature='a("b,x,c",c)') == ("a", ['"b, x, c"', "c"])
+        assert parse_parameters(signature='a(a, "b,x,c", "c,y",z)') == ("a", ["a", '"b, x, c"', '"c, y"', "z"])
+
+        assert parse_parameters(signature='a("Pets called "Mary" in "Sydney", Australia",c)') == (
+            "a",
+            ['"Pets called "Mary" in "Sydney", Australia"', "c"],
+        )

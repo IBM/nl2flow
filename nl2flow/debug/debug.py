@@ -98,7 +98,7 @@ class BasicDebugger(Debugger):
         )
 
         if len(planner_response.list_of_plans) > 0:
-            best_plan = planner_response.list_of_plans[0]
+            best_plan = planner_response.best_plan
 
             new_report.plan_diff_str = self.generate_plan_diff(printer, best_plan, list_of_tokens, **kwargs)
             new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str, **kwargs)
