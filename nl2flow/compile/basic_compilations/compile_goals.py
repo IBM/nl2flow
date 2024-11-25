@@ -85,7 +85,7 @@ def compile_step_goal(compilation: Any, goal_item: GoalItem, goal_predicates: Se
             goal_predicates.add(
                 compilation.mapped_to(
                     compilation.constant_map[goal_step.maps[index]],
-                    compilation.constant_map[param],
+                    compilation.constant_map[param.item_id],
                 )
             )
 
