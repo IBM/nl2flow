@@ -7,7 +7,7 @@ LOOKAHEAD: int = 1
 RETRY: int = 1
 MAX_RETRY: int = 5
 SLOT_GOODNESS: float = 0.5
-MAX_LABELS: int = 7
+MAX_LABELS: int = 10
 PARAMETER_DELIMITER = "----"
 
 

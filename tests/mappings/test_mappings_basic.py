@@ -14,9 +14,9 @@ from nl2flow.compile.schemas import (
 
 
 def check_basic_mapping_plan(plans: PlannerResponse) -> None:
-    assert plans.list_of_plans, "There should be plans."
+    poi = plans.best_plan
 
-    poi = plans.list_of_plans[0]
+    assert poi, "There should be plans."
     assert len(poi.plan) == 4, "The plan should have 4 steps."
 
     step_1: Action = poi.plan[0]
@@ -68,8 +68,7 @@ class TestMappingsBasic(BaseTestAgents):
         self.flow.add(goal)
 
         plans = self.get_plan()
-        best_plan = plans.list_of_plans[0]
-        pretty_print = CodeLikePrint.pretty_print_plan(best_plan, collapse_maps=True)
+        pretty_print = CodeLikePrint.pretty_print_plan(plans.best_plan, collapse_maps=True)
         print(pretty_print)
 
         assert pretty_print.split("\n") == [
@@ -91,7 +90,7 @@ class TestMappingsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "The plan should have 3 steps."
 
         step_1: Action = poi.plan[0]
@@ -114,7 +113,7 @@ class TestMappingsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "The plan should have 3 steps."
 
         step_1: Action = poi.plan[0]
@@ -142,7 +141,7 @@ class TestMappingsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 3, "The plan should have 3 steps."
 
         step_2: Action = poi.plan[1]
@@ -167,7 +166,7 @@ class TestMappingsBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 steps in the plan."
 
         slot_fill_actions = list(

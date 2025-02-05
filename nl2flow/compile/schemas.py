@@ -33,10 +33,14 @@ class Step(BaseModel):
     name: str
     label: Optional[str] = None
     parameters: List[Union[Parameter, str]] = []
+    maps: List[str] = []
 
     def parameter(self, index: int) -> str:
         parameter = self.parameters[index]
         return parameter if isinstance(parameter, str) else parameter.item_id
+
+    def is_same_as(self, step: Step) -> bool:
+        return step.name == self.name and step.maps == self.maps
 
     @classmethod
     def transform(cls, step: Step, transforms: List[Transform]) -> Step:
@@ -45,6 +49,7 @@ class Step(BaseModel):
             name=string_transform(step.name, transforms),
             label=string_transform(step.label, transforms),
             parameters=[p.transform(p, transforms) for p in parameters],
+            maps=[string_transform(m, transforms) for m in step.maps],
         )
 
 
@@ -70,6 +75,7 @@ class MappingItem(BaseModel):
 
 class MemoryItem(Parameter):
     item_state: MemoryState = MemoryState.UNKNOWN
+    label: Optional[str] = None
 
     @classmethod
     def transform(cls, memory_item: MemoryItem, transforms: List[Transform]) -> MemoryItem:
@@ -77,6 +83,7 @@ class MemoryItem(Parameter):
             item_id=string_transform(memory_item.item_id, transforms),
             item_type=string_transform(memory_item.item_type, transforms),
             item_state=memory_item.item_state,
+            label=string_transform(memory_item.label, transforms),
         )
 
 
@@ -114,6 +121,7 @@ class ManifestConstraint(BaseModel):
 class GoalItem(BaseModel):
     goal_name: Union[str, Step, Constraint]
     goal_type: GoalType = GoalType.OPERATOR
+    delegate_maps: bool = False
 
     @classmethod
     def transform(cls, goal_item: GoalItem, transforms: List[Transform]) -> GoalItem:
@@ -121,6 +129,7 @@ class GoalItem(BaseModel):
         return GoalItem(
             goal_name=string_transform(goal, transforms) if isinstance(goal, str) else goal.transform(goal, transforms),
             goal_type=goal_item.goal_type,
+            delegate_maps=goal_item.delegate_maps,
         )
 
 

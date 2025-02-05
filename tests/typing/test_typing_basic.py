@@ -82,5 +82,5 @@ class TestTypingBasic(BaseTestAgents):
         plans = self.get_plan()
         check_basic_mapping_plan(plans)
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert "Username" in [step.inputs[0] for step in poi.plan[1:3]], "Make sure Username is used."

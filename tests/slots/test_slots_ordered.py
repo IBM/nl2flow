@@ -26,7 +26,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         plans = self.get_plan()
         assert len(plans.list_of_plans) == 1, "There should be exactly one plan."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "There should be 4 steps in the plan."
 
         assert all([step.name == BasicOperations.SLOT_FILLER.value for step in poi.plan[:3]]), "Three slot fills..."
@@ -42,7 +42,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         plans = self.get_plan()
         assert len(plans.list_of_plans) == 1, "There should be exactly one plan."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 6, "There should be 6 steps in the plan."
         assert poi.plan[2].name == "Agent A", "Agent A is used to get value of a."
         assert [step.inputs[0] for step in poi.plan if step.name == BasicOperations.SLOT_FILLER.value] == [
@@ -61,7 +61,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         plans = self.get_plan()
         assert len(plans.list_of_plans) == 1, "There should be exactly one plan."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "There should be 2 steps in the plan."
 
         assert poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs, "One slot fill..."
@@ -77,7 +77,7 @@ class TestSlotFillerOrdered(BaseTestAgents):
         plans = self.get_plan()
         assert len(plans.list_of_plans) == 2, "There should be two plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 5, "There should be 5 steps in the plan."
 
         slots_filled = set()

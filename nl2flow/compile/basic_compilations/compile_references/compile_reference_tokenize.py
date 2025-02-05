@@ -2,7 +2,7 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, Atom, Tautology
 from typing import Any, Optional
-from nl2flow.compile.schemas import Step, Constraint
+from nl2flow.compile.schemas import Step, Constraint, FlowDefinition
 from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.options import RestrictedOperations, CostOptions
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
@@ -16,6 +16,7 @@ from nl2flow.compile.basic_compilations.compile_history import (
 
 def compile_reference_tokenize(compilation: Any, **kwargs: Any) -> None:
     report_type: Optional[SolutionQuality] = kwargs.get("report_type", None)
+    flow_definition: FlowDefinition = kwargs["flow_definition"]
 
     cached_predicates = list()
     token_predicates = list()
@@ -28,7 +29,7 @@ def compile_reference_tokenize(compilation: Any, **kwargs: Any) -> None:
                 for param in item.parameters:
                     add_to_condition_list_pre_check(compilation, param)
 
-                repeat_index = get_index_of_interest(compilation, item, index)
+                repeat_index = get_index_of_interest(compilation, item, flow_definition, index)
                 step_predicate = get_predicate_from_step(compilation, item, repeat_index, **kwargs)
 
             elif isinstance(item, Constraint):

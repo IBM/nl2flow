@@ -14,7 +14,7 @@ class TestVerbalizePrint:
     def test_prettified_plan_verbalize(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -35,7 +35,7 @@ class TestVerbalizePrint:
     def test_verbalize_single_goal(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -59,7 +59,7 @@ class TestVerbalizePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -87,7 +87,7 @@ class TestVerbalizePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -112,7 +112,7 @@ class TestVerbalizePrint:
         )
 
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(planner_response.list_of_plans[0], flow_object=self.flow)
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow)
         print(pretty)
 
         pretty_split = pretty.split("\n")
@@ -125,9 +125,7 @@ class TestVerbalizePrint:
     def test_prettified_plan_verbalize_with_lookahead(self) -> None:
         self.flow.add(GoalItems(goals=[GoalItem(goal_name="Agent B"), GoalItem(goal_name="Agent A")]))
         planner_response = self.flow.plan_it(PLANNER)
-        pretty = VerbalizePrint.pretty_print_plan(
-            planner_response.list_of_plans[0], flow_object=self.flow, lookahead=True
-        )
+        pretty = VerbalizePrint.pretty_print_plan(planner_response.best_plan, flow_object=self.flow, lookahead=True)
 
         print(pretty)
         pretty_split = pretty.split("\n")

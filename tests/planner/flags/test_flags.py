@@ -27,6 +27,7 @@ class TestFlags:
         assert len(raw_plans.list_of_plans) == 0
         assert raw_plans.error_running_planner is True
         assert raw_plans.is_no_solution is None
+        assert raw_plans.no_plan_needed is None
         assert raw_plans.is_timeout is False
         assert isinstance(raw_plans.stderr, BaseException)
 
@@ -35,6 +36,7 @@ class TestFlags:
         assert len(planner_response.list_of_plans) == 0
         assert planner_response.error_running_planner is False
         assert planner_response.is_no_solution is False
+        assert planner_response.no_plan_needed is True
         assert planner_response.is_timeout is False
         assert planner_response.error_running_planner is False
         assert planner_response.stderr is None
@@ -65,7 +67,7 @@ class TestFlags:
         assert planner_response.is_parse_error is False
         assert planner_response.stderr is None
 
-        plan = planner_response.list_of_plans[0]
+        plan = planner_response.best_plan
         assert all([step.name == BasicOperations.SLOT_FILLER.value for step in plan.plan[:-1]])
 
         slot_order = [step.inputs[0] for step in plan.plan[:-1]]

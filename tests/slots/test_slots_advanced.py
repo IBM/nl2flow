@@ -27,7 +27,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         with pytest.raises(Exception):
             fallback_and_last_resort_tests_should_look_the_same(plans)
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "There should be 2 steps."
 
         assert (
@@ -42,7 +42,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "There should be 2 steps."
 
         step_1: Action = poi.plan[0]
@@ -62,7 +62,7 @@ class TestSlotFillerAdvanced(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 5, "There should be 5 steps."
 
         assert Counter(["AccountID", "Email"]) == Counter(

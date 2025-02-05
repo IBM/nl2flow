@@ -72,7 +72,7 @@ class TestBasicButNotBasic(BaseTestAgents):
 
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
-        assert len(planner_response.list_of_plans[0].plan) == 4, "Best plan is of length 4."
+        assert len(planner_response.best_plan.plan) == 4, "Best plan is of length 4."
 
         self.flow.add(
             Step(
@@ -143,7 +143,7 @@ class TestBasicButNotBasic(BaseTestAgents):
 
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
-        assert len(planner_response.list_of_plans[0].plan) == 3, "Best plan is of length 3."
+        assert len(planner_response.best_plan.plan) == 3, "Best plan is of length 3."
 
     def test_goal_with_no_instance(self) -> None:
         self.flow.optimization_options.remove(NL2FlowOptions.multi_instance)
@@ -160,7 +160,7 @@ class TestBasicButNotBasic(BaseTestAgents):
 
         planner_response = self.get_plan()
         assert planner_response.list_of_plans, "There should be plans."
-        assert len(planner_response.list_of_plans[0].plan) == 2, "Best plan is of length 2."
+        assert len(planner_response.best_plan.plan) == 2, "Best plan is of length 2."
 
         self.flow.add(
             Step(

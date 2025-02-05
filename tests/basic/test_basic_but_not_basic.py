@@ -34,7 +34,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 2, "Plan of length 2."
         assert (
             poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0] == "list of errors"
@@ -51,7 +51,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "Plan of length 4."
         assert (
             poi.plan[0].name == BasicOperations.SLOT_FILLER.value and poi.plan[0].inputs[0] == "database link"
@@ -68,7 +68,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        poi = plans.list_of_plans[0]
+        poi = plans.best_plan
         assert len(poi.plan) == 4, "The plan should have 3 steps."
 
         assert poi.plan[2].name == BasicOperations.CONFIRM.value, "The third step should be a confirmation."
@@ -87,7 +87,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        optimal_cost = plans.list_of_plans[0].cost
+        optimal_cost = plans.best_plan.cost
 
         for poi in plans.list_of_plans:
             if poi.cost == optimal_cost:
@@ -105,7 +105,7 @@ class TestBasicButNotBasic(BaseTestAgents):
         plans = self.get_plan()
         assert plans.list_of_plans, "There should be plans."
 
-        optimal_cost = plans.list_of_plans[0].cost
+        optimal_cost = plans.best_plan.cost
 
         for poi in plans.list_of_plans:
             if poi.cost == optimal_cost:
