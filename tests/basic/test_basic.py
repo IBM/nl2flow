@@ -4,9 +4,6 @@ from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.schemas import SignatureItem, GoalItem, GoalItems
 from nl2flow.printers.codelike import CodeLikePrint
 
-import os
-
-PLANNER_URL = os.getenv("PLANNER_URL")
 PLANNER = Kstar()
 
 

@@ -1,7 +1,7 @@
 import copy
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from tarski.syntax import land, neg
+from tarski.syntax import land, lor, neg, CompoundFormula
 from typing import List, Set, Any, Optional
 
 from nl2flow.compile.basic_compilations.utils import (
@@ -39,6 +39,8 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
     for operator in list_of_actions:
         parameter_list: List[Any] = list()
         precondition_list: List[Any] = list()
+        must_know_list: List[Any] = list()
+        optional_know_list: List[Any] = list()
         add_effect_list = [
             compilation.has_done(
                 compilation.constant_map[operator.name],
@@ -56,12 +58,13 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
             for index_of_nested_input, param in enumerate(o_input.parameters):
                 add_to_condition_list_pre_check(compilation, param)
                 index_of_param = index_of_input + list(o_input.parameters).index(param)
+                type_of_param = (
+                    param.item_type or TypeOptions.ROOT.value
+                    if isinstance(param, Parameter)
+                    else get_type_of_constant(compilation, param)
+                )
 
-                if isinstance(param, Parameter):
-                    type_of_param = param.item_type or TypeOptions.ROOT.value
-                    param = param.item_id
-                else:
-                    type_of_param = get_type_of_constant(compilation, param)
+                param_name = param.item_id if isinstance(param, Parameter) else param
 
                 if NL2FlowOptions.multi_instance in optimization_options:
                     x = compilation.lang.variable(
@@ -74,35 +77,33 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                     add_effect_list.append(compilation.been_used(x))
                     precondition_list.extend(
                         [
-                            compilation.mapped_to(x, compilation.constant_map[param]),
+                            compilation.mapped_to(x, compilation.constant_map[param_name]),
                             neg(compilation.not_usable(x)),
                         ]
                     )
 
-                compilation.init.add(compilation.been_used(compilation.constant_map[param]))
+                compilation.init.add(compilation.been_used(compilation.constant_map[param_name]))
+                add_effect_list.append(compilation.been_used(compilation.constant_map[param_name]))
 
-                add_effect_list.append(compilation.been_used(compilation.constant_map[param]))
-                precondition_list.append(
-                    compilation.known(
-                        compilation.constant_map[param],
-                        compilation.constant_map[MemoryState.KNOWN.value],
-                    )
-                )
+                if isinstance(param, Parameter) and not param.required:
+                    optional_know_list.append(param_name)
+                else:
+                    must_know_list.append(param_name)
 
                 if MappingOptions.prohibit_direct in mapping_options:
-                    compilation.init.add(compilation.not_usable(compilation.constant_map[param]))
+                    compilation.init.add(compilation.not_usable(compilation.constant_map[param_name]))
 
                 if LifeCycleOptions.uncertain_on_use in variable_life_cycle:
                     del_effect_list.append(
                         compilation.known(
-                            compilation.constant_map[param],
+                            compilation.constant_map[param_name],
                             compilation.constant_map[MemoryState.KNOWN.value],
                         )
                     )
 
                     add_effect_list.append(
                         compilation.known(
-                            compilation.constant_map[param],
+                            compilation.constant_map[param_name],
                             compilation.constant_map[MemoryState.UNCERTAIN.value],
                         )
                     )
@@ -179,15 +180,70 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
                 add_effect_list.append(constraint_predicate)
 
         add_partial_orders(compilation, operator, precondition_list)
+        merged_preconditions = merge_optional_preconditions(
+            compilation,
+            must_know_list,
+            optional_know_list,
+            precondition_list,
+        )
+
         compilation.problem.action(
             operator.name,
             parameters=parameter_list,
-            precondition=land(*precondition_list, flat=True),
+            precondition=merged_preconditions,
             effects=[fs.AddEffect(add) for add in add_effect_list] + [fs.DelEffect(del_e) for del_e in del_effect_list],
             cost=iofs.AdditiveActionCost(
                 compilation.problem.language.constant(operator.cost, compilation.problem.language.get_sort("Integer"))
             ),
         )
+
+
+def merge_optional_preconditions(
+    compilation: Any,
+    must_know_list: List[str],
+    optional_know_list: List[str],
+    precondition_list: List[Any],
+) -> CompoundFormula:
+    must_know_predicates = [
+        compilation.known(
+            compilation.constant_map[item],
+            compilation.constant_map[MemoryState.KNOWN.value],
+        )
+        for item in must_know_list
+    ]
+
+    precondition_list.extend(must_know_predicates)
+
+    if optional_know_list:
+        for item in optional_know_list:
+            precondition_list.append(
+                neg(
+                    compilation.known(
+                        compilation.constant_map[item],
+                        compilation.constant_map[MemoryState.UNCERTAIN.value],
+                    )
+                )
+            )
+
+        optional_know_predicates = [
+            compilation.known(
+                compilation.constant_map[item],
+                compilation.constant_map[MemoryState.KNOWN.value],
+            )
+            for item in optional_know_list
+        ]
+
+        if must_know_list:
+            optional_or = lor(lor(*optional_know_predicates), land(*must_know_predicates))
+        else:
+            optional_or = lor(*optional_know_predicates)
+
+        merged_preconditions = land(land(*precondition_list, flat=True), optional_or)
+
+    else:
+        merged_preconditions = land(*precondition_list)
+
+    return merged_preconditions
 
 
 def add_advanced_properties(
