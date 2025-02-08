@@ -16,12 +16,14 @@ from nl2flow.compile.options import (
 
 
 class Parameter(BaseModel):
+    required: bool = True
     item_id: str
     item_type: Optional[str] = None
 
     @classmethod
     def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
         return Parameter(
+            required=parameter.required,
             item_id=string_transform(parameter.item_id, transforms),
             item_type=string_transform(parameter.item_type, transforms)
             if parameter.item_type is not None
@@ -332,8 +334,8 @@ class FlowDefinition(BaseModel):
     def hash_conflicts(self) -> FlowDefinition:
         transforms: List[Transform] = list()
 
-        reference_list_of_objects = self.get_list_of_object_names(self)
-        reference_keys = list(reference_list_of_objects.keys())
+        object_map = self.get_object_map(self)
+        reference_keys = list(object_map.keys())
 
         check_list_key = {
             "operators": "name",
@@ -367,29 +369,29 @@ class FlowDefinition(BaseModel):
 
     @model_validator(mode="after")
     def object_type_conflict(self) -> FlowDefinition:
-        list_of_object_names = self.get_list_of_object_names(self)
-        for item in list_of_object_names:
-            type_set = list_of_object_names[item]
+        object_map = self.get_object_map(self)
+        for item in object_map:
+            type_set = object_map[item]
             assert len(type_set) <= 1, f"Object {item} has more than one type: {', '.join(type_set)}."
 
         return self
 
     @model_validator(mode="after")
     def mappings_are_among_known_memory_items(self) -> FlowDefinition:
-        list_of_object_names = self.get_list_of_object_names(self)
+        object_map = self.get_object_map(self)
 
         for mapping in self.list_of_mappings:
             for item in [mapping.source_name, mapping.target_name]:
-                assert item in list_of_object_names, f"Mapping request with {item} unknown."
+                assert item in object_map, f"Mapping request with {item} unknown."
 
         return self
 
     @model_validator(mode="after")
     def slots_are_among_known_memory_items(self) -> FlowDefinition:
-        list_of_object_names = self.get_list_of_object_names(self)
+        object_map = self.get_object_map(self)
 
         for slot in self.slot_properties:
-            assert slot.slot_name in list_of_object_names, f"Slot request with {slot.slot_name} unknown."
+            assert slot.slot_name in object_map, f"Slot request with {slot.slot_name} unknown."
 
         return self
 
@@ -398,20 +400,18 @@ class FlowDefinition(BaseModel):
         return [i for i, c in Counter(list_item).items() if c > 1]
 
     @staticmethod
-    def update_object_map(
-        list_of_objects: Dict[str, Set[str]], object_name: str, object_type: Optional[str] = None
-    ) -> None:
-        if object_name not in list_of_objects:
+    def update_object_map(object_map: Dict[str, Set[str]], object_name: str, object_type: Optional[str] = None) -> None:
+        if object_name not in object_map:
             if object_type:
-                list_of_objects[object_name] = {object_type}
+                object_map[object_name] = {object_type}
             else:
-                list_of_objects[object_name] = set()
+                object_map[object_name] = set()
         else:
             if object_type:
-                list_of_objects[object_name].add(object_type)
+                object_map[object_name].add(object_type)
 
     @classmethod
-    def signature_parser(cls, list_of_objects: Dict[str, Set[str]], signature_item: SignatureItem) -> None:
+    def signature_parser(cls, object_map: Dict[str, Set[str]], signature_item: SignatureItem) -> None:
         parameters = (
             signature_item.parameters if isinstance(signature_item.parameters, List) else [signature_item.parameters]
         )
@@ -420,23 +420,23 @@ class FlowDefinition(BaseModel):
             parameter_name = parameter.item_id if isinstance(parameter, Parameter) else parameter
             parameter_type = parameter.item_type if isinstance(parameter, Parameter) else None
 
-            cls.update_object_map(list_of_objects, parameter_name, parameter_type)
+            cls.update_object_map(object_map, parameter_name, parameter_type)
 
         for constraint in signature_item.constraints:
-            cls.constraint_parser(list_of_objects, constraint)
+            cls.constraint_parser(object_map, constraint)
 
     @classmethod
-    def constraint_parser(cls, list_of_objects: Dict[str, Set[str]], constraint: Constraint) -> None:
-        cls.update_object_map(list_of_objects, constraint.constraint, None)
+    def constraint_parser(cls, object_map: Dict[str, Set[str]], constraint: Constraint) -> None:
+        cls.update_object_map(object_map, constraint.constraint, None)
         constraint_parameters = constraint.get_variable_references_from_constraint(constraint.constraint, [])
         for p in constraint_parameters:
-            cls.update_object_map(list_of_objects, p, None)
+            cls.update_object_map(object_map, p, None)
 
     @classmethod
-    def get_list_of_object_names(cls, flow: FlowDefinition) -> Dict[str, Set[str]]:
-        list_of_objects: Dict[str, Set[str]] = dict()
+    def get_object_map(cls, flow: FlowDefinition) -> Dict[str, Set[str]]:
+        object_map: Dict[str, Set[str]] = dict()
         for item in flow.memory_items:
-            cls.update_object_map(list_of_objects, item.item_id, item.item_type)
+            cls.update_object_map(object_map, item.item_id, item.item_type)
 
         for item in flow.goal_items:
             goals: List[GoalItem] = item.goals if isinstance(item.goals, List) else [item.goals]
@@ -444,26 +444,26 @@ class FlowDefinition(BaseModel):
                 if (
                     goal.goal_type != GoalType.OPERATOR
                     and goal.goal_type != GoalType.CONSTRAINT
-                    and not isinstance(goal.goal_name, Step)
+                    and isinstance(goal.goal_name, str)
                     and goal.goal_name not in [t.name for t in flow.type_hierarchy]
                 ):
-                    cls.update_object_map(list_of_objects, goal.goal_name, None)
+                    cls.update_object_map(object_map, goal.goal_name, None)
 
                 elif goal.goal_type == GoalType.OPERATOR and isinstance(goal.goal_name, Step):
                     for param in goal.goal_name.parameters:
                         cls.update_object_map(
-                            list_of_objects,
+                            object_map,
                             param.item_id if isinstance(param, Parameter) else param,
                             None,
                         )
 
                 elif isinstance(goal.goal_name, Constraint):
                     for param in goal.goal_name.get_variable_references_from_constraint(goal.goal_name.constraint, []):
-                        cls.update_object_map(list_of_objects, param)
+                        cls.update_object_map(object_map, param)
 
         for operator in flow.operators:
             for item in operator.inputs:
-                cls.signature_parser(list_of_objects, item)
+                cls.signature_parser(object_map, item)
 
             outputs = operator.outputs
             if not isinstance(outputs, List):
@@ -471,9 +471,9 @@ class FlowDefinition(BaseModel):
 
             for output in outputs:
                 for item in output.constraints:
-                    cls.constraint_parser(list_of_objects, item)
+                    cls.constraint_parser(object_map, item)
 
                 for item in output.outcomes:
-                    cls.signature_parser(list_of_objects, item)
+                    cls.signature_parser(object_map, item)
 
-        return list_of_objects
+        return object_map
