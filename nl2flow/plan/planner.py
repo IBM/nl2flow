@@ -148,7 +148,7 @@ def cache_known_items(new_action: Action, cached_items: List[str], **kwargs: Any
             if item in cached_items:
                 new_inputs.append(item)
 
-                if new_action.parameters and debug_flag == DebugFlag.DIRECT:
+                if new_action.parameters and debug_flag != DebugFlag.DIRECT:
                     new_parameters.append(new_action.parameters[index])
 
         new_action.parameters = new_parameters or new_action.parameters
