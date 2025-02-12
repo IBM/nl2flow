@@ -16,6 +16,7 @@ from nl2flow.compile.options import (
 
 
 class Parameter(BaseModel):
+    allowed_values: List[Any] = []
     required: bool = True
     item_id: str
     item_type: Optional[str] = None
@@ -23,6 +24,7 @@ class Parameter(BaseModel):
     @classmethod
     def transform(cls, parameter: Parameter, transforms: List[Transform]) -> Parameter:
         return Parameter(
+            allowed_values=[string_transform(item, transforms) for item in parameter.allowed_values],
             required=parameter.required,
             item_id=string_transform(parameter.item_id, transforms),
             item_type=string_transform(parameter.item_type, transforms)
@@ -59,6 +61,7 @@ class MappingItem(BaseModel):
     source_name: str
     target_name: str
     probability: float = 1.0
+    is_mapped: Optional[bool] = False
 
     @classmethod
     def transform(cls, mapping_item: MappingItem, transforms: List[Transform]) -> MappingItem:
@@ -66,6 +69,7 @@ class MappingItem(BaseModel):
             source_name=string_transform(mapping_item.source_name, transforms),
             target_name=string_transform(mapping_item.target_name, transforms),
             probability=mapping_item.probability,
+            is_mapped=mapping_item.is_mapped,
         )
 
     @field_validator("probability")
