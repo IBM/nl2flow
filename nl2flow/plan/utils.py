@@ -87,6 +87,13 @@ def find_goal(name: str, flow_object: Flow) -> Optional[GoalItem]:
     return next(filter(lambda goal_item: getattr(goal_item, "goal_name") == name, all_goals), None)
 
 
+def find_operator(name: str, flow_object: Flow) -> Optional[OperatorDefinition]:
+    filter_for_operators = filter(lambda x: x.name == name, flow_object.flow_definition.operators)
+    operator: Optional[OperatorDefinition] = next(filter_for_operators, None)
+
+    return operator
+
+
 def parse_action(
     action_name: str,
     parameters: List[str],
@@ -122,8 +129,7 @@ def parse_action(
             return new_action
 
     else:
-        filter_for_operators = filter(lambda x: x.name == action_name, flow_object.flow_definition.operators)
-        operator: Optional[OperatorDefinition] = next(filter_for_operators, None)
+        operator = find_operator(action_name, flow_object)
 
         if operator is None:
             if debug_flag:

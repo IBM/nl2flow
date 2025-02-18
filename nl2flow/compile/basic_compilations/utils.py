@@ -1,20 +1,23 @@
-from typing import List, Set, Dict, Union, Any
+from typing import List, Set, Dict, Union, Any, Optional
 from nl2flow.compile.options import TypeOptions, MAX_RETRY, LOOKAHEAD
 from nl2flow.compile.schemas import MemoryItem, TypeItem, SlotProperty, Parameter, SignatureItem
 
 
-def unpack_list_of_signature_items(signature_items: List[SignatureItem]) -> List[str]:
-    items = list()
+def unpack_list_of_signature_items(signature_items: List[SignatureItem], required: Optional[bool] = None) -> List[str]:
+    unpacked_items = list()
 
     for signature_item in signature_items:
         params = signature_item.parameters
+        params = params if isinstance(params, List) else [params]
 
-        if isinstance(params, List):
-            items.extend([p if isinstance(p, str) else p.item_id for p in params])
-        else:
-            items.append(params if isinstance(params, str) else params.item_id)
+        for item in params:
+            if isinstance(item, Parameter):
+                if required is None or item.required == required:
+                    unpacked_items.append(item.item_id)
+            else:
+                unpacked_items.append(item)
 
-    return items
+    return unpacked_items
 
 
 def get_agent_to_slot_map(compilation: Any) -> Dict[str, List[str]]:

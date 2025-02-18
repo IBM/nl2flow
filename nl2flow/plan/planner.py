@@ -2,7 +2,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform, revert_string_transforms
 from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan, Action
 from nl2flow.plan.options import TIMEOUT
-from nl2flow.plan.utils import parse_action, group_items
+from nl2flow.plan.utils import parse_action, group_items, find_operator, unpack_list_of_signature_items
 from nl2flow.compile.schemas import PDDL
 from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
@@ -144,8 +144,15 @@ def cache_known_items(new_action: Action, cached_items: List[str], **kwargs: Any
         new_inputs = []
         new_parameters = []
 
+        operator_definition = find_operator(new_action.name, flow_object)
+
+        if operator_definition is None:
+            return None
+
+        required_inputs = unpack_list_of_signature_items(operator_definition.inputs, required=True)
+
         for index, item in enumerate(new_action.inputs):
-            if item in cached_items:
+            if item in cached_items or item in required_inputs:
                 new_inputs.append(item)
 
                 if new_action.parameters and debug_flag != DebugFlag.DIRECT:

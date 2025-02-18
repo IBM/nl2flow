@@ -119,6 +119,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
             precondition_list.extend(
                 [
                     neg(label_level == compilation.constant_map[get_token_predicate_name(index=0, token="var")]),
+                    neg(label_level == compilation.constant_map[get_token_predicate_name(index=0, token="varm")]),
                     compilation.available(label_level),
                 ]
             )

@@ -160,6 +160,9 @@ def add_instantiated_operation(
                 add_to_condition_list_pre_check(compilation, param)
 
                 if isinstance(param, Parameter):
+                    if not param.required:
+                        continue
+
                     param = param.item_id
 
                 precondition_list.append(

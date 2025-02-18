@@ -39,6 +39,7 @@ from nl2flow.compile.basic_compilations.compile_mappings import (
 from nl2flow.compile.basic_compilations.compile_goals import compile_goals
 from nl2flow.compile.basic_compilations.compile_history import compile_history
 from nl2flow.compile.basic_compilations.compile_constraints import compile_manifest_constraints
+from nl2flow.compile.basic_compilations.compile_labels import compile_label_maker
 
 from nl2flow.compile.basic_compilations.utils import (
     add_type_item_to_type_map,
@@ -105,6 +106,7 @@ class ClassicPDDL(Compilation):
         self.map_affinity: Any = None
         self.slot_goodness: Any = None
         self.connected: Any = None
+        self.label_ladder: Any = None
         self.done_goal_pre: Any = None
         self.done_goal_post: Any = None
         self.has_asked: Any = None
@@ -147,13 +149,29 @@ class ClassicPDDL(Compilation):
 
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
-        used_labels_in_history = compile_history(self, **kwargs)
+        compile_history(self, **kwargs)
 
         if NL2FlowOptions.label_production in optimization_options:
-            for label in range(0, MAX_LABELS + 1):
+            label_0 = None
+
+            for label_index in range(1, MAX_LABELS + 1):
+                label_0 = get_token_predicate_name(index=label_index, token="var")
+
+                if label_0 not in used_labels_in_memory:
+                    break
+
+            if label_0 is None:
+                label_0 = get_token_predicate_name(index=0, token="var")
+
+            self.init.add(self.available(self.constant_map[label_0]))
+
+            for label in range(1, MAX_LABELS + 1):
                 label_name = get_token_predicate_name(index=label, token="var")
-                if label_name not in used_labels_in_history and label_name not in used_labels_in_memory:
-                    self.init.add(self.available(self.constant_map[label_name]))
+                previous_label = get_token_predicate_name(index=label - 1, token="var")
+
+                self.init.add(self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name]))
+
+            compile_label_maker(self)
 
         if debug_flag == DebugFlag.TOKENIZE:
             compile_reference_tokenize(self, flow_definition=self.flow_definition, **kwargs)
@@ -317,6 +335,12 @@ class ClassicPDDL(Compilation):
             self.type_map[TypeOptions.LABEL.value],
         )
 
+        self.label_ladder = self.lang.predicate(
+            "label_ladder",
+            self.type_map[TypeOptions.LABEL.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
         self.assigned_to = self.lang.predicate(
             "assigned_to",
             self.type_map[TypeOptions.OPERATOR.value],
@@ -346,7 +370,7 @@ class ClassicPDDL(Compilation):
 
     def construct_memory(self, **kwargs: Any) -> List[str]:
         optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-        used_labels = [get_token_predicate_name(index=0, token="var")]
+        used_labels = []
 
         for memory_item in self.flow_definition.memory_items:
             add_memory_item_to_constant_map(self, memory_item)
