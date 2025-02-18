@@ -18,6 +18,7 @@ class NL2FlowOptions(Enum):
 
 
 class RestrictedOperations(Enum):
+    LABEL_MAKER = "label_maker"
     UNTOKENIZE = "untokenize"
     TOKENIZE = "tokenize"
     MANIFEST = "manifest"

@@ -119,6 +119,7 @@ def compile_operators(compilation: Any, **kwargs: Any) -> None:
             precondition_list.extend(
                 [
                     neg(label_level == compilation.constant_map[get_token_predicate_name(index=0, token="var")]),
+                    neg(label_level == compilation.constant_map[get_token_predicate_name(index=0, token="varm")]),
                     compilation.available(label_level),
                 ]
             )
@@ -233,11 +234,7 @@ def merge_optional_preconditions(
             for item in optional_know_list
         ]
 
-        if must_know_list:
-            optional_or = lor(lor(*optional_know_predicates), land(*must_know_predicates))
-        else:
-            optional_or = lor(*optional_know_predicates)
-
+        optional_or = land(*must_know_predicates) if must_know_list else lor(*optional_know_predicates)
         merged_preconditions = land(land(*precondition_list, flat=True), optional_or)
 
     else:

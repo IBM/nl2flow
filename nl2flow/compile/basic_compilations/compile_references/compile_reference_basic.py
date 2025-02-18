@@ -1,7 +1,8 @@
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
-from tarski.syntax import land, neg, Atom, Tautology
-from typing import Any, Optional, Set, List
+from tarski.syntax import land, neg, Atom, Tautology, CompoundFormula
+from typing import Any, Optional, Set, List, Tuple
+from nl2flow.compile.basic_compilations.compile_operators import merge_optional_preconditions
 from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
 from nl2flow.compile.options import (
@@ -77,7 +78,7 @@ def add_instantiated_map(
     del_effect_list: List[Any],
     post_token_predicate: Any,
     **kwargs: Any,
-) -> Optional[Any]:
+) -> Tuple[Optional[Atom], CompoundFormula]:
     for item in step.parameters[:2]:
         add_to_condition_list_pre_check(compilation, item)
 
@@ -123,7 +124,7 @@ def add_instantiated_map(
         ]
     )
 
-    return step_predicate
+    return step_predicate, land(*precondition_list)
 
 
 def add_instantiated_operation(
@@ -135,11 +136,14 @@ def add_instantiated_operation(
     add_effect_list: List[Any],
     del_effect_list: List[Any],
     **kwargs: Any,
-) -> Optional[Any]:
+) -> Tuple[Optional[Atom], CompoundFormula]:
     flow_definition: FlowDefinition = kwargs["flow_definition"]
 
     repeat_index = get_index_of_interest(compilation, step, flow_definition, index)
     step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
+
+    must_know_list: List[str] = list()
+    optional_know_list: List[str] = list()
 
     if step_predicate:
         goal_predicates.add(step_predicate)
@@ -160,14 +164,13 @@ def add_instantiated_operation(
                 add_to_condition_list_pre_check(compilation, param)
 
                 if isinstance(param, Parameter):
-                    param = param.item_id
+                    if param.required:
+                        must_know_list.append(param.item_id)
+                    else:
+                        optional_know_list.append(param.item_id)
 
-                precondition_list.append(
-                    compilation.known(
-                        compilation.constant_map[param],
-                        compilation.constant_map[MemoryState.KNOWN.value],
-                    )
-                )
+                else:
+                    must_know_list.append(param)
 
         if step.label:
             precondition_list.append(compilation.available(compilation.constant_map[step.label]))
@@ -218,7 +221,14 @@ def add_instantiated_operation(
                     ]
                 )
 
-    return step_predicate
+    precondition = merge_optional_preconditions(
+        compilation,
+        must_know_list,
+        optional_know_list,
+        precondition_list,
+    )
+
+    return step_predicate, precondition
 
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
@@ -267,7 +277,8 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 action_name = (
                     f"{action_name}{PARAMETER_DELIMITER}{step.parameter(0)}{PARAMETER_DELIMITER}{step.parameter(1)}"
                 )
-                step_predicate = add_instantiated_map(
+
+                step_predicate, precondition = add_instantiated_map(
                     compilation,
                     step,
                     index,
@@ -283,7 +294,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 raise NotImplementedError
 
             else:
-                step_predicate = add_instantiated_operation(
+                step_predicate, precondition = add_instantiated_operation(
                     compilation,
                     step,
                     index,
@@ -301,7 +312,7 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 compilation.problem.action(
                     action_name,
                     parameters=[],
-                    precondition=land(*precondition_list, flat=True),
+                    precondition=precondition,
                     effects=[fs.AddEffect(add) for add in add_effect_list]
                     + [fs.DelEffect(del_e) for del_e in del_effect_list],
                     cost=iofs.AdditiveActionCost(

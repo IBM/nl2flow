@@ -239,3 +239,23 @@ class TestBasic:
             print(f"\n\n{diff_string}")
 
             assert report.determination, f"Reference plan is {mode.value}"
+
+    def test_optional_parameter(self) -> None:
+        agent_x = Operator(name="agent_x")
+        agent_x.add_input(SignatureItem(parameters=Parameter(item_id="x_1", required=False)))
+        agent_x.add_output(SignatureItem(parameters="y"))
+
+        self.flow.add(agent_x)
+
+        messed_up_tokens = [
+            "ask(x_1)",
+            "y = agent_x(x_1)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(messed_up_tokens, report_type=SolutionQuality.VALID)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert report.determination

@@ -2,7 +2,7 @@ from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform, revert_string_transforms
 from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan, Action
 from nl2flow.plan.options import TIMEOUT
-from nl2flow.plan.utils import parse_action, group_items
+from nl2flow.plan.utils import parse_action, group_items, find_operator, unpack_list_of_signature_items
 from nl2flow.compile.schemas import PDDL
 from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.options import (
@@ -114,7 +114,7 @@ class FDDerivedPlanner(ABC):
                 if new_action:
                     # TODO: Temporary till state tracking, ISS134
                     if isinstance(new_action, Action):
-                        cache_known_items(flow_object, new_action, cached_items)
+                        cache_known_items(new_action, cached_items, **kwargs)
 
                     new_plan.plan.append(new_action)
 
@@ -124,7 +124,10 @@ class FDDerivedPlanner(ABC):
         return list_of_plans
 
 
-def cache_known_items(flow_object: Flow, new_action: Action, cached_items: List[str]) -> None:
+def cache_known_items(new_action: Action, cached_items: List[str], **kwargs: Any) -> None:
+    flow_object: Flow = kwargs["flow"]
+    debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
+
     if BasicOperations.is_basic(new_action.name):
         if new_action.name.startswith(BasicOperations.SLOT_FILLER.value):
             if LifeCycleOptions.confirm_on_slot not in flow_object.variable_life_cycle:
@@ -141,14 +144,21 @@ def cache_known_items(flow_object: Flow, new_action: Action, cached_items: List[
         new_inputs = []
         new_parameters = []
 
+        operator_definition = find_operator(new_action.name, flow_object)
+
+        if operator_definition is None:
+            return None
+
+        required_inputs = unpack_list_of_signature_items(operator_definition.inputs, required=True)
+
         for index, item in enumerate(new_action.inputs):
-            if item in cached_items:
+            if item in cached_items or item in required_inputs:
                 new_inputs.append(item)
 
-                if new_action.parameters:
+                if new_action.parameters and debug_flag != DebugFlag.DIRECT:
                     new_parameters.append(new_action.parameters[index])
 
-        new_action.parameters = new_parameters
+        new_action.parameters = new_parameters or new_action.parameters
         new_action.inputs = new_inputs
 
         if LifeCycleOptions.confirm_on_determination not in flow_object.variable_life_cycle:
