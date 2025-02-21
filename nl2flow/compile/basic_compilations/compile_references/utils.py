@@ -1,8 +1,10 @@
-from typing import Any
+from typing import Any, Optional
+from nestful.utils import get_token
 
 
-def get_token_predicate_name(index: int, token: str = "token") -> str:
-    return f"{token}{index}"
+def get_token_predicate_name(index: int, token: Optional[str] = None) -> str:
+    token = str(get_token(index, token or "token"))
+    return token
 
 
 def set_token_predicate(compilation: Any, index: int) -> Any:

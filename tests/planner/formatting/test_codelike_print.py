@@ -2,7 +2,7 @@ from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.operators import ClassicalOperator as Operator
 from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalItems, GoalItem, Step
-from nl2flow.printers.codelike import CodeLikePrint, parse_parameters
+from nl2flow.printers.codelike import CodeLikePrint
 
 PLANNER = Kstar()
 
@@ -211,26 +211,3 @@ class TestCodeLikePrint:
         assert CodeLikePrint.parse_token("a(b, c)") == target
         assert CodeLikePrint.parse_token("x = a(b,c)") == target
         assert CodeLikePrint.parse_token(" x = a(b,c) ") == target
-
-    def test_parse_parameters(self) -> None:
-        assert parse_parameters(signature="a(b,c)") == ("a", ["b", "c"])
-        assert parse_parameters(signature="a(b, c)") == ("a", ["b", "c"])
-        assert parse_parameters(signature=" a(b,c) ") == ("a", ["b", "c"])
-
-        assert parse_parameters(signature="a(c)") == ("a", ["c"])
-        assert parse_parameters(signature="a()") == ("a", [])
-
-        assert parse_parameters(signature="agent_a(b,c)") == ("agent_a", ["b", "c"])
-        assert parse_parameters(signature="3a-1(b-2,c3)") == ("3a-1", ["b-2", "c3"])
-
-        assert parse_parameters(signature='a("b,",c)') == ("a", ['"b, "', "c"])
-        assert parse_parameters(signature='a("b,", "x", c)') == ("a", ['"b, "', '"x"', "c"])
-        assert parse_parameters(signature='a(a, "b,","x",c)') == ("a", ["a", '"b, "', '"x"', "c"])
-
-        assert parse_parameters(signature='a("b,x,c",c)') == ("a", ['"b, x, c"', "c"])
-        assert parse_parameters(signature='a(a, "b,x,c", "c,y",z)') == ("a", ["a", '"b, x, c"', '"c, y"', "z"])
-
-        assert parse_parameters(signature='a("Pets called "Mary" in "Sydney", Australia",c)') == (
-            "a",
-            ['"Pets called "Mary" in "Sydney", Australia"', "c"],
-        )

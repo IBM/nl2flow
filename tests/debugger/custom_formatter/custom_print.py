@@ -1,5 +1,5 @@
 from nl2flow.printers.driver import Printer
-from nl2flow.printers.codelike import parse_parameters
+from nestful.utils import parse_parameters
 from nl2flow.plan.schemas import Action, ClassicalPlan as Plan
 from nl2flow.compile.schemas import Step, Constraint
 from nl2flow.compile.options import BasicOperations, ConstraintState
