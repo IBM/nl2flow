@@ -3,7 +3,7 @@ name = "nl2flow"
 version = "0.0.7"
 description = "NL2Flow: A PDDL interface to flow construction"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 
 authors = [
@@ -34,7 +34,7 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: MacOS",
   "Operating System :: Unix",
-  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.11",
   "Framework :: Pydantic :: 2",
   "Framework :: Pytest",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -49,10 +49,31 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = ["pydantic>=2.4.2", "pyyaml", "tarski-tmp", "StrEnum", "kstar-planner", "forbiditerative", "haikunator"]
+dependencies = [
+  "pydantic>=2.4.2",
+  "pyyaml",
+  "tarski-tmp",
+  "StrEnum",
+  "kstar-planner",
+  "forbiditerative",
+  "haikunator",
+  "nestful-wrapper"
+]
 
 [project.optional-dependencies]
-dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock", "types-PyYAML"]
+dev = [
+  "check-manifest",
+  "pytest",
+  "pytest-mock",
+  "black",
+  "pylint",
+  "flake8",
+  "pre-commit",
+  "Flake8-pyproject",
+  "coverage",
+  "pytest-mock",
+  "types-PyYAML"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/IBM/nl2flow"
@@ -87,7 +108,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
+target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -104,7 +125,7 @@ exclude = '''
 '''
 
 [tool.mypy]
-python_version=3.9
+python_version=3.11
 mypy_path = "src"
 
 show_column_numbers = true
@@ -134,7 +155,7 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 
 [tool.pylint."MAIN"]
-py-version=3.9
+py-version=3.11
 
 [tool.pylint."FORMAT"]
 max-line-length = 120
