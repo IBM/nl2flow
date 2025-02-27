@@ -131,7 +131,7 @@ def get_index_of_interest(compilation: Any, step: Step, flow_definition: FlowDef
         if i == current_index:
             indices_of_interest.append(i)
 
-        if isinstance(r, Step) and step.name == r.name and not r.is_same_as(step):
+        if isinstance(r, Step) and step.name == r.name:
             indices_of_interest.append(i)
 
     return indices_of_interest.index(current_index) if current_index in indices_of_interest else 0

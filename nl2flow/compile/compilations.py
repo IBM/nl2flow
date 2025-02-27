@@ -149,19 +149,19 @@ class ClassicPDDL(Compilation):
 
         compile_goals(self, **kwargs)
         compile_manifest_constraints(self)
-        compile_history(self, **kwargs)
+        used_labels = compile_history(self, **kwargs)
+
+        used_labels_in_memory.extend(used_labels)
 
         if NL2FlowOptions.label_production in optimization_options:
-            label_0 = None
+            label_0 = get_token_predicate_name(index=0, token="var")
 
             for label_index in range(1, MAX_LABELS + 1):
-                label_0 = get_token_predicate_name(index=label_index, token="var")
+                temp_label = get_token_predicate_name(index=label_index, token="var")
 
-                if label_0 not in used_labels_in_memory:
+                if temp_label not in used_labels_in_memory:
+                    label_0 = temp_label
                     break
-
-            if label_0 is None:
-                label_0 = get_token_predicate_name(index=0, token="var")
 
             self.init.add(self.available(self.constant_map[label_0]))
 
@@ -169,7 +169,8 @@ class ClassicPDDL(Compilation):
                 label_name = get_token_predicate_name(index=label, token="var")
                 previous_label = get_token_predicate_name(index=label - 1, token="var")
 
-                self.init.add(self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name]))
+                if label_name not in used_labels_in_memory:
+                    self.init.add(self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name]))
 
             compile_label_maker(self)
 

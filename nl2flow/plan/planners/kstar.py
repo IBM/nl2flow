@@ -73,7 +73,7 @@ class Kstar(Planner, FDDerivedPlanner):
         try:
             planner_response.list_of_plans = self.parse(raw_planner_result.list_of_plans, **kwargs)
 
-            if planner_response.no_plan_needed is not True:
+            if not planner_response.no_plan_needed:
                 planner_response.no_plan_needed = (
                     planner_response.best_plan is not None and planner_response.best_plan.plan == []
                 )

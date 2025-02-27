@@ -146,8 +146,6 @@ def add_instantiated_operation(
     optional_know_list: List[str] = list()
 
     if step_predicate:
-        goal_predicates.add(step_predicate)
-
         precondition_list.append(neg(step_predicate))
         add_effect_list.append(step_predicate)
 
@@ -247,6 +245,15 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
 
         precondition_list = [pre_token_predicate]
         add_effect_list = [post_token_predicate]
+
+        if step.label:
+            if step.label not in compilation.constant_map:
+                add_to_condition_list_pre_check(
+                    compilation, MemoryItem(item_id=step.label, item_type=TypeOptions.LABEL.value)
+                )
+
+            add_effect_list.append(compilation.available(compilation.constant_map[step.label]))
+
         del_effect_list: List[Any] = []
 
         compilation.problem.action(
@@ -264,11 +271,6 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
 
         if isinstance(step, Step):
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
-
-            if step.label and step.label not in compilation.constant_map:
-                add_to_condition_list_pre_check(
-                    compilation, MemoryItem(item_id=step.label, item_type=TypeOptions.LABEL.value)
-                )
 
             if step.name == BasicOperations.SLOT_FILLER.value:
                 raise NotImplementedError
