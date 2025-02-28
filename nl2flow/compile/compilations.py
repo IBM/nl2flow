@@ -125,6 +125,8 @@ class ClassicPDDL(Compilation):
         slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
         optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
+        use_given_operators_only: bool = kwargs.get("use_given_operators_only", False)
+
         compile_operators(self, **kwargs)
         compile_confirmation(self, **kwargs)
         add_extra_objects(self, **kwargs)
@@ -154,25 +156,35 @@ class ClassicPDDL(Compilation):
         used_labels_in_memory.extend(used_labels)
 
         if NL2FlowOptions.label_production in optimization_options:
-            label_0 = get_token_predicate_name(index=0, token="var")
+            if use_given_operators_only:
+                for label_index in range(0, MAX_LABELS + 1):
+                    temp_label = get_token_predicate_name(index=label_index, token="var")
 
-            for label_index in range(1, MAX_LABELS + 1):
-                temp_label = get_token_predicate_name(index=label_index, token="var")
+                    if temp_label not in used_labels_in_memory:
+                        self.init.add(self.available(self.constant_map[temp_label]))
 
-                if temp_label not in used_labels_in_memory:
-                    label_0 = temp_label
-                    break
+            else:
+                label_0 = get_token_predicate_name(index=0, token="var")
 
-            self.init.add(self.available(self.constant_map[label_0]))
+                for label_index in range(1, MAX_LABELS + 1):
+                    temp_label = get_token_predicate_name(index=label_index, token="var")
 
-            for label in range(1, MAX_LABELS + 1):
-                label_name = get_token_predicate_name(index=label, token="var")
-                previous_label = get_token_predicate_name(index=label - 1, token="var")
+                    if temp_label not in used_labels_in_memory:
+                        label_0 = temp_label
+                        break
 
-                if label_name not in used_labels_in_memory:
-                    self.init.add(self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name]))
+                self.init.add(self.available(self.constant_map[label_0]))
 
-            compile_label_maker(self)
+                for label in range(1, MAX_LABELS + 1):
+                    label_name = get_token_predicate_name(index=label, token="var")
+                    previous_label = get_token_predicate_name(index=label - 1, token="var")
+
+                    if label_name not in used_labels_in_memory:
+                        self.init.add(
+                            self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name])
+                        )
+
+                compile_label_maker(self)
 
         if debug_flag == DebugFlag.TOKENIZE:
             compile_reference_tokenize(self, flow_definition=self.flow_definition, **kwargs)

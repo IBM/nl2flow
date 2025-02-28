@@ -21,6 +21,33 @@ from nl2flow.compile.basic_compilations.compile_history import (
 )
 
 
+def add_untokenize_main(
+    compilation: Any,
+    index: int,
+    step: Step,
+    precondition_list: List[Any],
+    add_effect_list: List[Any],
+) -> None:
+    temp_add_effect_list = (
+        add_effect_list + [compilation.available(compilation.constant_map[step.label])]
+        if step.label
+        else add_effect_list
+    )
+
+    compilation.problem.action(
+        f"{RestrictedOperations.UNTOKENIZE.value}_{index}_{step.name}",
+        parameters=[],
+        precondition=land(*precondition_list, flat=True),
+        effects=[fs.AddEffect(add) for add in temp_add_effect_list],
+        cost=iofs.AdditiveActionCost(
+            compilation.problem.language.constant(
+                CostOptions.HIGH.value,
+                compilation.problem.language.get_sort("Integer"),
+            )
+        ),
+    )
+
+
 def add_surrogate_goal(
     compilation: Any,
     goal_predicates: Set[Any],
@@ -79,6 +106,8 @@ def add_instantiated_map(
     post_token_predicate: Any,
     **kwargs: Any,
 ) -> Tuple[Optional[Atom], CompoundFormula]:
+    compression_option: bool = kwargs.get("compress", False)
+
     for item in step.parameters[:2]:
         add_to_condition_list_pre_check(compilation, item)
 
@@ -94,7 +123,10 @@ def add_instantiated_map(
 
         add_effect_list.append(compilation.label_tag(target, compilation.constant_map[step.label]))
 
-    add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
+    if compression_option:
+        goal_predicates.add(step_predicate)
+    else:
+        add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
 
     precondition_list.extend(
         [
@@ -142,11 +174,17 @@ def add_instantiated_operation(
     repeat_index = get_index_of_interest(compilation, step, flow_definition, index)
     step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
 
+    compression_option: bool = kwargs.get("compress", False)
+
     must_know_list: List[str] = list()
     optional_know_list: List[str] = list()
 
     if step_predicate:
-        precondition_list.append(neg(step_predicate))
+        if compression_option:
+            goal_predicates.add(step_predicate)
+        else:
+            precondition_list.append(neg(step_predicate))
+
         add_effect_list.append(step_predicate)
 
         operator: OperatorDefinition = next(
@@ -231,6 +269,7 @@ def add_instantiated_operation(
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    compression_option: bool = kwargs.get("compress", False)
 
     if NL2FlowOptions.multi_instance in optimization_options:
         raise NotImplementedError
@@ -241,10 +280,9 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
         pre_token_predicate = get_token_predicate(compilation, index)
         post_token_predicate = get_token_predicate(compilation, index + 1)
 
-        goal_predicates.add(post_token_predicate)
-
         precondition_list = [pre_token_predicate]
         add_effect_list = [post_token_predicate]
+        del_effect_list: List[Any] = []
 
         if step.label:
             if step.label not in compilation.constant_map:
@@ -252,22 +290,9 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                     compilation, MemoryItem(item_id=step.label, item_type=TypeOptions.LABEL.value)
                 )
 
-            add_effect_list.append(compilation.available(compilation.constant_map[step.label]))
-
-        del_effect_list: List[Any] = []
-
-        compilation.problem.action(
-            f"{RestrictedOperations.UNTOKENIZE.value}_{index}_{step.name}",
-            parameters=[],
-            precondition=land(*precondition_list, flat=True),
-            effects=[fs.AddEffect(add) for add in add_effect_list],
-            cost=iofs.AdditiveActionCost(
-                compilation.problem.language.constant(
-                    CostOptions.HIGH.value,
-                    compilation.problem.language.get_sort("Integer"),
-                )
-            ),
-        )
+        if not compression_option:
+            goal_predicates.add(post_token_predicate)
+            add_untokenize_main(compilation, index, step, precondition_list, add_effect_list)
 
         if isinstance(step, Step):
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
