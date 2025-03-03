@@ -123,9 +123,9 @@ def add_instantiated_map(
 
         add_effect_list.append(compilation.label_tag(target, compilation.constant_map[step.label]))
 
-    if compression_option:
-        goal_predicates.add(step_predicate)
-    else:
+    goal_predicates.add(step_predicate)
+
+    if not compression_option:
         add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
 
     precondition_list.extend(

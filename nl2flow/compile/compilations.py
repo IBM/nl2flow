@@ -165,6 +165,7 @@ class ClassicPDDL(Compilation):
 
             else:
                 label_0 = get_token_predicate_name(index=0, token="var")
+                self.init.add(self.available(self.constant_map[label_0]))
 
                 for label_index in range(1, MAX_LABELS + 1):
                     temp_label = get_token_predicate_name(index=label_index, token="var")
