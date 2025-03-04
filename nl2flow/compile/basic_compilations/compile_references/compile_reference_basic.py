@@ -14,6 +14,7 @@ from nl2flow.compile.options import (
     NL2FlowOptions,
     TypeOptions,
 )
+
 from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
 from nl2flow.compile.basic_compilations.compile_history import (
     get_predicate_from_step,
@@ -113,6 +114,8 @@ def add_instantiated_map(
 
     step_predicate = get_predicate_from_step(compilation, step, **kwargs)
 
+    goal_predicates.add(step_predicate)
+
     source = compilation.constant_map[step.parameter(0)]
     target = compilation.constant_map[step.parameter(1)]
 
@@ -177,9 +180,9 @@ def add_instantiated_operation(
     optional_know_list: List[str] = list()
 
     if step_predicate:
-        if compression_option:
-            goal_predicates.add(step_predicate)
-        else:
+        goal_predicates.add(step_predicate)
+
+        if not compression_option:
             precondition_list.append(neg(step_predicate))
 
         add_effect_list.append(step_predicate)
