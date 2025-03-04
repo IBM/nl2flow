@@ -27,9 +27,9 @@ class StepDiff(BaseModel):
 
 
 class Report(BaseModel):
-    report_type: SolutionQuality
+    report_type: SolutionQuality = SolutionQuality.SOUND
     determination: Optional[bool] = None
-    planner_response: PlannerResponse
+    planner_response: PlannerResponse = PlannerResponse()
     reference: Optional[ClassicalPlanReference] = None
     plan_diff_obj: List[StepDiff] = []
     plan_diff_str: List[str] = []
