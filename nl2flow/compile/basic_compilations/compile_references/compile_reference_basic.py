@@ -1,370 +1,411 @@
+import tarski
 import tarski.fstrips as fs
-from tarski.io import fstrips as iofs
-from tarski.syntax import land, neg, Atom, Tautology, CompoundFormula
-from typing import Any, Optional, Set, List, Tuple
-from nl2flow.compile.basic_compilations.compile_operators import merge_optional_preconditions
-from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
-from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
+from tarski.theories import Theory
+from tarski.io import FstripsWriter
+from abc import ABC, abstractmethod
+from typing import List, Set, Dict, Any, Tuple, Optional
+from nl2flow.debug.schemas import DebugFlag
+from nl2flow.compile.schemas import (
+    FlowDefinition,
+    PDDL,
+    Transform,
+    TypeItem,
+    MemoryItem,
+)
+
+from nl2flow.compile.basic_compilations.compile_operators import compile_operators
+from nl2flow.compile.basic_compilations.compile_confirmation import compile_confirmation
+from nl2flow.compile.basic_compilations.compile_references.utils import (
+    set_token_predicate,
+    get_token_predicate,
+    get_token_predicate_name,
+)
+from nl2flow.compile.basic_compilations.compile_references.compile_reference_tokenize import compile_reference_tokenize
+from nl2flow.compile.basic_compilations.compile_references.compile_reference_basic import compile_reference_basic
+
+from nl2flow.compile.basic_compilations.compile_slots import (
+    compile_higher_cost_slots,
+    compile_last_resort_slots,
+    compile_all_together,
+    compile_new_object_maps,
+    get_goodness_map,
+)
+
+from nl2flow.compile.basic_compilations.compile_mappings import (
+    compile_typed_mappings,
+    compile_declared_mappings,
+)
+
+from nl2flow.compile.basic_compilations.compile_goals import compile_goals
+from nl2flow.compile.basic_compilations.compile_history import compile_history
+from nl2flow.compile.basic_compilations.compile_constraints import compile_manifest_constraints
+from nl2flow.compile.basic_compilations.compile_labels import compile_label_maker
+
+from nl2flow.compile.basic_compilations.utils import (
+    add_type_item_to_type_map,
+    add_memory_item_to_constant_map,
+    add_extra_objects,
+    add_retry_states,
+)
+
 from nl2flow.compile.options import (
-    PARAMETER_DELIMITER,
-    BasicOperations,
-    MemoryState,
-    RestrictedOperations,
-    CostOptions,
+    MAX_LABELS,
     NL2FlowOptions,
+    SlotOptions,
+    MappingOptions,
     TypeOptions,
-)
-from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
-from nl2flow.compile.basic_compilations.compile_history import (
-    get_predicate_from_step,
-    get_index_of_interest,
+    MemoryState,
+    ConstraintState,
+    HasDoneState,
 )
 
 
-def add_untokenize_main(
-    compilation: Any,
-    index: int,
-    step: Step,
-    precondition_list: List[Any],
-    add_effect_list: List[Any],
-) -> None:
-    temp_add_effect_list = (
-        add_effect_list + [compilation.available(compilation.constant_map[step.label])]
-        if step.label
-        else add_effect_list
-    )
+class Compilation(ABC):
+    def __init__(self, flow_definition: FlowDefinition):
+        self.flow_definition = flow_definition
 
-    compilation.problem.action(
-        f"{RestrictedOperations.UNTOKENIZE.value}_{index}_{step.name}",
-        parameters=[],
-        precondition=land(*precondition_list, flat=True),
-        effects=[fs.AddEffect(add) for add in temp_add_effect_list],
-        cost=iofs.AdditiveActionCost(
-            compilation.problem.language.constant(
-                CostOptions.HIGH.value,
-                compilation.problem.language.get_sort("Integer"),
-            )
-        ),
-    )
+    @abstractmethod
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
+        pass
 
 
-def add_surrogate_goal(
-    compilation: Any,
-    goal_predicates: Set[Any],
-    post_token_predicate: Any,
-    target: Any,
-    index: int,
-) -> None:
-    add_to_condition_list_pre_check(compilation, target.name)
+class ClassicPDDL(Compilation):
+    def __init__(self, flow_definition: FlowDefinition):
+        Compilation.__init__(self, flow_definition)
 
-    new_index = 100 * (index + 1)
-    token_predicate = get_token_predicate(compilation, index=new_index)
+        self.cached_transforms: List[Transform] = list()
+        self.flow_definition = FlowDefinition.transform(self.flow_definition, self.cached_transforms)
 
-    goal_predicates.add(token_predicate)
+        name = self.flow_definition.name
+        lang = fs.language(name, theories=[Theory.EQUALITY, Theory.ARITHMETIC])
 
-    precondition_list = [post_token_predicate, compilation.been_used(target)]
-    add_effect_list = [token_predicate]
+        self.lang = lang
+        self.cost = self.lang.function("total-cost", self.lang.Real)
 
-    compilation.problem.action(
-        f"{RestrictedOperations.TOKENIZE.value}_{new_index}",
-        parameters=[],
-        precondition=land(*precondition_list, flat=True),
-        effects=[fs.AddEffect(add) for add in add_effect_list],
-        cost=iofs.AdditiveActionCost(
-            compilation.problem.language.constant(
-                CostOptions.ZERO.value,
-                compilation.problem.language.get_sort("Integer"),
-            )
-        ),
-    )
-
-    precondition_list = [post_token_predicate]
-    add_effect_list = [token_predicate]
-
-    compilation.problem.action(
-        f"{RestrictedOperations.UNTOKENIZE.value}_{new_index}",
-        parameters=[],
-        precondition=land(*precondition_list, flat=True),
-        effects=[fs.AddEffect(add) for add in add_effect_list],
-        cost=iofs.AdditiveActionCost(
-            compilation.problem.language.constant(
-                CostOptions.HIGH.value,
-                compilation.problem.language.get_sort("Integer"),
-            )
-        ),
-    )
-
-
-def add_instantiated_map(
-    compilation: Any,
-    step: Step,
-    index: int,
-    goal_predicates: Set[Any],
-    precondition_list: List[Any],
-    add_effect_list: List[Any],
-    del_effect_list: List[Any],
-    post_token_predicate: Any,
-    **kwargs: Any,
-) -> Tuple[Optional[Atom], CompoundFormula]:
-    compression_option: bool = kwargs.get("compress", False)
-
-    for item in step.parameters[:2]:
-        add_to_condition_list_pre_check(compilation, item)
-
-    step_predicate = get_predicate_from_step(compilation, step, **kwargs)
-
-    source = compilation.constant_map[step.parameter(0)]
-    target = compilation.constant_map[step.parameter(1)]
-
-    if step.label:
-        precondition_list.append(
-            compilation.label_tag(source, compilation.constant_map[step.label]),
+        self.problem = fs.create_fstrips_problem(
+            domain_name=f"{name}-domain",
+            problem_name=f"{name}-problem",
+            language=self.lang,
         )
+        self.problem.metric(self.cost(), fs.OptimizationType.MINIMIZE)
 
-        add_effect_list.append(compilation.label_tag(target, compilation.constant_map[step.label]))
+        # noinspection PyUnresolvedReferences
+        self.init = tarski.model.create(self.lang)
 
-    goal_predicates.add(step_predicate)
+        self.has_done: Any = None
+        self.free: Any = None
+        self.been_used: Any = None
+        self.not_usable: Any = None
+        self.new_item: Any = None
+        self.known: Any = None
+        self.mapped: Any = None
+        self.mapped_to: Any = None
+        self.not_slotfillable: Any = None
+        self.is_mappable: Any = None
+        self.not_mappable: Any = None
+        self.map_affinity: Any = None
+        self.slot_goodness: Any = None
+        self.connected: Any = None
+        self.label_ladder: Any = None
+        self.done_goal_pre: Any = None
+        self.done_goal_post: Any = None
+        self.has_asked: Any = None
+        self.label_tag: Any = None
+        self.available: Any = None
+        self.assigned_to: Any = None
+        self.ready_for_token: Any = None
 
-    if not compression_option:
-        add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
+        self.type_map: Dict[str, Any] = dict()
+        self.constant_map: Dict[str, Any] = dict()
 
-    precondition_list.extend(
-        [
-            compilation.known(source, compilation.constant_map[MemoryState.KNOWN.value]),
-            compilation.is_mappable(source, target),
-            compilation.been_used(target),
-            neg(compilation.not_mappable(source, target)),
-            neg(compilation.new_item(source)),
-        ]
-    )
+    def compile(self, **kwargs: Any) -> Tuple[PDDL, List[Transform]]:
+        used_labels_in_memory = self.construct_state_predicates(**kwargs)
 
-    add_effect_list.extend(
-        [
-            compilation.known(
-                target,
-                compilation.constant_map[MemoryState.KNOWN.value],
-            ),
-            compilation.mapped_to(source, target),
-            compilation.mapped(source),
-        ]
-    )
+        debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
+        slot_options: Set[SlotOptions] = set(kwargs["slot_options"])
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
 
-    del_effect_list.extend(
-        [
-            compilation.been_used(target),
-            compilation.not_usable(target),
-        ]
-    )
+        use_given_operators_only: bool = kwargs.get("use_given_operators_only", False)
 
-    return step_predicate, land(*precondition_list)
+        compile_operators(self, **kwargs)
+        compile_confirmation(self, **kwargs)
+        add_extra_objects(self, **kwargs)
 
+        if len(slot_options) > 1:
+            compile_new_object_maps(self, **kwargs)
+            get_goodness_map(self)
 
-def add_instantiated_operation(
-    compilation: Any,
-    step: Step,
-    index: int,
-    goal_predicates: Set[Any],
-    precondition_list: List[Any],
-    add_effect_list: List[Any],
-    del_effect_list: List[Any],
-    **kwargs: Any,
-) -> Tuple[Optional[Atom], CompoundFormula]:
-    flow_definition: FlowDefinition = kwargs["flow_definition"]
+        if SlotOptions.higher_cost in slot_options:
+            compile_higher_cost_slots(self, **kwargs)
 
-    repeat_index = get_index_of_interest(compilation, step, flow_definition, index)
-    step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
+        if SlotOptions.last_resort in slot_options:
+            compile_last_resort_slots(self, **kwargs)
 
-    compression_option: bool = kwargs.get("compress", False)
+        if SlotOptions.all_together in slot_options:
+            compile_all_together(self, **kwargs)
 
-    must_know_list: List[str] = list()
-    optional_know_list: List[str] = list()
+        compile_declared_mappings(self, **kwargs)
 
-    if step_predicate:
-        if compression_option:
-            goal_predicates.add(step_predicate)
-        else:
-            precondition_list.append(neg(step_predicate))
+        if MappingOptions.ignore_types not in set(kwargs["mapping_options"]):
+            compile_typed_mappings(self, **kwargs)
 
-        add_effect_list.append(step_predicate)
+        compile_goals(self, **kwargs)
+        compile_manifest_constraints(self)
+        used_labels = compile_history(self, **kwargs)
 
-        operator: OperatorDefinition = next(
-            filter(lambda x: x.name == step.name, compilation.flow_definition.operators)
-        )
+        used_labels_in_memory.extend(used_labels)
 
-        for i, param in enumerate(step.parameters):
-            add_to_condition_list_pre_check(compilation, step.parameter(i))
-            add_effect_list.append(compilation.been_used(compilation.constant_map[step.parameter(i)]))
+        if NL2FlowOptions.label_production in optimization_options:
+            if use_given_operators_only:
+                for label_index in range(0, MAX_LABELS + 1):
+                    temp_label = get_token_predicate_name(index=label_index, token="var")
 
-        for o_input in operator.inputs:
-            for param in o_input.parameters:
-                add_to_condition_list_pre_check(compilation, param)
-
-                if isinstance(param, Parameter):
-                    if param.required:
-                        must_know_list.append(param.item_id)
-                    else:
-                        optional_know_list.append(param.item_id)
-
-                else:
-                    must_know_list.append(param)
-
-        if step.label:
-            precondition_list.append(compilation.available(compilation.constant_map[step.label]))
-            del_effect_list.append(compilation.available(compilation.constant_map[step.label]))
-            add_effect_list.append(
-                compilation.assigned_to(compilation.constant_map[step.name], compilation.constant_map[step.label])
-            )
-
-        outputs = operator.outputs[0]
-        for o_output in outputs.outcomes:
-            for param in o_output.parameters:
-                add_to_condition_list_pre_check(compilation, param)
-
-                if isinstance(param, Parameter):
-                    param = param.item_id
-
-                del_effect_list.append(compilation.mapped(compilation.constant_map[param]))
-                add_effect_list.extend(
-                    [
-                        compilation.free(compilation.constant_map[param]),
-                        compilation.known(
-                            compilation.constant_map[param],
-                            compilation.constant_map[MemoryState.KNOWN.value],
-                        ),
-                    ]
-                )
-
-                if step.label:
-                    add_effect_list.append(
-                        compilation.label_tag(compilation.constant_map[param], compilation.constant_map[step.label])
-                    )
-
-        # DOES NOT SCALE
-        # TODO: https://github.com/IBM/nl2flow/issues/130
-        if operator.max_try > 1:
-            optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-            prev_step_predicate = get_predicate_from_step(compilation, step, repeat_index - 1, **kwargs)
-
-            if NL2FlowOptions.allow_retries in optimization_options:
-                precondition_list.extend(
-                    [
-                        prev_step_predicate,
-                        compilation.connected(
-                            compilation.constant_map[operator.name],
-                            compilation.constant_map[f"try_level_{repeat_index}"],
-                            compilation.constant_map[f"try_level_{repeat_index+1}"],
-                        ),
-                    ]
-                )
-
-    precondition = merge_optional_preconditions(
-        compilation,
-        must_know_list,
-        optional_know_list,
-        precondition_list,
-    )
-
-    return step_predicate, precondition
-
-
-def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
-    optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
-    compression_option: bool = kwargs.get("compress", False)
-
-    if NL2FlowOptions.multi_instance in optimization_options:
-        raise NotImplementedError
-
-    goal_predicates = set()
-
-    for index, step in enumerate(compilation.flow_definition.reference.plan):
-        pre_token_predicate = get_token_predicate(compilation, index)
-        post_token_predicate = get_token_predicate(compilation, index + 1)
-
-        precondition_list = [pre_token_predicate]
-        add_effect_list = [post_token_predicate]
-        del_effect_list: List[Any] = []
-
-        if step.label:
-            if step.label not in compilation.constant_map:
-                add_to_condition_list_pre_check(
-                    compilation, MemoryItem(item_id=step.label, item_type=TypeOptions.LABEL.value)
-                )
-
-        if not compression_option:
-            goal_predicates.add(post_token_predicate)
-            add_untokenize_main(compilation, index, step, precondition_list, add_effect_list)
-
-        if isinstance(step, Step):
-            action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
-
-            if step.name == BasicOperations.SLOT_FILLER.value:
-                raise NotImplementedError
-
-            elif step.name == BasicOperations.MAPPER.value:
-                action_name = (
-                    f"{action_name}{PARAMETER_DELIMITER}{step.parameter(0)}{PARAMETER_DELIMITER}{step.parameter(1)}"
-                )
-
-                step_predicate, precondition = add_instantiated_map(
-                    compilation,
-                    step,
-                    index,
-                    goal_predicates,
-                    precondition_list,
-                    add_effect_list,
-                    del_effect_list,
-                    post_token_predicate,
-                    **kwargs,
-                )
-
-            elif step.name == BasicOperations.CONFIRM.value:
-                raise NotImplementedError
+                    if temp_label not in used_labels_in_memory:
+                        self.init.add(self.available(self.constant_map[temp_label]))
 
             else:
-                step_predicate, precondition = add_instantiated_operation(
-                    compilation,
-                    step,
-                    index,
-                    goal_predicates,
-                    precondition_list,
-                    add_effect_list,
-                    del_effect_list,
-                    **kwargs,
-                )
+                label_0 = get_token_predicate_name(index=0, token="var")
+                self.init.add(self.available(self.constant_map[label_0]))
 
-            if step.label:
-                action_name = f"{action_name}{PARAMETER_DELIMITER}{step.label}"
+                for label_index in range(1, MAX_LABELS + 1):
+                    temp_label = get_token_predicate_name(index=label_index, token="var")
 
-            if step_predicate:
-                compilation.problem.action(
-                    action_name,
-                    parameters=[],
-                    precondition=precondition,
-                    effects=[fs.AddEffect(add) for add in add_effect_list]
-                    + [fs.DelEffect(del_e) for del_e in del_effect_list],
-                    cost=iofs.AdditiveActionCost(
-                        compilation.problem.language.constant(
-                            CostOptions.UNIT.value + len(step.parameters),
-                            compilation.problem.language.get_sort("Integer"),
+                    if temp_label not in used_labels_in_memory:
+                        label_0 = temp_label
+                        break
+
+                self.init.add(self.available(self.constant_map[label_0]))
+
+                for label in range(1, MAX_LABELS + 1):
+                    label_name = get_token_predicate_name(index=label, token="var")
+                    previous_label = get_token_predicate_name(index=label - 1, token="var")
+
+                    if label_name not in used_labels_in_memory:
+                        self.init.add(
+                            self.label_ladder(self.constant_map[previous_label], self.constant_map[label_name])
                         )
+
+                compile_label_maker(self)
+
+        if debug_flag == DebugFlag.TOKENIZE:
+            compile_reference_tokenize(self, flow_definition=self.flow_definition, **kwargs)
+        elif debug_flag == DebugFlag.DIRECT:
+            compile_reference_basic(self, flow_definition=self.flow_definition, **kwargs)
+
+        self.init.set(self.cost(), 0)
+        self.problem.init = self.init
+
+        writer = FstripsWriter(self.problem)
+        domain = writer.print_domain(constant_objects=list(self.constant_map.values())).replace(" :numeric-fluents", "")
+        problem = writer.print_instance(constant_objects=list(self.constant_map.values()))
+
+        return PDDL(domain=domain, problem=problem), self.cached_transforms
+
+    def construct_state_predicates(self, **kwargs: Any) -> List[str]:
+        debug_flag: Optional[DebugFlag] = kwargs.get("debug_flag", None)
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+
+        reserved_types = [
+            TypeOptions.ROOT,
+            TypeOptions.OPERATOR,
+            TypeOptions.HAS_DONE,
+            TypeOptions.STATUS,
+            TypeOptions.MEMORY,
+            TypeOptions.LABEL,
+        ]
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            reserved_types.append(TypeOptions.RETRY)
+
+        for reserved_type in reserved_types:
+            add_type_item_to_type_map(self, TypeItem(name=reserved_type.value, parent=None))
+
+        reserved_type_map = {
+            HasDoneState: TypeOptions.HAS_DONE,
+            ConstraintState: TypeOptions.STATUS,
+            MemoryState: TypeOptions.MEMORY,
+        }
+
+        for item in reserved_type_map:
+            for item_state in item:
+                add_memory_item_to_constant_map(
+                    self,
+                    MemoryItem(
+                        item_id=str(item_state.value),
+                        item_type=reserved_type_map[item].value,
                     ),
                 )
 
-        elif isinstance(step, Constraint):
-            raise NotImplementedError
-        else:
-            raise ValueError(f"Invalid reference object: {step}")
+        if NL2FlowOptions.label_production in optimization_options:
+            self.construct_labels()
 
-    if compilation.problem.goal is None or isinstance(compilation.problem.goal, Tautology):
-        new_goal = land(*goal_predicates, flat=True)
+        if debug_flag:
+            if self.flow_definition.reference is not None:
+                for index in range(len(self.flow_definition.reference.plan) + 1):
+                    set_token_predicate(self, index)
 
-    else:
-        if isinstance(compilation.problem.goal, Atom):
-            sub_formulas = [compilation.problem.goal]
-        else:
-            sub_formulas = list(compilation.problem.goal.subformulas)
+            if debug_flag == DebugFlag.DIRECT:
+                init_token = get_token_predicate(self, index=0)
+                self.init.add(init_token)
 
-        sub_formulas.extend(goal_predicates)
-        new_goal = land(*sub_formulas, flat=True)
+            if debug_flag == DebugFlag.TOKENIZE:
+                self.ready_for_token = self.lang.predicate("ready_for_token")
+                self.has_asked = self.lang.predicate(
+                    "has_asked",
+                    self.type_map[TypeOptions.ROOT.value],
+                )
 
-    compilation.problem.goal = new_goal
+        self.has_done = self.lang.predicate(
+            "has_done",
+            self.type_map[TypeOptions.OPERATOR.value],
+            self.type_map[TypeOptions.HAS_DONE.value],
+        )
+
+        self.been_used = self.lang.predicate(
+            "been_used",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.new_item = self.lang.predicate("new_item", self.type_map[TypeOptions.ROOT.value])
+
+        self.known = self.lang.predicate(
+            "known",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.MEMORY.value],
+        )
+
+        self.not_slotfillable = self.lang.predicate("not_slotfillable", self.type_map[TypeOptions.ROOT.value])
+
+        self.slot_goodness = self.lang.function(
+            "slot_goodness",
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
+
+        self.is_mappable = self.lang.predicate(
+            "is_mappable",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.not_mappable = self.lang.predicate(
+            "not_mappable",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.mapped = self.lang.predicate(
+            "mapped",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.not_usable = self.lang.predicate(
+            "not_usable",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.mapped_to = self.lang.predicate(
+            "mapped_to",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.map_affinity = self.lang.function(
+            "affinity",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.ROOT.value],
+            self.lang.Real,
+        )
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            self.connected = self.lang.predicate(
+                "connected",
+                self.type_map[TypeOptions.OPERATOR.value],
+                self.type_map[TypeOptions.RETRY.value],
+                self.type_map[TypeOptions.RETRY.value],
+            )
+
+        self.free = self.lang.predicate(
+            "free",
+            self.type_map[TypeOptions.ROOT.value],
+        )
+
+        self.done_goal_pre = self.lang.predicate("done_goal_pre")
+        self.done_goal_post = self.lang.predicate("done_goal_post")
+
+        for type_item in self.flow_definition.type_hierarchy:
+            add_type_item_to_type_map(self, type_item)
+
+        used_labels = self.construct_memory(**kwargs)
+
+        if NL2FlowOptions.allow_retries in optimization_options:
+            add_retry_states(self)
+
+        return used_labels
+
+    def construct_labels(self) -> None:
+        self.available = self.lang.predicate(
+            "available",
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        self.label_ladder = self.lang.predicate(
+            "label_ladder",
+            self.type_map[TypeOptions.LABEL.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        self.assigned_to = self.lang.predicate(
+            "assigned_to",
+            self.type_map[TypeOptions.OPERATOR.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        self.label_tag = self.lang.predicate(
+            "label_tag",
+            self.type_map[TypeOptions.ROOT.value],
+            self.type_map[TypeOptions.LABEL.value],
+        )
+
+        memory_label_name = get_token_predicate_name(index=0, token="varm")
+        add_memory_item_to_constant_map(
+            self,
+            MemoryItem(item_id=memory_label_name, item_type=TypeOptions.LABEL.value),
+        )
+
+        self.init.add(self.available(self.constant_map[memory_label_name]))
+
+        for label in range(0, MAX_LABELS + 1):
+            label_name = get_token_predicate_name(index=label, token="var")
+            add_memory_item_to_constant_map(
+                self,
+                MemoryItem(item_id=label_name, item_type=TypeOptions.LABEL.value),
+            )
+
+    def construct_memory(self, **kwargs: Any) -> List[str]:
+        optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+        used_labels = []
+
+        for memory_item in self.flow_definition.memory_items:
+            add_memory_item_to_constant_map(self, memory_item)
+
+            if memory_item.item_state != MemoryState.UNKNOWN:
+                self.init.add(
+                    self.known(
+                        self.constant_map[memory_item.item_id],
+                        self.constant_map[memory_item.item_state.value],
+                    )
+                )
+
+                if NL2FlowOptions.label_production in optimization_options:
+                    if memory_item.label:
+                        used_labels.append(memory_item.label)
+
+                    self.init.add(
+                        self.label_tag(
+                            self.constant_map[memory_item.item_id],
+                            self.constant_map[memory_item.label or get_token_predicate_name(index=0, token="var")],
+                        )
+                    )
+
+        return used_labels
