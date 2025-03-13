@@ -1,11 +1,14 @@
 import tarski.fstrips as fs
+
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg
 from typing import Set, Any, Optional
+from copy import deepcopy
 
 from nl2flow.debug.schemas import DebugFlag
 from nl2flow.compile.schemas import FlowDefinition, MemoryItem
 from nl2flow.compile.basic_compilations.utils import is_this_a_datum, add_memory_item_to_constant_map
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate_name
 from nl2flow.compile.options import (
     TypeOptions,
     LifeCycleOptions,
@@ -94,29 +97,48 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
             fs.DelEffect(compilation.not_usable(y)),
         ]
 
-        compilation.problem.action(
-            f"{BasicOperations.MAPPER.value}--free-alt",
-            parameters=parameter_list,
-            precondition=land(*precondition_list, compilation.free(x), flat=True),
-            effects=effect_list + [fs.AddEffect(compilation.free(y))],
-            cost=iofs.AdditiveActionCost(
-                compilation.problem.language.constant(
-                    CostOptions.INTERMEDIATE.value,
-                    compilation.problem.language.get_sort("Integer"),
-                )
-            ),
-        )
-
         if debug_flag == DebugFlag.TOKENIZE:
             precondition_list.append(compilation.ready_for_token())
             effect_list.append(fs.DelEffect(compilation.ready_for_token()))
 
         if NL2FlowOptions.label_production in optimization_options:
             label_param = compilation.lang.variable("l", compilation.type_map[TypeOptions.LABEL.value])
+            token_name = get_token_predicate_name(index=0, token="var")
+
             parameter_list.append(label_param)
 
             precondition_list.append(compilation.label_tag(x, label_param))
             effect_list.append(fs.AddEffect(compilation.label_tag(y, label_param)))
+
+            tmp_precondition_list = deepcopy(precondition_list)
+            tmp_effect_list = deepcopy(effect_list)
+
+            tmp_precondition_list.append(label_param == compilation.constant_map[token_name])
+
+            compilation.problem.action(
+                f"{BasicOperations.MAPPER.value}--{token_name}",
+                parameters=parameter_list,
+                precondition=land(*tmp_precondition_list, flat=True),
+                effects=tmp_effect_list,
+                cost=iofs.AdditiveActionCost(compilation.map_affinity(x, y)),
+            )
+
+            precondition_list.append(neg(label_param == compilation.constant_map[token_name]))
+            effect_list.append(fs.DelEffect(compilation.label_tag(x, label_param)))
+
+        else:
+            compilation.problem.action(
+                f"{BasicOperations.MAPPER.value}--free-alt",
+                parameters=parameter_list,
+                precondition=land(*precondition_list, compilation.free(x), flat=True),
+                effects=effect_list + [fs.AddEffect(compilation.free(y))],
+                cost=iofs.AdditiveActionCost(
+                    compilation.problem.language.constant(
+                        CostOptions.INTERMEDIATE.value,
+                        compilation.problem.language.get_sort("Integer"),
+                    )
+                ),
+            )
 
         compilation.problem.action(
             BasicOperations.MAPPER.value,
