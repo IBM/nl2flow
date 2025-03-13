@@ -1,6 +1,6 @@
 [project]
 name = "nl2flow"
-version = "0.0.8"
+version = "0.0.9"
 description = "NL2Flow: A PDDL interface to flow construction"
 readme = "README.md"
 requires-python = ">=3.11"

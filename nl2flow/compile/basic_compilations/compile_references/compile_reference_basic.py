@@ -22,6 +22,16 @@ from nl2flow.compile.basic_compilations.compile_history import (
 )
 
 
+def is_there_memory(
+    flow_definition: FlowDefinition,
+) -> bool:
+    for item in flow_definition.memory_items:
+        if item.item_state == MemoryState.KNOWN:
+            return True
+
+    return False
+
+
 def add_untokenize_main(
     compilation: Any,
     index: int,
@@ -35,6 +45,13 @@ def add_untokenize_main(
         else add_effect_list
     )
 
+    if step.name.startswith(BasicOperations.MAPPER.value) and step.label:
+        temp_add_effect_list.append(
+            compilation.label_tag(
+                compilation.constant_map[step.parameters[0].item_id], compilation.constant_map[step.label]
+            )
+        )
+
     compilation.problem.action(
         f"{RestrictedOperations.UNTOKENIZE.value}_{index}_{step.name}",
         parameters=[],
@@ -42,7 +59,7 @@ def add_untokenize_main(
         effects=[fs.AddEffect(add) for add in temp_add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                5 * CostOptions.VERY_HIGH.value,
+                CostOptions.VERY_HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -114,17 +131,15 @@ def add_instantiated_map(
 
     step_predicate = get_predicate_from_step(compilation, step, **kwargs)
 
-    goal_predicates.add(step_predicate)
+    # goal_predicates.add(step_predicate)
 
     source = compilation.constant_map[step.parameter(0)]
     target = compilation.constant_map[step.parameter(1)]
 
     if step.label:
-        precondition_list.append(
-            compilation.label_tag(source, compilation.constant_map[step.label]),
-        )
-
+        precondition_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
         add_effect_list.append(compilation.label_tag(target, compilation.constant_map[step.label]))
+        del_effect_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
 
     if not compression_option:
         add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
