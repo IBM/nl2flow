@@ -5,7 +5,8 @@ from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.schemas import ClassicalPlan
 from nl2flow.compile.flow import Flow
-from nl2flow.compile.schemas import ClassicalPlanReference
+from nl2flow.compile.options import BasicOperations
+from nl2flow.compile.schemas import ClassicalPlanReference, Step
 from nl2flow.debug.schemas import Report, SolutionQuality, StepDiff, DiffAction, DebugFlag
 from nl2flow.printers.codelike import CodeLikePrint
 from nl2flow.printers.driver import Printer
@@ -103,6 +104,11 @@ class BasicDebugger(Debugger):
             new_report.plan_diff_str = self.generate_plan_diff(printer, best_plan, list_of_tokens, **kwargs)
             new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str, **kwargs)
 
-            new_report.determination = len([d for d in new_report.plan_diff_obj if d.diff_type is not None]) == 0
+            new_report.determination = True
+
+            for d in new_report.plan_diff_obj:
+                if d.diff_type is not None and isinstance(d.step, Step) and not BasicOperations.is_basic(d.step.name):
+                    new_report.determination = False
+                    break
 
         return new_report
