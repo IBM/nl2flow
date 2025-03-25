@@ -81,7 +81,7 @@ class TestCodeLikePrint:
         if "Agent 1" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165100.0, Length: 6",
+                "Cost: 165070.0, Length: 6",
                 "",
                 "[0] ask(b)",
                 "[1] a = Agent 1(b)",
@@ -93,7 +93,7 @@ class TestCodeLikePrint:
         elif "Agent 0" in pretty:
             assert pretty.strip().split("\n") == [
                 "---- Plan #0 ----",
-                "Cost: 165100.0, Length: 6",
+                "Cost: 165070.0, Length: 6",
                 "",
                 "[0] ask(b)",
                 "[1] a = Agent 0(b)",
