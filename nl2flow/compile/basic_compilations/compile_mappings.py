@@ -56,7 +56,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
                 compilation.init.add(compilation.is_mappable(source, target))
                 compilation.init.set(
                     compilation.map_affinity(source, target),
-                    int((2 - mappable_item.probability) * CostOptions.VERY_LOW.value),
+                    int((2 - mappable_item.probability) * CostOptions.EDIT.value),
                 )
 
             if MappingOptions.transitive in mapping_options:
@@ -67,7 +67,7 @@ def compile_declared_mappings(compilation: Any, **kwargs: Any) -> None:
                     compilation.init.add(compilation.is_mappable(target, source))
                     compilation.init.set(
                         compilation.map_affinity(target, source),
-                        int((2 - mappable_item.probability) * CostOptions.VERY_LOW.value),
+                        int((2 - mappable_item.probability) * CostOptions.EDIT.value),
                     )
 
         x = compilation.lang.variable("x", compilation.type_map[TypeOptions.ROOT.value])
@@ -215,7 +215,7 @@ def compile_typed_mappings(compilation: Any, **kwargs: Any) -> None:
                 effects=effect_list,
                 cost=iofs.AdditiveActionCost(
                     compilation.problem.language.constant(
-                        CostOptions.LOW.value,
+                        CostOptions.VERY_LOW.value,
                         compilation.problem.language.get_sort("Integer"),
                     )
                 ),
