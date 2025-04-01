@@ -1,6 +1,6 @@
 [project]
 name = "nl2flow"
-version = "0.0.9"
+version = "0.0.10"
 description = "NL2Flow: A PDDL interface to flow construction"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -50,7 +50,7 @@ classifiers = [
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = [
-  "pydantic>=2.4.2",
+  "pydantic==2.10.6",
   "pyyaml",
   "tarski-tmp",
   "StrEnum",
