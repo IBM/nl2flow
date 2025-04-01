@@ -125,13 +125,12 @@ def add_instantiated_map(
     **kwargs: Any,
 ) -> Tuple[Optional[Atom], CompoundFormula]:
     compression_option: bool = kwargs.get("compress", False)
+    allow_remaps: bool = kwargs.get("allow_remaps", False)
 
     for item in step.parameters[:2]:
         add_to_condition_list_pre_check(compilation, item)
 
     step_predicate = get_predicate_from_step(compilation, step, **kwargs)
-
-    # goal_predicates.add(step_predicate)
 
     source = compilation.constant_map[step.parameter(0)]
     target = compilation.constant_map[step.parameter(1)]
@@ -139,7 +138,9 @@ def add_instantiated_map(
     if step.label:
         precondition_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
         add_effect_list.append(compilation.label_tag(target, compilation.constant_map[step.label]))
-        del_effect_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
+
+        if not allow_remaps:
+            del_effect_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
 
     if not compression_option:
         add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
