@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from types import ModuleType
 from typing import List, Optional
 from nl2flow.plan.schemas import PlannerResponse
@@ -14,6 +16,8 @@ from nl2flow.plan.planner import Planner
 from nl2flow.printers.codelike import CodeLikePrint
 from nl2flow.printers.verbalize import VerbalizePrint
 from profiler.common_helpers.time_helper import get_current_time_in_millisecond
+
+project_root_path = Path(__file__).parent.parent.parent.parent.resolve()
 
 
 def generate_dataset_with_info_generator(
@@ -33,6 +37,9 @@ def generate_dataset_with_info_generator(
             should_objects_known_in_memory=sample.agent_info_generator_input.should_objects_known_in_memory,
         )
         pddl, _ = flow.compile_to_pddl()
+
+        with open(os.path.join(project_root_path, "pddl.json"), "w") as f:
+            f.write(pddl.model_dump_json())
 
         planner_time_start = get_current_time_in_millisecond()
         planner_response = flow.plan_it(planner) if should_plan else PlannerResponse()

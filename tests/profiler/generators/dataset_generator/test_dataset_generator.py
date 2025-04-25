@@ -15,7 +15,7 @@ class TestDatasetGenerator:
         agent_info_generator_input: AgentInfoGeneratorInput = AgentInfoGeneratorInput(
             num_agents=5,
             num_var=40,
-            num_input_parameters=4,
+            num_input_parameters=5,
             num_samples=num_samples,
             num_goal_agents=1,
             proportion_coupled_agents=0.5,
