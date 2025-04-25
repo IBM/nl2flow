@@ -392,11 +392,6 @@ def get_agents_with_variables(
         agent_infos, position_item_coupled, variables_remaining_deque
     )
 
-    # check if any slot-fillable variables remains
-    if len(variables_remaining_deque) > 0 and variables_remaining_deque[0].slot_fillable:
-        # slot-fillable variable should not be used for available_data
-        return [], available_data
-
     # use remaining variables for available_data
     available_data = list(
         map(
