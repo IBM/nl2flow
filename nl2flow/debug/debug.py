@@ -109,9 +109,10 @@ class BasicDebugger(Debugger):
                 reference = ClassicalPlan.from_reference(plan)
 
                 new_kwargs = deepcopy(kwargs)
-                del new_kwargs["show_output"]
+                new_kwargs["show_output"] = False
+                new_kwargs["line_numbers"] = False
 
-                list_of_tokens = printer.pretty_print_plan(reference, show_output=False, **new_kwargs).split("\n")
+                list_of_tokens = printer.pretty_print_plan(reference, **new_kwargs).split("\n")
 
             new_report.plan_diff_str = self.generate_plan_diff(printer, best_plan, list_of_tokens, **kwargs)
             new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str, **kwargs)

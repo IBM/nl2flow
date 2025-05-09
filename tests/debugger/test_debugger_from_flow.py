@@ -69,10 +69,7 @@ class TestBasic:
         stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(self.tokens)])
         planner_response = self.flow.plan_it(PLANNER)
         assert any(
-            [
-                stringify_tokens == CodeLikePrint.pretty_print_plan(plan, line_numbers=True)
-                for plan in planner_response.list_of_plans
-            ]
+            [stringify_tokens == CodeLikePrint.pretty_print_plan(plan) for plan in planner_response.list_of_plans]
         )
 
     def test_token_parsing(self) -> None:
