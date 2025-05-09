@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pydantic import BaseModel
 from typing import List, Any, Optional, Union
-from nl2flow.compile.schemas import Constraint
+from nl2flow.compile.schemas import Constraint, ClassicalPlanReference, Step, Parameter
 
 
 class Action(BaseModel):
@@ -10,13 +10,35 @@ class Action(BaseModel):
     inputs: List[str] = []
     outputs: List[str] = []
 
+    @classmethod
+    def from_reference(cls, reference: Step) -> Action:
+        inputs = (
+            reference.maps
+            if len(reference.maps) > 0
+            else [item.item_id if isinstance(item, Parameter) else item for item in reference.parameters]
+        )
+
+        return Action(
+            name=reference.name,
+            inputs=inputs,
+        )
+
 
 class ClassicalPlan(BaseModel):
     cost: float = 0.0
     length: float = 0.0
     metadata: Optional[Any] = None
-    reference: List[str]
+    reference: List[str] = []
     plan: List[Union[Action, Constraint]] = []
+
+    @classmethod
+    def from_reference(cls, reference: ClassicalPlanReference) -> ClassicalPlan:
+        new_plan = [Action.from_reference(item) if isinstance(item, Step) else item for item in reference.plan]
+
+        return ClassicalPlan(
+            plan=new_plan,
+            length=len(new_plan),
+        )
 
 
 class RawPlannerResult(BaseModel):

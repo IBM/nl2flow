@@ -69,7 +69,10 @@ class TestBasic:
         stringify_tokens = "\n".join([f"[{index}] {token}" for index, token in enumerate(self.tokens)])
         planner_response = self.flow.plan_it(PLANNER)
         assert any(
-            [stringify_tokens == CodeLikePrint.pretty_print_plan(plan) for plan in planner_response.list_of_plans]
+            [
+                stringify_tokens == CodeLikePrint.pretty_print_plan(plan, line_numbers=True)
+                for plan in planner_response.list_of_plans
+            ]
         )
 
     def test_token_parsing(self) -> None:
@@ -228,22 +231,6 @@ class TestBasic:
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 11, "1 edits"
         assert report.determination is False, "Reference plan is not sound"
 
-    def test_disorder(self) -> None:
-        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
-
-        self.flow.add(goal)
-
-        tokens = [
-            "ask(i1)",
-            "ask(i2)",
-            # Should have been: "o1, o2, y = agent_e(i1, i2)"
-            "o1, y, o2 = agent_e(i2, i1)",
-            "agent_d(y)",
-        ]
-
-        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND)
-        assert report.determination is None
-
     def test_custom_formatter(self) -> None:
         alternative_tokens = [
             "agent_a() -> a_1",
@@ -280,3 +267,75 @@ class TestBasic:
         print(f"\n\n{diff_string}")
 
         assert report.determination
+
+    def test_disorder_in_input(self) -> None:
+        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
+        self.flow.add(goal)
+
+        tokens = [
+            "ask(i1)",
+            "ask(i2)",
+            # Should have been: "o1, o2, y = agent_e(i1, i2)"
+            "o1, o2, y = agent_e(i2, i1)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND)
+        assert report.determination is None
+
+    def test_disorder_with_output(self) -> None:
+        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
+        self.flow.add(goal)
+
+        tokens = [
+            "ask(i1)",
+            "ask(i2)",
+            # Should have been: "o1, o2, y = agent_e(i1, i2)"
+            "o1, y, o2 = agent_e(i1, i2)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert report.determination is False
+
+    def test_disorder_without_output(self) -> None:
+        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
+        self.flow.add(goal)
+
+        tokens = [
+            "ask(i1)",
+            "ask(i2)",
+            "agent_e(i1, i2)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND, show_output=False)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert report.determination is True
+
+    def test_disorder_ignore_output(self) -> None:
+        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
+        self.flow.add(goal)
+
+        tokens = [
+            "ask(i1)",
+            "ask(i2)",
+            # Should have been: "o1, o2, y = agent_e(i1, i2)"
+            "o1, y, o2 = agent_e(i1, i2)",
+            # NOTE: This plan will fail while executing because y would have taken the value intended for o2
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND, show_output=None)
+
+        diff_string = "\n".join(report.plan_diff_str)
+        print(f"\n\n{diff_string}")
+
+        assert report.determination is True

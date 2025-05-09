@@ -12,7 +12,7 @@ class CodeLikePrint(Printer):
     @classmethod
     def pretty_print_plan(cls, plan: Plan, **kwargs: Any) -> str:
         show_output: bool = kwargs.get("show_output", True)
-        line_numbers: bool = kwargs.get("line_numbers", True)
+        line_numbers: bool = kwargs.get("line_numbers", False)
         collapse_maps: bool = kwargs.get("collapse_maps", False)
         start_at: int = kwargs.get("start_at", 0)
 
