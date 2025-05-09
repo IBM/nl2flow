@@ -39,6 +39,10 @@ class TestBasic:
         agent_d = Operator(name="agent_d")
         agent_d.add_input(SignatureItem(parameters="y"))
 
+        agent_e = Operator(name="agent_e")
+        agent_e.add_input(SignatureItem(parameters=["i1", "i2"]))
+        agent_e.add_output(SignatureItem(parameters=["o1", "o2", "y"]))
+
         goal = GoalItems(goals=GoalItem(goal_name="agent_d"))
         self.flow.add(
             [
@@ -46,6 +50,7 @@ class TestBasic:
                 agent_b,
                 agent_c,
                 agent_d,
+                agent_e,
                 goal,
             ]
         )
@@ -222,6 +227,22 @@ class TestBasic:
 
         assert len([d for d in report.plan_diff_obj if d.diff_type is not None]) == 11, "1 edits"
         assert report.determination is False, "Reference plan is not sound"
+
+    def test_disorder(self) -> None:
+        goal = GoalItems(goals=[GoalItem(goal_name="agent_d"), GoalItem(goal_name="agent_e")])
+
+        self.flow.add(goal)
+
+        tokens = [
+            "ask(i1)",
+            "ask(i2)",
+            # Should have been: "o1, o2, y = agent_e(i1, i2)"
+            "o1, y, o2 = agent_e(i2, i1)",
+            "agent_d(y)",
+        ]
+
+        report = self.debugger.debug(tokens, report_type=SolutionQuality.SOUND)
+        assert report.determination is None
 
     def test_custom_formatter(self) -> None:
         alternative_tokens = [
