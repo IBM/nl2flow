@@ -7,12 +7,12 @@ license = {file = "LICENSE"}
 
 authors = [
   {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
-  {name = "Jung koo Kang"},
+  {name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com"},
 ]
 
 maintainers = [
   {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
-  {name = "Jung koo Kang", email = "jungkoo.kang@gmail.com"},
+  {name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com"},
 ]
 
 keywords = [
