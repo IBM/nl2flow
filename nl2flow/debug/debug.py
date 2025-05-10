@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List, Any, Optional
 from difflib import Differ
+from copy import deepcopy
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.schemas import ClassicalPlan
@@ -100,6 +101,18 @@ class BasicDebugger(Debugger):
 
         if len(planner_response.list_of_plans) > 0:
             best_plan = planner_response.best_plan
+
+            show_output: Optional[bool] = kwargs.get("show_output", None)
+
+            if "show_output" in kwargs and show_output is None:
+                plan = printer.parse_tokens(list_of_tokens, **kwargs)
+                reference = ClassicalPlan.from_reference(plan)
+
+                new_kwargs = deepcopy(kwargs)
+                new_kwargs["show_output"] = False
+                new_kwargs["line_numbers"] = False
+
+                list_of_tokens = printer.pretty_print_plan(reference, **new_kwargs).split("\n")
 
             new_report.plan_diff_str = self.generate_plan_diff(printer, best_plan, list_of_tokens, **kwargs)
             new_report.plan_diff_obj = self.generate_plan_diff_obj(printer, new_report.plan_diff_str, **kwargs)
