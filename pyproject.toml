@@ -1,6 +1,5 @@
 [project]
 name = "nl2flow"
-version = "0.0.11"
 description = "NL2Flow: A PDDL interface to flow construction"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,7 +12,7 @@ authors = [
 
 maintainers = [
   {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
-  {name = "Jung koo Kang"},
+  {name = "Jung koo Kang", email = "jungkoo.kang@gmail.com"},
 ]
 
 keywords = [
@@ -59,6 +58,7 @@ dependencies = [
   "haikunator",
   "nestful-wrapper"
 ]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
@@ -95,6 +95,10 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["nl2flow*", "profiler*"]
 
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+write_to       = "nl2flow/__version__.py"
+
 # If there are data files included in your packages that need to be
 # installed, specify them here.
 # package-data = {"sample" = ["*.dat"]}
@@ -104,7 +108,6 @@ include = ["nl2flow*", "profiler*"]
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
 requires = ["setuptools>=43.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
-
 
 [tool.black]
 line-length = 120
