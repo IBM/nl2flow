@@ -12,7 +12,8 @@ import tempfile
 
 
 class Kstar(Planner, FDDerivedPlanner):
-    def __call_to_planner(self, pddl: PDDL) -> RawPlannerResult:
+    @classmethod
+    def __call_to_planner(cls, pddl: PDDL) -> RawPlannerResult:
         with tempfile.NamedTemporaryFile() as domain_temp, tempfile.NamedTemporaryFile() as problem_temp:
             domain_file = Path(tempfile.gettempdir()) / domain_temp.name
             problem_file = Path(tempfile.gettempdir()) / problem_temp.name
@@ -26,7 +27,6 @@ class Kstar(Planner, FDDerivedPlanner):
             planner_result = planners.plan_unordered_topq(
                 domain_file=domain_file,
                 problem_file=problem_file,
-                timeout=self.timeout,
                 quality_bound=QUALITY_BOUND,
                 number_of_plans_bound=NUM_PLANS,
             )
