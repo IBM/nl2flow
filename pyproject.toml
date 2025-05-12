@@ -1,46 +1,17 @@
 [project]
-name = "nl2flow"
-description = "NL2Flow: A PDDL interface to flow construction"
-readme = "README.md"
+name            = "nl2flow"
+description     = "NL2Flow: A PDDL interface to flow construction"
+readme          = "README.md"
 requires-python = ">=3.11"
-license = {file = "LICENSE"}
+license         = { file = "LICENSE" }
 
-authors = [
-  {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
-  {name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com"},
-]
+authors = [{ name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" }, { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }]
 
-maintainers = [
-  {name = "Tathagata Chakraborti", email = "tchakra2@ibm.com"},
-  {name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com"},
-]
+maintainers = [{ name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" }, { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }]
 
-keywords = [
-  "automated planning",
-  "natural language processing",
-  "process automation",
-  "service composition",
-  "conversational agents",
-  "generative ai",
-  "large language models",
-]
+keywords = ["automated planning", "natural language processing", "process automation", "service composition", "conversational agents", "generative ai", "large language models"]
 
-classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
-  "Intended Audience :: Developers",
-  "Intended Audience :: Science/Research",
-  "Natural Language :: English",
-  "License :: OSI Approved :: Apache Software License",
-  "Operating System :: MacOS",
-  "Operating System :: Unix",
-  "Programming Language :: Python :: 3.11",
-  "Framework :: Pydantic :: 2",
-  "Framework :: Pytest",
-  "Topic :: Scientific/Engineering :: Artificial Intelligence",
-  "Topic :: Scientific/Engineering :: Human Machine Interfaces",
-  "Topic :: Scientific/Engineering :: Information Analysis",
-  "Topic :: Software Development :: User Interfaces"
-]
+classifiers = ["Development Status :: 2 - Pre-Alpha", "Intended Audience :: Developers", "Intended Audience :: Science/Research", "Natural Language :: English", "License :: OSI Approved :: Apache Software License", "Operating System :: MacOS", "Operating System :: Unix", "Programming Language :: Python :: 3.11", "Framework :: Pydantic :: 2", "Framework :: Pytest", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Topic :: Scientific/Engineering :: Human Machine Interfaces", "Topic :: Scientific/Engineering :: Information Analysis", "Topic :: Software Development :: User Interfaces"]
 
 # This field lists other packages that your project depends on to run.
 # Any package you put here will be installed by pip when your project is
@@ -48,39 +19,18 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = [
-  "pydantic==2.10.6",
-  "pyyaml",
-  "tarski-tmp",
-  "StrEnum",
-  "kstar-planner",
-  "forbiditerative",
-  "haikunator",
-  "nestful-wrapper"
-]
-dynamic = ["version"]
+dependencies = ["pydantic==2.10.6", "pyyaml", "tarski-tmp", "StrEnum", "kstar-planner", "forbiditerative", "haikunator", "nestful-wrapper"]
+dynamic      = ["version"]
 
 [project.optional-dependencies]
-dev = [
-  "check-manifest",
-  "pytest",
-  "pytest-mock",
-  "black",
-  "pylint",
-  "flake8",
-  "pre-commit",
-  "Flake8-pyproject",
-  "coverage",
-  "pytest-mock",
-  "types-PyYAML"
-]
+dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock", "types-PyYAML"]
 
 [project.urls]
-"Homepage" = "https://github.com/IBM/nl2flow"
+"Homepage"    = "https://github.com/IBM/nl2flow"
 "Bug Reports" = "https://github.com/IBM/nl2flow/issues"
-"Funding" = "https://research.ibm.com"
+"Funding"     = "https://research.ibm.com"
 "Say Thanks!" = "https://tchakra2.com"
-"Source" = "https://github.com/IBM/nl2flow"
+"Source"      = "https://github.com/IBM/nl2flow"
 
 # The following would provide a command line executable called `sample`
 # which executes the function `main` from this package when invoked.
@@ -95,10 +45,6 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["nl2flow*", "profiler*"]
 
-[tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-write_to       = "nl2flow/__version__.py"
-
 # If there are data files included in your packages that need to be
 # installed, specify them here.
 # package-data = {"sample" = ["*.dat"]}
@@ -106,8 +52,12 @@ write_to       = "nl2flow/__version__.py"
 [build-system]
 # These are the assumed default build requirements from pip:
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
-requires = ["setuptools>=43.0.0", "wheel"]
+requires      = ["setuptools>=43.0.0", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+write_to       = "nl2flow/__version__.py"
 
 [tool.black]
 line-length = 120
@@ -128,8 +78,8 @@ exclude = '''
 '''
 
 [tool.mypy]
-python_version=3.11
-mypy_path = "src"
+python_version = 3.11
+mypy_path      = "src"
 
 show_column_numbers = true
 
@@ -141,13 +91,13 @@ ignore_missing_imports = true
 
 # be strict
 disallow_untyped_calls = true
-warn_return_any = true
-strict_optional = true
-warn_no_return = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-disallow_any_generics = true
-no_implicit_optional = true
+warn_return_any        = true
+strict_optional        = true
+warn_no_return         = true
+warn_redundant_casts   = true
+warn_unused_ignores    = true
+disallow_any_generics  = true
+no_implicit_optional   = true
 
 # Unreachable blocks have been an issue when compiling mypyc, let's try
 # to avoid 'em in the first place.
@@ -155,16 +105,16 @@ warn_unreachable = true
 
 # The following are off by default.  Flip them on if you feel adventurous.
 disallow_untyped_defs = true
-check_untyped_defs = true
+check_untyped_defs    = true
 
 [tool.pylint."MAIN"]
-py-version=3.11
+py-version = 3.11
 
 [tool.pylint."FORMAT"]
 max-line-length = 120
 
 [tool.flake8]
-extend-ignore = ["E203", "E501"]
-count = true
+extend-ignore   = ["E203", "E501"]
+count           = true
 max-line-length = 120
-max-complexity = 18
+max-complexity  = 18
