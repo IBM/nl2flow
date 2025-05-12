@@ -3,7 +3,6 @@ from typing import List, Any, Optional
 from difflib import Differ
 from copy import deepcopy
 from nl2flow.plan.planners.kstar import Kstar
-from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.schemas import ClassicalPlan
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.options import BasicOperations
@@ -26,7 +25,7 @@ class Debugger(ABC):
         list_of_tokens: List[str],
         report_type: SolutionQuality,
         debug_flag: DebugFlag = DebugFlag.TOKENIZE,
-        timeout: int = TIMEOUT,
+        timeout: Optional[int] = None,
         printer: Printer = CodeLikePrint(),
         **kwargs: Any,
     ) -> Report:
@@ -83,7 +82,7 @@ class BasicDebugger(Debugger):
         list_of_tokens: List[str],
         report_type: SolutionQuality,
         debug_flag: DebugFlag = DebugFlag.TOKENIZE,
-        timeout: int = TIMEOUT,
+        timeout: Optional[int] = None,
         printer: Printer = CodeLikePrint(),
         **kwargs: Any,
     ) -> Report:
@@ -92,7 +91,7 @@ class BasicDebugger(Debugger):
         reference_plan: ClassicalPlanReference = printer.parse_tokens(list_of_tokens, **kwargs)
         self.flow.add(reference_plan)
 
-        planner_response = self.flow.plan_it(PLANNER, debug_flag, report_type, **kwargs)
+        planner_response = self.flow.plan_it(PLANNER, debug_flag, report_type, timeout=timeout, **kwargs)
         new_report = Report(
             report_type=report_type.value,
             planner_response=planner_response,

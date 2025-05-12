@@ -1,9 +1,10 @@
 from typing import Set, List, Union, Any, Tuple, Dict, Optional
+from queue import Queue as TQueue
 from nl2flow.plan.schemas import PlannerResponse
+from nl2flow.debug.schemas import SolutionQuality, DebugFlag
 from nl2flow.compile.compilations import ClassicPDDL
 from nl2flow.compile.operators import Operator
 from nl2flow.compile.schemas import TypeItem, FlowDefinition, PDDL, ClassicalPlanReference, Transform
-from nl2flow.debug.schemas import SolutionQuality, DebugFlag
 from nl2flow.compile.options import (
     CompileOptions,
     SlotOptions,
@@ -14,6 +15,8 @@ from nl2flow.compile.options import (
     NL2FlowOptions,
     LOOKAHEAD,
 )
+
+import multiprocess as mp
 
 
 class Flow:
@@ -177,11 +180,49 @@ class Flow:
         debug_flag: Optional[DebugFlag] = None,
         report_type: Optional[SolutionQuality] = None,
         compilation_type: CompileOptions = CompileOptions.CLASSICAL,
+        timeout: Optional[int] = None,
+        queue: Optional[TQueue[PlannerResponse]] = None,
         **kwargs: Any,
     ) -> PlannerResponse:
         pddl, transforms = self.compile_to_pddl(debug_flag, report_type, compilation_type, **kwargs)
-        parsed_plans: PlannerResponse = planner.plan(pddl=pddl, flow=self, transforms=transforms, debug_flag=debug_flag)
-        return parsed_plans
+
+        if timeout is None:
+            parsed_plans: PlannerResponse = planner.plan(
+                pddl=pddl, flow=self, transforms=transforms, debug_flag=debug_flag
+            )
+
+            if queue:
+                queue.put(parsed_plans)
+
+            return parsed_plans
+
+        else:
+            q = mp.Queue()  # type: ignore
+            processes = [
+                mp.Process(
+                    target=self.plan_it,
+                    args=(
+                        planner,
+                        debug_flag,
+                        report_type,
+                        compilation_type,
+                        None,
+                        q,
+                    ),
+                    kwargs=kwargs,
+                )
+            ]
+
+            processes[0].start()
+            processes[0].join(timeout)
+
+            try:
+                result = q.get(timeout=timeout)
+            except Exception as e:
+                result = PlannerResponse(is_timeout=True, planner_error=str(e))
+
+            processes[0].kill()
+            return result
 
     def compile_to_pddl(
         self,

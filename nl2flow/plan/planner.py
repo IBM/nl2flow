@@ -1,7 +1,6 @@
 from nl2flow.compile.flow import Flow
 from nl2flow.compile.utils import Transform, revert_string_transform, revert_string_transforms
 from nl2flow.plan.schemas import RawPlan, PlannerResponse, ClassicalPlan as Plan, Action
-from nl2flow.plan.options import TIMEOUT
 from nl2flow.plan.utils import parse_action, group_items, find_operator, unpack_list_of_signature_items
 from nl2flow.compile.schemas import PDDL
 from nl2flow.debug.schemas import DebugFlag
@@ -23,15 +22,7 @@ from copy import deepcopy
 
 class Planner(ABC):
     def __init__(self) -> None:
-        self._timeout: int = TIMEOUT
-
-    @property
-    def timeout(self) -> int:
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, set_timeout: int) -> None:
-        self._timeout = int(set_timeout)
+        pass
 
     @abstractmethod
     def plan(self, pddl: PDDL, **kwargs: Any) -> PlannerResponse:
