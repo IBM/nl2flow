@@ -12,9 +12,15 @@ def test_pre_process_plan_str_re_order_signature_items() -> None:
         + " Since executing a__2 was the goal of this plan, return the results of a__2(v__24, v__26) to the user."
         + "\nPLAN\n[0] ask(v__24)\n[1] ask(v__26)\n[2] v__1, v__27 = a__2(v__24, v__26)"
     )
-    available_agents: List[AgentInfo]= [AgentInfo(agent_id="a__2", actuator_signature=AgentInfoSignature(in_sig_full=[AgentInfoSignatureItem(name="v__26"), AgentInfoSignatureItem(name="v__24")]))]
+    available_agents: List[AgentInfo] = [
+        AgentInfo(
+            agent_id="a__2",
+            actuator_signature=AgentInfoSignature(
+                in_sig_full=[AgentInfoSignatureItem(name="v__26"), AgentInfoSignatureItem(name="v__24")]
+            ),
+        )
+    ]
     action_strs = pre_process_plan_str(response=llm_response, available_agents=available_agents)
 
     assert len(action_strs) == 3
     assert action_strs[2].index("v__26") < action_strs[2].index("v__24")
-    
