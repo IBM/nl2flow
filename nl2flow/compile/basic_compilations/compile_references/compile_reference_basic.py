@@ -2,9 +2,17 @@ import tarski.fstrips as fs
 from tarski.io import fstrips as iofs
 from tarski.syntax import land, neg, Atom, Tautology, CompoundFormula
 from typing import Any, Optional, Set, List, Tuple
-from nl2flow.compile.basic_compilations.compile_operators import merge_optional_preconditions
-from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
+
+from nl2flow.debug.schemas import SolutionQuality
 from nl2flow.compile.basic_compilations.utils import add_to_condition_list_pre_check
+from nl2flow.compile.basic_compilations.compile_operators import merge_optional_preconditions
+from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
+from nl2flow.compile.basic_compilations.compile_history import (
+    get_predicate_from_step,
+    get_index_of_interest,
+)
+
+from nl2flow.compile.schemas import Step, Constraint, Parameter, MemoryItem, OperatorDefinition, FlowDefinition
 from nl2flow.compile.options import (
     PARAMETER_DELIMITER,
     BasicOperations,
@@ -13,12 +21,6 @@ from nl2flow.compile.options import (
     CostOptions,
     NL2FlowOptions,
     TypeOptions,
-)
-
-from nl2flow.compile.basic_compilations.compile_references.utils import get_token_predicate
-from nl2flow.compile.basic_compilations.compile_history import (
-    get_predicate_from_step,
-    get_index_of_interest,
 )
 
 
@@ -34,6 +36,7 @@ def is_there_memory(
 
 def add_untokenize_main(
     compilation: Any,
+    report_type: SolutionQuality,
     index: int,
     step: Step,
     precondition_list: List[Any],
@@ -59,7 +62,7 @@ def add_untokenize_main(
         effects=[fs.AddEffect(add) for add in temp_add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.VERY_HIGH.value,
+                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.VERY_HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -68,6 +71,7 @@ def add_untokenize_main(
 
 def add_surrogate_goal(
     compilation: Any,
+    report_type: SolutionQuality,
     goal_predicates: Set[Any],
     post_token_predicate: Any,
     target: Any,
@@ -78,7 +82,8 @@ def add_surrogate_goal(
     new_index = 100 * (index + 1)
     token_predicate = get_token_predicate(compilation, index=new_index)
 
-    goal_predicates.add(token_predicate)
+    if report_type != SolutionQuality.OPTIMAL:
+        goal_predicates.add(token_predicate)
 
     precondition_list = [post_token_predicate, compilation.been_used(target)]
     add_effect_list = [token_predicate]
@@ -106,7 +111,7 @@ def add_surrogate_goal(
         effects=[fs.AddEffect(add) for add in add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.HIGH.value,
+                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -126,6 +131,7 @@ def add_instantiated_map(
 ) -> Tuple[Optional[Atom], CompoundFormula]:
     compression_option: bool = kwargs.get("compress", False)
     allow_remaps: bool = kwargs.get("allow_remaps", False)
+    report_type: SolutionQuality = kwargs["report_type"]
 
     for item in step.parameters[:2]:
         add_to_condition_list_pre_check(compilation, item)
@@ -143,7 +149,7 @@ def add_instantiated_map(
             del_effect_list.append(compilation.label_tag(source, compilation.constant_map[step.label]))
 
     if not compression_option:
-        add_surrogate_goal(compilation, goal_predicates, post_token_predicate, target, index)
+        add_surrogate_goal(compilation, report_type, goal_predicates, post_token_predicate, target, index)
 
     precondition_list.extend(
         [
@@ -186,6 +192,7 @@ def add_instantiated_operation(
     **kwargs: Any,
 ) -> Tuple[Optional[Atom], CompoundFormula]:
     flow_definition: FlowDefinition = kwargs["flow_definition"]
+    report_type: SolutionQuality = kwargs["report_type"]
 
     repeat_index = get_index_of_interest(compilation, step, flow_definition, index)
     step_predicate = get_predicate_from_step(compilation, step, repeat_index, **kwargs)
@@ -196,7 +203,8 @@ def add_instantiated_operation(
     optional_know_list: List[str] = list()
 
     if step_predicate:
-        goal_predicates.add(step_predicate)
+        if report_type != SolutionQuality.OPTIMAL:
+            goal_predicates.add(step_predicate)
 
         if not compression_option:
             precondition_list.append(neg(step_predicate))
@@ -285,6 +293,7 @@ def add_instantiated_operation(
 
 def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
     optimization_options: Set[NL2FlowOptions] = set(kwargs["optimization_options"])
+    report_type: SolutionQuality = kwargs["report_type"]
     compression_option: bool = kwargs.get("compress", False)
 
     if NL2FlowOptions.multi_instance in optimization_options:
@@ -307,8 +316,10 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
                 )
 
         if not compression_option:
-            goal_predicates.add(post_token_predicate)
-            add_untokenize_main(compilation, index, step, precondition_list, add_effect_list)
+            if report_type != SolutionQuality.OPTIMAL:
+                goal_predicates.add(post_token_predicate)
+
+            add_untokenize_main(compilation, report_type, index, step, precondition_list, add_effect_list)
 
         if isinstance(step, Step):
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
