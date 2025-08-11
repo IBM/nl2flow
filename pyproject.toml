@@ -57,8 +57,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
-write_to       = "nl2flow/__version__.py"
 local_scheme = "no-local-version"
+write_to       = "nl2flow/__version__.py"
 
 [tool.black]
 line-length = 120
