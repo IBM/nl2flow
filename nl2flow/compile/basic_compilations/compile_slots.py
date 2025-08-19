@@ -279,7 +279,9 @@ def compile_last_resort_slots(compilation: Any, **kwargs: Any) -> None:
                     precondition_list.append(
                         compilation.has_done(
                             compilation.constant_map[operator],
-                            compilation.constant_map[HasDoneState.past.value],
+                            compilation.constant_map[HasDoneState.present.value]
+                            if debug_flag
+                            else compilation.constant_map[HasDoneState.past.value],
                         )
                     )
 
@@ -415,7 +417,9 @@ def compile_all_together(compilation: Any, **kwargs: Any) -> None:
                             precondition_list.append(
                                 compilation.has_done(
                                     compilation.constant_map[reference_operator],
-                                    compilation.constant_map[HasDoneState.past.value],
+                                    compilation.constant_map[HasDoneState.present.value]
+                                    if debug_flag
+                                    else compilation.constant_map[HasDoneState.past.value],
                                 )
                             )
 
