@@ -56,6 +56,17 @@ def get_item_source_map(compilation: Any) -> Dict[str, Set[str]]:
             if constant in params:
                 source_map[constant].add(operator.name)
 
+            else:
+                for param in params:
+                    if any(
+                        [
+                            mapping.source_name == param and mapping.target_name == constant
+                            for mapping in compilation.flow_definition.list_of_mappings
+                        ]
+                    ):
+                        source_map[constant].add(operator.name)
+                        break
+
     return source_map
 
 

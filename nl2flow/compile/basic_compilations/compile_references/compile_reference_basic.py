@@ -62,7 +62,7 @@ def add_untokenize_main(
         effects=[fs.AddEffect(add) for add in temp_add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.VERY_HIGH.value,
+                CostOptions.VERY_LOW.value if report_type == SolutionQuality.OPTIMAL else CostOptions.VERY_HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -111,7 +111,7 @@ def add_surrogate_goal(
         effects=[fs.AddEffect(add) for add in add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.HIGH.value,
+                CostOptions.VERY_LOW.value if report_type == SolutionQuality.OPTIMAL else CostOptions.HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -232,6 +232,17 @@ def add_instantiated_operation(
                 else:
                     must_know_list.append(param)
 
+        for partial_order in flow_definition.partial_orders:
+            if partial_order.consequent == step.name:
+                has_done_predicate_name = f"has_done_{step.name}"
+                parameter_names = ["try_level_1"]
+
+                po_step_predicate = getattr(compilation, has_done_predicate_name)(
+                    *[compilation.constant_map[p] for p in parameter_names]
+                )
+
+                precondition_list.append(po_step_predicate)
+
         if step.label:
             precondition_list.append(compilation.available(compilation.constant_map[step.label]))
             del_effect_list.append(compilation.available(compilation.constant_map[step.label]))
@@ -276,7 +287,7 @@ def add_instantiated_operation(
                         compilation.connected(
                             compilation.constant_map[operator.name],
                             compilation.constant_map[f"try_level_{repeat_index}"],
-                            compilation.constant_map[f"try_level_{repeat_index+1}"],
+                            compilation.constant_map[f"try_level_{repeat_index + 1}"],
                         ),
                     ]
                 )
@@ -325,7 +336,13 @@ def compile_reference_basic(compilation: Any, **kwargs: Any) -> None:
             action_name = f"{RestrictedOperations.TOKENIZE.value}_{index}//{step.name}"
 
             if step.name == BasicOperations.SLOT_FILLER.value:
-                raise NotImplementedError
+                action_name = f"{action_name}{PARAMETER_DELIMITER}{step.parameter(0)}"
+                step_predicate = compilation.known(
+                    compilation.constant_map[step.parameter(0)], compilation.constant_map[MemoryState.KNOWN.value]
+                )
+
+                precondition_list = [neg(step_predicate)]
+                precondition = land(*precondition_list)
 
             elif step.name == BasicOperations.MAPPER.value:
                 action_name = (
