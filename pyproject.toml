@@ -3,6 +3,7 @@ name            = "nl2flow"
 description     = "NL2Flow: A PDDL interface to flow construction"
 readme          = "README.md"
 requires-python = ">=3.11"
+version         = "0.1.0"
 license         = { file = "LICENSE" }
 
 authors = [{ name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" }, { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }]
@@ -20,7 +21,6 @@ classifiers = ["Development Status :: 2 - Pre-Alpha", "Intended Audience :: Deve
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = ["pydantic", "pyyaml", "tarski-tmp", "StrEnum", "kstar-planner", "forbiditerative", "haikunator", "nestful-wrapper"]
-dynamic      = ["version"]
 
 [project.optional-dependencies]
 dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock", "types-PyYAML"]
@@ -54,11 +54,6 @@ include = ["nl2flow*", "profiler*"]
 # https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
 requires      = ["setuptools>=43.0.0", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "no-local-version"
-write_to       = "nl2flow/__version__.py"
 
 [tool.black]
 line-length = 120
