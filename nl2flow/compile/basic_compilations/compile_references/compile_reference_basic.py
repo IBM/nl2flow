@@ -62,7 +62,7 @@ def add_untokenize_main(
         effects=[fs.AddEffect(add) for add in temp_add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.VERY_LOW.value if report_type == SolutionQuality.OPTIMAL else CostOptions.VERY_HIGH.value,
+                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.VERY_HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
@@ -111,7 +111,7 @@ def add_surrogate_goal(
         effects=[fs.AddEffect(add) for add in add_effect_list],
         cost=iofs.AdditiveActionCost(
             compilation.problem.language.constant(
-                CostOptions.VERY_LOW.value if report_type == SolutionQuality.OPTIMAL else CostOptions.HIGH.value,
+                CostOptions.ZERO.value if report_type == SolutionQuality.OPTIMAL else CostOptions.HIGH.value,
                 compilation.problem.language.get_sort("Integer"),
             )
         ),
