@@ -30,7 +30,8 @@ class Kstar(Planner, FDDerivedPlanner):
                 quality_bound=QUALITY_BOUND,
                 number_of_plans_bound=NUM_PLANS,
             )
-            result = RawPlannerResult(list_of_plans=planner_result.get("plans", []))
+
+            result = RawPlannerResult(pddl=pddl, list_of_plans=planner_result.get("plans", []))
             result.error_running_planner = False
             result.is_no_solution = planner_result.get("unsolvable", None)
             result.is_timeout = planner_result.get("timeout_triggered", None)

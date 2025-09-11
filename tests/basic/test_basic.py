@@ -22,10 +22,7 @@ def test_basic() -> None:
     goal = GoalItems(goals=GoalItem(goal_name="Fix Errors"))
     new_flow.add(goal)
 
-    pddl, _ = new_flow.compile_to_pddl()
-    _ = pddl  # explore the pddl
+    planner_response = new_flow.plan_it(PLANNER)
+    print(CodeLikePrint.pretty_print(planner_response))
 
-    plans = new_flow.plan_it(PLANNER)
-    print(CodeLikePrint.pretty_print(plans))
-
-    assert plans.list_of_plans, "There should be plans."
+    assert planner_response.list_of_plans, "There should be plans."
