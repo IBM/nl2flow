@@ -3,16 +3,45 @@ name            = "nl2flow"
 description     = "NL2Flow: A PDDL interface to flow construction"
 readme          = "README.md"
 requires-python = ">=3.11"
-version         = "0.1.1"
+version         = "0.1.2"
 license         = { file = "LICENSE" }
 
-authors = [{ name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" }, { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }]
+authors = [
+    { name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" },
+    { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }
+]
 
-maintainers = [{ name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" }, { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }]
+maintainers = [
+    { name = "Tathagata Chakraborti", email = "tchakra2@ibm.com" },
+    { name = "Jungkoo Kang", email = "jungkoo.kang@gmail.com" }
+]
 
-keywords = ["automated planning", "natural language processing", "process automation", "service composition", "conversational agents", "generative ai", "large language models"]
+keywords = [
+    "automated planning",
+    "natural language processing",
+    "process automation",
+    "service composition",
+    "conversational agents",
+    "generative ai",
+    "large language models"
+]
 
-classifiers = ["Development Status :: 2 - Pre-Alpha", "Intended Audience :: Developers", "Intended Audience :: Science/Research", "Natural Language :: English", "License :: OSI Approved :: Apache Software License", "Operating System :: MacOS", "Operating System :: Unix", "Programming Language :: Python :: 3.11", "Framework :: Pydantic :: 2", "Framework :: Pytest", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Topic :: Scientific/Engineering :: Human Machine Interfaces", "Topic :: Scientific/Engineering :: Information Analysis", "Topic :: Software Development :: User Interfaces"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3.11",
+    "Framework :: Pydantic :: 2",
+    "Framework :: Pytest",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Human Machine Interfaces",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: User Interfaces"
+]
 
 # This field lists other packages that your project depends on to run.
 # Any package you put here will be installed by pip when your project is

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pydantic import BaseModel
 from typing import List, Any, Optional, Union
-from nl2flow.compile.schemas import Constraint, ClassicalPlanReference, Step, Parameter
+from nl2flow.compile.schemas import Constraint, ClassicalPlanReference, Step, Parameter, PDDL
 
 
 class Action(BaseModel):
@@ -42,6 +42,7 @@ class ClassicalPlan(BaseModel):
 
 
 class RawPlannerResult(BaseModel):
+    pddl: Optional[PDDL] = None
     list_of_plans: List[RawPlan] = []
     error_running_planner: Optional[bool] = None
     is_no_solution: Optional[bool] = None
@@ -73,6 +74,7 @@ class PlannerResponse(RawPlannerResult):
     @classmethod
     def initialize_from_raw_plans(cls, raw_planner_result: RawPlannerResult) -> PlannerResponse:
         return PlannerResponse(
+            pddl=raw_planner_result.pddl,
             error_running_planner=raw_planner_result.error_running_planner,
             is_no_solution=raw_planner_result.is_no_solution,
             no_plan_needed=raw_planner_result.no_plan_needed,
