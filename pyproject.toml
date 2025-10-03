@@ -2,8 +2,8 @@
 name            = "nl2flow"
 description     = "NL2Flow: A PDDL interface to flow construction"
 readme          = "README.md"
-requires-python = ">=3.11"
-version         = "0.1.2"
+requires-python = ">=3.10"
+version         = "0.1.3"
 license         = { file = "LICENSE" }
 
 authors = [
@@ -49,7 +49,7 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = ["pydantic", "pyyaml", "tarski-tmp", "StrEnum", "kstar-planner", "forbiditerative", "haikunator", "nestful-wrapper"]
+dependencies = ["pydantic", "pyyaml", "tarski-tmp", "StrEnum", "kstar-planner", "haikunator", "nestful-wrapper"]
 
 [project.optional-dependencies]
 dev = ["check-manifest", "pytest", "pytest-mock", "black", "pylint", "flake8", "pre-commit", "Flake8-pyproject", "coverage", "pytest-mock", "types-PyYAML"]
