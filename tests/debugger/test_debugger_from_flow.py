@@ -1,3 +1,4 @@
+from typing import List
 from nl2flow.debug.debug import BasicDebugger
 from nl2flow.debug.schemas import ClassicalPlanReference, DiffAction, SolutionQuality
 from nl2flow.compile.flow import Flow
@@ -6,6 +7,7 @@ from nl2flow.compile.schemas import SignatureItem, Parameter, Constraint, GoalIt
 from nl2flow.compile.options import LifeCycleOptions, BasicOperations
 from nl2flow.plan.planners.kstar import Kstar
 from nl2flow.printers.codelike import CodeLikePrint
+from profiler.data_types.agent_info_data_types import AgentInfo, AgentInfoSignature, AgentInfoSignatureItem
 from tests.debugger.custom_formatter.custom_print import CustomPrint
 from copy import deepcopy
 
@@ -101,12 +103,38 @@ class TestBasic:
             ),
         ]
 
+    def test_token_string_parsing(self) -> None:
+        tokens = ["ask(v__24)", "ask(v__26)", "v__1, v__27 = a__2(v__24, v__26)"]
+        new_tokens: List[str] = []
+        for idx, token in enumerate(tokens):
+            new_token = "[" + str(idx + 1) + "] " + token
+            new_tokens.append(new_token)
+
+        token_str = "PLAN\n" + "\n" + "\n".join(new_tokens)
+        available_agents: List[AgentInfo] = [
+            AgentInfo(
+                agent_id="a__2",
+                actuator_signature=AgentInfoSignature(
+                    in_sig_full=[AgentInfoSignatureItem(name="v__26"), AgentInfoSignatureItem(name="v__24")]
+                ),
+            )
+        ]
+        reference_plan: ClassicalPlanReference = CodeLikePrint.parse_string(
+            token_str, available_agents=available_agents
+        )
+
+        assert reference_plan.plan == [
+            Step(name="ask", parameters=["v__24"], maps=[]),
+            Step(name="ask", parameters=["v__26"], maps=[]),
+            Step(name="a__2", parameters=["v__26", "v__24"], maps=[]),
+        ]
+
     def test_unsound_plan(self) -> None:
         incomplete_unsound_tokens = deepcopy(self.tokens)
         incomplete_unsound_tokens.remove("assert $a > 10")
         incomplete_unsound_tokens.remove("y = agent_b(a)")
 
-        report = self.debugger.debug(incomplete_unsound_tokens, report_type=SolutionQuality.SOUND)
+        report = self.debugger.debug(incomplete_unsound_tokens, report_type=SolutionQuality.VALID)
         diff_string = "\n".join(report.plan_diff_str)
         print(f"\n\n{diff_string}")
 
